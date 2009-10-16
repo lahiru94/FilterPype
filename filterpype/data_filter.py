@@ -900,7 +900,7 @@ class DedupeData(dfb.DataFilter):
         self.send_on(packet)
         
                 
-class DistillHeader(dfb.DataFilterDynamic):
+class DistillHeader(dfb.DataFilter):
     """Strip header off, and send header_size bytes to the branch. If
     distill_mode is "once" then the header will be removed only once, from the
     first packet, while if distill_mode is "repeated", it will removed from

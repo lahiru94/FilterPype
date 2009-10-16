@@ -41,7 +41,6 @@ import filterpype.data_filter as df
 import filterpype.filter_utils as fut
 import filterpype.filter_factory as ff
 import filterpype.pipeline as ppln
-import filterpypefds.filter_factory_fds as fff
 
 k_run_long_tests = True
 
