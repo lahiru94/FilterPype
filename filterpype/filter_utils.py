@@ -1,0 +1,556 @@
+
+# -*- coding: utf-8 -*-
+# filter_utils.py
+
+# Licence
+#
+# FilterPype is a process-flow pipes-and-filters Python framework.
+# Copyright (c) 2009 Folding Software Ltd and contributors
+# www.foldingsoftware.com/filterpype, www.filterpype.org
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRAN	TY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
+import re
+import sys
+import cStringIO
+import os
+import glob
+import uuid
+import string
+import struct
+
+_bit_sum_dict = {}
+
+## debug = 1
+debug = 5
+quick_test = 50 # Higher the number for faster, e.g. 50
+               # 0 for all tests
+               
+
+# Alternative executable
+#     /Library/Frameworks/Python.framework/Versions/Current_2.6/bin/python
+               
+# Assume file structure:
+#    /MyPackageName
+#        /mypackagename
+#            /docs
+#            /tests
+#
+     
+def abs_dir_of_file(abs_file_location):
+    """Returns the absolute path of the package containing abs_file_location,
+    usually found from __file__.
+    """
+    return os.path.dirname(os.path.realpath(abs_file_location))
+                                 
+##def abs_dir_package(abs_file_location): 
+    ##"""Returns the absolute path of the package containing abs_file_location,
+    ##usually found from __file__.
+    ##"""
+    ##return os.path.split(os.path.realpath(abs_file_location))[0]
+
+##def abs_dir_tests(abs_file_location):
+    ##"""Returns the absolute path of the tests in the package containing 
+    ##abs_file_location, usually found from __file__.
+    ##"""
+    ##return os.path.join(os.path.split(abs_dir_package(abs_file_location))[0], 
+                        ##'tests')
+
+def all_files(pattern, search_path, path_sep=os.pathsep):
+    """Given a search path, yield all files matching the pattern.
+    From Python Cookbook, p. 92.
+    """
+    for path in search_path.split(path_sep):
+        for match in glob.glob(os.path.join(path, pattern)):
+            yield match
+
+def bit_sum(chars):
+    """Add the bits in all chars"""
+    def _bit_sum_char(char):
+        """Add the bits in a single char, if not already in the dictionary. """
+        try:
+            return _bit_sum_dict[ord(char)]
+        except KeyError:
+            byte_bit_sum = 0
+            for shift in xrange(8):
+                byte_bit_sum += (ord(char) >> shift) & 0x01 
+            _bit_sum_dict[ord(char)] = byte_bit_sum
+            return byte_bit_sum
+    result = 0
+    for char in chars:
+        result += _bit_sum_char(char)
+    return result
+
+def config_obj_comma_fix(text):
+    """ConfigObj puts strings with commas into a list, converting to integers
+    where possible. Reconstruct the string with string types. Rejoin the list
+    items with a comma, if present.
+    """
+    try:
+        return ', '.join(str(x) for x in (text + []))
+    except TypeError:   
+        return text
+
+def construct_filename(*args, **kwargs):
+    filename = ''.join(args + (kwargs.get('extension'),))
+    return os.path.join(kwargs.get('path', ''), filename)
+
+def copy_attr(from_obj, to_obj, attr_name):
+    to_obj.__dict__[attr_name] = from_obj.__dict__[attr_name]
+
+def convert_config_list(values):
+    """Apply convert_config_str for each item in the list.
+    """
+    conversions = []
+    for val in values:
+        conversions.append(convert_config_str(val))
+    return conversions
+    
+def convert_config_str(value):
+    """With string from config file, interpret it in order:
+       1) as a number (integer, float or hex)
+       2) as Boolean
+       3) as space
+       4) list
+       5) dictionary
+       6) else return original string.
+    """
+    try:
+        value + ''  # Is this a string to be interpreted?
+    except TypeError:
+        # Is this a list of values to be converted?
+        try:
+            return convert_config_list(value + [])  # TypeError if not list
+        except TypeError:
+            # Not a string, or a list, so give up and don't try to convert
+            return value
+    value = value.strip()  # Remove surrounding white space
+    try:
+        if value.isdigit():
+            return int(value)  # Try for integer
+        else:
+            return float(value)
+    except ValueError:
+        if value.startswith('0x'):
+            try:
+                return int(value, 16)  # Try for hex string
+            except ValueError:
+                pass   
+        compare_value = value.lower()
+        if compare_value in ['true', 't']:
+            return True
+        elif compare_value in ['false', 'f']:
+            return False
+        elif compare_value == 'none':
+            return None
+        elif compare_value == 'empty':
+            return ''
+        elif compare_value == 'space':
+            return ' '
+        elif value.startswith('[') and value.endswith(']'):
+            # If paranoid, validate this with a regex for a Python list first
+            try:
+                alist = eval(value)
+                try:
+                    return convert_config_list(alist + []) 
+                except TypeError:
+                    return value
+            except SyntaxError:
+                # It's not really a list. Give up -- return original string
+                return value  
+        elif value.startswith('{') and value.endswith('}'):
+            # If paranoid, validate value with a regex for a Python dict first
+            try:
+                adict = eval(value)
+                adict.update({})  # Attribute error if not dict
+                return adict
+            except SyntaxError:
+                # It's not really a dict. Give up -- return original string
+                return value 
+        else:
+            return value  # Original string
+        
+
+##def convert_to_int(value):
+    ##"""Return the integer value, if the input text is a hex string, or
+       ##an integer, else return the original string."""
+    ##try:
+        ##return int(value)  # Check for integer
+    ##except (ValueError, TypeError):
+        ##if value.startswith('0x'):
+            ##try:
+                ##return int(value, 16)  # Check for hex string
+            ##except (ValueError, TypeError):
+                ##return value  # OK, it's just a string
+        ##else:
+            ##return value
+
+def convert_to_2s_complement(str_val):
+    """ Convert a data string into it 2s complement value
+        E.g.
+        0xF22C4158 is the hex string 0xF2 0x2C 0x41 0x58
+        0xF2 0x2C 0x41 0x58 --> -231980712 (in 2s complement)
+        
+        NOTE: values must be strings
+        NOTE: Please only give chars (1 byte), shorts (2 bytes) or
+              longs (4 bytes). Anything else will currently return an error
+    """
+    try:
+        str_val + ''
+    except TypeError:
+        raise TypeError, "String expected but got %s instead" % type(str_val)
+
+    if len(str_val) == 1:
+        converted_value = struct.unpack('>b', str_val)[0]
+    elif len(str_val) == 2:
+        converted_value = struct.unpack('>h', str_val)[0]
+    elif len(str_val) == 4:
+        converted_value = struct.unpack('>l', str_val)[0]
+    else:
+        print "Only chars (1 byte), shorts (2 bytes) and longs (4 bytes) " +\
+              "are valid inputs. String of length %s given" % str(len(str_val))
+        return
+    return converted_value
+
+def get_word_interval_num_results(wps, hz):
+    """
+        Get the word interval and number of results per superframe, given the
+        words per second and hertz
+        
+        WARNING: This function returns an int. If the user does not give
+                 sensible values and a calculation is made that results in
+                 non-zero values on the right hand side of the decimal point,
+                 an inaccurate result will be given.
+                 
+                 EG: 
+                 Inputs: WPS:256, HZ:3
+                 Real Interval: 85.333333333333329, Real num results: 48.0
+                 Function Output: (85, 48)       
+          
+    """
+    if wps == 0 or hz == 0:
+        msg = "One or more values are zero which is not allowed"
+        raise ValueError, msg
+    interval = float(wps) / float(hz)
+    number_of_results = float(hz) * 16.0
+    
+    return (int(interval), int(number_of_results))
+
+def convert_integers_to_hex(int_list, mode=4):
+    """ Use this function for converting a list of integers into a hex
+        representation in a format determined by mode.
+        
+        E.g. If input is [1, 2, 3]
+        Mode        Format
+        1           ['0x1', '0x2', '0x3']
+        2           '0x010203'
+        3           '\\x01\\x02\\x03'
+        4           '01 02 03'
+        
+    """
+    # Don't allow negative integers. Sorry but negative in hex values are
+    # not valid e.g. you can't have 0x123-4
+    for value in int_list:
+        if value < 0:
+            msg = 'negative integer found. Negative integers are not allowed'
+            raise ValueError, msg
+    
+    # modexconvert (where x is a number) are lambda functions for doing
+    # what needs to be done to the integer list
+    # mode1convert converts into what's required by mode 1, mode2convert to
+    # what's required by mode 2 and so on.
+    mode1convert = lambda int_list: [hex(hex_val) for hex_val in int_list]
+    mode3convert = lambda int_list: ''.join(
+        [chr(hex_val) for hex_val in int_list])
+    mode4convert = lambda int_list: data_to_hex_string(mode3convert(int_list))
+    mode2convert = lambda int_list: '0x' + ''.join(
+        mode4convert(int_list).split())
+    
+    # A dictionary mapping the modes to the lambda functions
+    mode_funcs = {1:mode1convert,
+                  2:mode2convert,
+                  3:mode3convert,
+                  4:mode4convert}
+    
+    # Using the user given mode, go execute the correct function
+    return mode_funcs[mode](int_list)
+
+def convert_to_zero_based_tuple(tup):
+    """For each number in the tuple, return one less, converting 1-based
+       counting to 0-based.
+    """
+    return tuple(x - 1 for x in tup)
+    
+def data_to_hex_string(data, limit=None, space=' '):
+    """Return the hexadecimal representation of a string of bytes, so that
+       it can be printed and compared with the display of a hex editor.
+       
+       e.g. 'ABC' --> '41 42 43'
+    """
+    return space.join([('%2.2X' % ord(char)) for char in data][:limit])
+
+def data_type(data):
+    """Return the type of data passed in.
+    """
+    try:
+        data + []
+        return 'list'
+    except TypeError: # Not a list
+        try:
+            data + ''
+            return 'string'
+        except TypeError: # Not a string
+            try:
+                data * 1
+                return 'number'
+            except TypeError: # Not a number
+                if data is None:
+                    return 'none'
+                else:
+                    return 'unknown' 
+
+def destruct_filename(filename):
+    path, basename = os.path.split(filename)
+    base, extension = os.path.splitext(basename)
+    return path, base, extension
+
+def get_values_from_name(filter_name):
+    """Essential key values may be set after a ':' for the each essential key.
+       e.g. foo:35:fred:${baz}
+       This provides three key values to the filter foo: 35 (as an integer),
+       'fred' (as a string) and baz as a variable to be substituted for.
+    """
+    parts = filter_name.split(':')
+    # Parts list must have at least one part, if there is no ':'
+    filt_name = parts[0]
+    # Convert to integer, Boolean, etc if possible
+    values = [convert_config_str(part) for part in parts[1:]]
+    return filt_name, values
+
+def hex_string_to_data(data, space=None):
+    """Read string data as hexadecimal bytes, and return as data string.
+       e.g '41 42 43' --> 'ABC'
+       
+       Note the use of the int() function, with a second parameter. 
+       I hadn't realised that this was necessary for converting anything 
+       apart from base 10 strings.
+    """
+    # Check that input data is made with spaces/etc in between hex chars
+    bytes = data.split(space)  # NB default to None not ' '
+    if len(bytes) == 1:  
+        # No space found, so assume we have a continuous string of 0-F hex
+        bytes = split_strings(data, 2)
+    return ''.join(chr(int('0x%s' % ch, 16)) for ch in bytes if ch)
+
+def latest_defaults(keys):
+    """Take a list with some repeated keys which have different default
+    values. Return the only key with the latest value, in the position of the
+    first occurrence of the key. e.g.
+        keys_in = ['abc', 'def:0', 'fred', 'jane:ergo', 'def:3']
+        keys_out = ['abc', 'def:3', 'fred', 'jane:ergo']
+    """
+    bare_keys = []
+    key_values = {}
+    for key in keys:
+        bare_key = key.split(':')[0] 
+        if ':' in key:
+            # Later values will overwrite earlier ones
+            key_values[bare_key] = key.split(':')[1]
+        if bare_key not in bare_keys:
+            # First position of bare_key will be maintained
+            bare_keys.append(bare_key)
+    keys_out = []
+    for bare_key in bare_keys:
+        if bare_key in key_values:
+            keys_out.append('%s:%s' % (bare_key, key_values[bare_key]))
+        else:
+            keys_out.append(bare_key)
+    return keys_out
+
+def make_dict(*args, **kwargs):
+    """Ease the dictionary making process by removing the need for quoting
+       the keys.  \*args is for tuples coming from an existing dictionary,
+       using the \*adict.items() form. \**kwargs forms keyword parameters into
+       a dictionary.
+       
+    """
+    adict = dict(args)
+    adict.update(kwargs)
+    return adict
+
+def nibble_count(bit_length):
+    """How many nibbles needed to show required numbers of bits?
+    """
+    return 1 + (bit_length - 1) // 4
+    
+def pad_string(text, length, pad_char=' '):
+    """Pad input string to the length with pad_char. 
+       If length < length(text), return the whole string.
+    """
+    return text + (pad_char * (length - len(text)))
+
+def printable(text):
+    """Return a string with all unprintable characters replaced with '?'
+    """
+    result = []
+    for char in text:
+        if ord(char) >= 32 and ord(char) <= 127:
+            result.append(char)
+        else:
+            result.append('?')
+    return ''.join(result)
+
+def print_redirect(func, *args, **kwargs):
+    """redirect(func, ...) --> (output string result, func's return value)
+       (See p.257 of Python in a Nutshell)
+       func must be a callable and may emit results to standard output.
+       Capture those results as a string and return a pair: the print 
+       output and func's return value.
+    """
+    save_out = sys.stdout
+    sys.stdout = cStringIO.StringIO()
+    try:
+        ret_val = func(*args, **kwargs)
+        return sys.stdout.getvalue(), ret_val
+    finally:
+        sys.stdout.close()
+        sys.stdout = save_out
+
+def pypes_for_dict_gen(file_dir):
+    """Create generator to return all pypes in the pypes directory.
+    """
+##    print '**10530** Looking for *.pype files in %s' % file_dir
+    for file_name in all_files('*.pype', file_dir):
+        # Remove the path and the extension
+        short_file_name = os.path.basename(file_name)[:-5]
+##        print '**10550**', short_file_name, file_name
+        yield short_file_name, file_name
+        
+def random_file_name(ext='.dat'):
+    """Returns a unique random file name generated as a UUID string. This is
+    statistically guaranteed to avoid a name clash.
+    """
+    return str(uuid.uuid4()) + ext
+
+def remove_punctuation(string_in):
+    """Removes all punctuation chars from string_in
+    
+    Punctuation removed:
+    '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+    """
+    allchars = string.maketrans('', '')
+    keep = string.ascii_letters + string.digits + string.whitespace
+    delchars = allchars.translate(allchars, keep)
+    return string_in.translate(allchars, delchars)
+
+def reverse_byte(byte):
+##    for j in xrange(8):
+##        result.append((byte & (1 << j)) << (7 - j))
+    result = ((byte & 0x01) << 7) | \
+             ((byte & 0x02) << 5) | \
+             ((byte & 0x04) << 3) | \
+             ((byte & 0x08) << 1) | \
+             ((byte & 0x10) >> 1) | \
+             ((byte & 0x20) >> 3) | \
+             ((byte & 0x40) >> 5) | \
+             ((byte & 0x80) >> 7)
+    return result
+        
+##def set_first_ess_key_val(filter_class, essential_key_value, attr_dict, 
+                          ##error_class):
+    ##"""An essential key value can be set from config or route, but not
+       ##both. Raise error even the two values are the same. <<<< TO-DO <<<<<
+    ##"""
+    ### TO-DO: tests for set_fekv_in_param_dict
+    ##try:
+        ##first_essential_key = filter_class.essential_keys[0]
+    ##except IndexError:
+        ##raise error_class, 'Filter class "%s" has no essential keys' % (
+                                                        ##filter_class.__name__)
+    ####if first_essential_key in attr_dict:
+        ####if set_twice == 'ignore' and \
+           ####attr_dict[first_essential_key] == essential_key_value:
+            ##### Ignore resetting if it is to the same value
+            ####return
+        ####else:
+            ####msg = 'Can\'t set the %s.%s parameter value more than once' % (
+                  ####filter_class.__name__, first_essential_key)
+            ####raise error_class, msg
+    ##if first_essential_key not in attr_dict:
+        ### Route may refer to the same filter more than once with an
+        ### essential key suffix. Set it if it is the first time, or...
+        ##attr_dict['first_essential_key'] = first_essential_key
+        ##attr_dict[first_essential_key] = essential_key_value
+    ##else:
+        ### ...check that we're not trying to change the value.
+        ##if attr_dict[first_essential_key] != essential_key_value:
+            ##msg = 'Can\'t change the %s.%s parameter value from %s to %s' % (
+                ##filter_class.__name__, first_essential_key,
+                ##attr_dict[first_essential_key], essential_key_value)
+            ##raise error_class, msg
+            
+def split_strings(data, split_size):
+    """Return the input string as a list of strings, split into split_size
+       pieces.  The last piece sent may be an incomplete split.
+    """
+    return [data[j:j + split_size] for j in xrange(0, len(data), split_size)]
+
+def strip_number_suffix(txt):
+    """Remove any trailing digits from a string and underscore.
+    """
+    for j in xrange(len(txt) - 1, -1, -1):
+        if not txt[j].isdigit() and txt[j] != '_':
+            alpha_at = j
+            break
+    else:
+        alpha_at = -1
+    return txt[:alpha_at + 1]
+    
+def strip_prefix(txt, separator):
+    """Remove the text up to and including the separator, if there is one,
+       or else return the original text.
+    """
+    try:
+        return txt.split(separator)[1]
+    except IndexError:  # No separator
+        return txt
+    except AttributeError: # Probably trying to split None
+        return None
+    
+def strip_prefixes(txt, prefix_regex):
+    re_prefix = re.compile(prefix_regex)
+    try:
+        return ''.join(re_prefix.split(txt))
+    except TypeError:  # Not a string
+        return txt
+    
+def unindent(lines):
+    """Remove the same number of spaces from the front of each line, so that
+    at least one line has no leading spaces. Return a list of the stripped
+    lines. Ignore blank lines, even though they may have leading spaces.
+    """
+    if lines:
+        min_spaces = min((len(x) - len(x.lstrip())) for x in lines if x.strip())
+        return [line[min_spaces:] for line in lines]
+    else:
+        return []
+    
+    
+    

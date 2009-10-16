@@ -1,0 +1,19 @@
+[--main--]
+ftype = some_new_pipeline
+description = TO-DO: docstring
+    
+[python_scale_airspeed]
+x = sum([3, 4, 5])        # = 12
+y = x * 2                 # = 24
+z = x + (2 * y / 6)       # = 20
+##  This is a comment
+print 'Hello World'
+abc = [name_that_could _be_a_filter]
+
+[python_mean_g]
+g10 = (g3 + g4 + g5) / 3.0
+ft56 = g10 + RADALT
+    
+[--route--]
+python_scale_airspeed >>>
+sink

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!--
+jEdit highlight description for pype files.
+version 1.0 26-08-2009
+
+Installation:
+1.Copy this file to jEdit\modes
+2.Add below line to jEdit\modes\catalog file, just before tag: </MODES>
+	<MODE NAME="pype" FILE="pype.xml" FILE_NAME_GLOB="*.pype"/>
+-->
+<!DOCTYPE MODE SYSTEM "xmode.dtd">
+
+<MODE>
+	<PROPS>
+		<PROPERTY NAME="lineComment" VALUE="##" />
+	</PROPS>
+	
+	<RULES IGNORE_CASE="FALSE"
+		HIGHLIGHT_DIGITS="TRUE"
+		DIGIT_RE="(0[lL]?|[1-9]\d{0,9}(\d{0,9}[lL])?|0[xX]\p{XDigit}{1,8}(\p{XDigit}{0,8}[lL])?|0[0-7]{1,11}([0-7]{0,11}[lL])?|([0-9]+\.[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?[fFdD]?|[0-9]+([eE][+-]?[0-9]+[fFdD]?|([eE][+-]?[0-9]+)?[fFdD]))">
+		
+		<!-- comments out line -->
+		<EOL_SPAN TYPE="COMMENT2">##</EOL_SPAN>
+		<EOL_SPAN TYPE="COMMENT1">#</EOL_SPAN>
+		
+		<SEQ TYPE="LITERAL1" AT_LINE_START="TRUE">[--main--]</SEQ>
+		<SEQ TYPE="LITERAL1" AT_LINE_START="TRUE">[--route--]</SEQ>
+		
+		<!-- function definition ?? -->
+		<SEQ_REGEXP TYPE="LITERAL4" AT_LINE_START="TRUE">(\[)[a-z_]+(\])</SEQ_REGEXP>
+		
+		<!-- variable assigment -->
+		<SEQ_REGEXP TYPE="KEYWORD1" AT_LINE_START="FALSE" AT_WHITESPACE_END="TRUE">\b([a-zA-Z0-9_.-]+)\b\s*(=)</SEQ_REGEXP>
+		
+		<!-- access to defined variable -->
+		<SEQ_REGEXP TYPE="KEYWORD2" AT_LINE_START="FALSE">:\$\{[a-z][0-9a-z_]*\}</SEQ_REGEXP>
+		
+		<!-- pipeline operator -->
+		<SEQ_REGEXP TYPE="KEYWORD3" AT_LINE_START="FALSE">(>>>|\)|\()</SEQ_REGEXP>
+		
+		<!-- const parameters passed to pipeline -->
+		<SEQ_REGEXP TYPE="KEYWORD4" AT_LINE_START="FALSE">:\$\{[A-Z][0-9A-Z_]*\}|(:)[A-Z][A-Z0-9_.-]+</SEQ_REGEXP>
+		
+		<SEQ_REGEXP TYPE="LITERAL3" AT_LINE_START="FALSE">:([a-z_]+)|:(0x[0-9a-f]+)|:([0-9]+)</SEQ_REGEXP>
+		
+		
+	</RULES>
+	
+	
+</MODE>
