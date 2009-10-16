@@ -96,7 +96,7 @@ setup(
     # to remember to modify your setup script whenever your project grows 
     # additional top-level packages or subpackages.
 
-    packages = find_packages(),      
+    packages = find_packages(exclude=['lextab.*', 'parsetab.*']),      
                 
     # Often, additional files need to be installed into a package. These files 
     # are often data that's closely related to the package's implementation, or 
