@@ -118,12 +118,8 @@ setup(
     # package_data keyword, e.g.:
 
     package_data = {
-        # If any package contains *.txt or *.rst files, include them:
-        '': ['*.txt', '*.rst', '*.py', '*.pype'],
-        # And include any *.dat files found in the 'data' directory of the 
-        # 'skeleton' package amd all the files in the 'scripts' directory
-        # of the 'skeleton' package too.
-        'syntax_highlight': ['jEdit/*'],
+        # Include the required files
+        '': ['pypes/*.pype'],
     },
 
     # === Test Suite ===
@@ -161,7 +157,7 @@ setup(
 
     # A string or list of strings specifying what other distributions need to be 
     # installed when this one is.
-    install_requires = ['setuptools>=0.6b1'],
+    install_requires = ['setuptools>=0.6b1', 'configobj==4.6.0', 'ply==3.3'],
          
     # Sometimes a project has "recommended" dependencies, that are not required 
     # for all uses of the project. For example, a project might offer optional 
@@ -192,14 +188,14 @@ setup(
     # already. If you want them to be installed, as well as being available when 
     # the setup script is run, you should add them to install_requires and 
     # setup_requires.)
-    setup_requires = ['pylint'],
+    setup_requires = [''],
 
 
     # If your project's tests need one or more additional packages besides those 
     # needed to install it, you can use this option to specify them. It should 
     # be a string or list of strings specifying what other distributions need to 
     # be present for the package's tests to run.     
-    tests_require = ['nose>=0.11', 'figleaf', 'coverage==2.85', 'mock'],
+    tests_require = ['nose>=0.11', 'figleaf', 'coverage==2.85', 'mock==0.6.0'],
 
 
     # If your project depends on packages that aren't registered in PyPI, you 
@@ -222,9 +218,9 @@ setup(
     # for eggs or source distributions, if the package's dependencies aren't 
     # already installed:
 
-    dependency_links = [
-        'http://vindictive.flightdataservices.com/Nest/dist/'
-    ],
+    #dependency_links = [
+    #    'http://www.example.org/Eggs'
+    #],
 
     # === Script Creation ===
     
@@ -239,7 +235,7 @@ setup(
     # default, it is replaced with the current interpreter location. 
 
     # The scripts option simply is a list of files to be handled in this way. 
-    #scripts=['skeleton/scripts/skull', 'skeleton/scripts/cross_bones'],
+    #scripts=['filterpype/scripts/thing'],
 
     # === Entry Points (are better than 'scripts') ===
 
@@ -254,9 +250,7 @@ setup(
     # .exe file so that users don't have to change their PATHEXT settings. The 
     # way to use this feature is to define "entry points" in your setup script 
     # that indicate what function the generated script should import and run. 
-    # It is possible to create console scripts and GUI scripts.        
-        
-    # Two notations are popular, the first is easy to read and maintain.
+    # It is possible to create console scripts and GUI scripts.                
     
     #entry_points = """
     #    [console_scripts]
