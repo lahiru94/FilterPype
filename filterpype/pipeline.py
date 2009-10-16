@@ -5,7 +5,7 @@
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
 # Copyright (c) 2009 Folding Software Ltd and contributors
-# www.foldingsoftware.com/filterpype, www.filterpype.org
+# www.foldingsoftware.com/filterpype, www.filterpype.org 
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
