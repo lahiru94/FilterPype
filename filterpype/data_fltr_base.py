@@ -52,6 +52,7 @@ re_caps_params = re.compile(r'\b[A-Z][A-Z0-9_]+\b')
 # Match param only if entire string
 re_caps_params_with_percent = re.compile(r'^%[A-Z][A-Z0-9_]+$')
 
+k_unset = '$$<unset>$$'
 
 
 class ControllerError(Exception):
@@ -166,7 +167,7 @@ class DataFilterBase(object):
     callbacks = ['results_callback']
 ##    standard_keys = ['_can_be_refinery', '_class', 'factory', 'ftype', 
     standard_keys = ['_class', '_key_values', '_name', 'factory', 'ftype', 
-                     'pipeline', 'update_live'] + callbacks
+                     'pipeline', 'dynamic', 'update_live'] + callbacks
     
     ##def __init__(self, factory=None, pipeline=None, **kwargs):
         ##self.factory = factory
@@ -556,18 +557,33 @@ class DataFilterBase(object):
     def _hidden__getattribute__(self, attr_name):
         """Make a filter/pipeline dynamic by setting __getattribute__ to
         point to this function. The superclass allows us to get the attribute
-        without recursion, thus being able to return alternate values.
+        without recursion, thus being able to return alternative values.
         """
         superclass = DataFilterBase.__bases__[0]
         value = superclass.__getattribute__(self, attr_name)
         try:
-            if value.startswith('%'):
-                return 'fred'
+            value + ''  # Test for being a string, to give TypeError if not.
+                        # Avoid raising AttributeError to pass it. If so,
+                        # exception from getattr would mistakenly return value.
+            if re_caps_params_with_percent.match(value): 
+                return getattr(embed.pype, value[1:], k_unset)
             else:
                 return value
-        except AttributeError:
+        except TypeError:
             return value
-
+        
+    def make_dynamic(self, is_dynamic=True):
+        if is_dynamic:
+            print '**16090** Making "%s" filter/pipeline dynamic' % (
+                self.name)
+            # Hold default value =
+            #     <slot wrapper '__getattribute__' of 'object' objects>
+            self._hold__getattribute__ = self.__class__.__getattribute__
+            self.__class__.__getattribute__ = self._hidden__getattribute__
+        else:
+            print '**16090** Resetting "%s" filter/pipeline to static' % (
+                self.name)
+            self.__class__.__getattribute__ = self._hold__getattribute__
                     
     def _make_filters(self):
         # This does something only in Pipeline class.
@@ -764,8 +780,14 @@ class DataFilterBase(object):
             ##print '**19830** Before _set_key_values(), %s._key_values = %s' % (
                 ##self.name, self._key_values)
             for key, value in zip(self._keys, self._key_values):
+                try:
+                    value + ''
+                    uc_percent = re_caps_params_with_percent.match(value)
+                except TypeError:
+                    uc_percent = False
                 if key in self.__dict__:  # Don't use "if hasattr(self, key):"
-                    if self.__dict__[key] != value:
+                    if self.__dict__[key] not in [k_unset, value] and \
+                       not uc_percent:
                         msg = 'Can\'t change the %s.%s parameter value ' + \
                               'from %s to %s'
                         raise FilterAttributeError, msg % (
@@ -1236,47 +1258,16 @@ class DataFilter(DataFilterBase):
             e_msg = "'%s' open_message_bottle does not recognise message '%s'"
             raise MessageError, e_msg % (self.name, packet.message)
                 
-    
-def mix_in (base, addition):
-    """Mixes in place, i.e. the base class is modified.
-    Tags the class with a list of names of mixed members.
-    """
-    assert ('_mixed_' not in base.__dict__)
-    mixed = []
-    for item in addition.__dict__:
-        if item not in base.__dict__:
-            base.__dict__[item] = addition.__dict__[item]
-            mixed.append (item)
-    base._mixed_ = mixed
-    
-    import SocketServer as ss
-    ss.ForkingMixIn
-    
-def mix_in_copy (base, addition):
-    """Same as mixIn, but returns a new class instead of modifying
-    the base.
-    """
-    class NewClass(object): 
-        pass
-    NewClass.__dict__ = base.__dict__.copy()
-    mix_in(NewClass, addition)
-    return NewClass
-
-#------------------------------------------
-
-##def dynamic_params(instance):
-    ##def decorator(f):
-        ##import new
-        ##f = new.instancemethod(f, instance, instance.__class__)
-        ##setattr(instance, f.func_name, f)
-        ##return f
-    ##return decorator
-
-
+        
 def dynamic_params(static_class):
-    """Decorator to add the functionality to look up from the embedded Python
-    environment the current values of attributes whose apparent values start
-    with "%" and the name is upper case.
+    """Class decorator to add the functionality to look up from the embedded
+    Python environment the current values of attributes whose apparent values
+    start with "%" and the name is upper case.
+    
+    Usage: put "@dynamic_params" on the line before the class decoration
+    
+    Problem is that this changes the static class for all uses of it. We may
+    not want all instances dynamic.
     """
     def __getattribute__(self, attr_name):
         # Call the undecorated class to get the original attribute value
@@ -1290,8 +1281,7 @@ def dynamic_params(static_class):
                       'key "%s" with current static_value "%s"'
                 print msg % (static_class.__getattribute__(self, 'name'), 
                              attr_name, static_value)
-                return embed
-                return 'dynamic ' + static_value
+                return getattr(embed.pype, static_value[1:])
             else:
                 return static_value
         except TypeError:  # value was not a string
@@ -1304,15 +1294,47 @@ def dynamic_params(static_class):
 #------------------------------------------
 
 class DynamicMetaClass(type):
+    """Use this metaclass, derived from "type", to create the class. This sets
+    a flag for checking that it is being used, and sets __getattribute__ to 
+    ensure dynamic processing. This is variable at run time, as to whether we
+    use the metaclass or not, but is not reversible.
+    """
     def __init__(cls, name, bases, ns):
         cls.uses_dynamic_metaclass = True
-    x = 3
+        cls.__getattribute__ = DataFilterBase._hidden__getattribute__
 
-    
-##class DataFilterDynamic(DataFilter):
+  
+# Mix-in functions (not used, after all)
+
+def mix_in (base, addition):
+    """Mixes in place, i.e. the base class is modified.
+    Tags the class with a list of names of mixed members.
+    """
+    assert ('_mixed_' not in base.__dict__)
+    mixed = []
+    for item in addition.__dict__:
+        if item not in base.__dict__:
+            base.__dict__[item] = addition.__dict__[item]
+            mixed.append (item)
+    base._mixed_ = mixed
+        
+def mix_in_copy (base, addition):
+    """Same as mix_in, but returns a new class instead of modifying
+    the base.
+    """
+    class NewClass(object): 
+        pass
+    # This gives error:
+    # AttributeError: attribute '__dict__' of 'type' objects is not writable
+    NewClass.__dict__ = base.__dict__.copy()
+    mix_in(NewClass, addition)
+    return NewClass
+
+
 class DynamicMixIn(object):
-    """Alternative base class for Filters, where each attribute access is
+    """Additional base class for Filters, where each attribute access is
     checked for beginning with "%", i.e. requiring a dynamic value.
+    Dynamic property is not easily reversible.
     """
 
     def __getattribute__(self, attr_name):
@@ -1321,10 +1343,10 @@ class DynamicMixIn(object):
         try:
             value + ''  # Check if string
             if re_caps_params_with_percent.match(value):  # e.g. %SOME_VAR
-                msg = '**14490** %s: Attempting dynamic update of ' + \
+                msg = '**14505** %s: Attempting dynamic update of ' + \
                       'key "%s" with current value "%s"'
                 print msg % (self.name, attr_name, value)
-                return 'fred'
+                return getattr(embed.pype, value[1:])
             else:
                 return value
         except AttributeError:
