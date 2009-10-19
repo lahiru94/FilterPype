@@ -229,25 +229,23 @@ class FilterFactory(object):
         filter_attrs.update(param_dict)
         # Everything is now in place for the actual creation of the filter
         class_to_create = filter_attrs['_class']
-        ##print '**10130** class_to_create =', class_to_create.__name__
-        ##for k, v in sorted(filter_attrs.iteritems()):
-            ##print '**10140** %s%s = %s' % (' ' * 4, k, v)
-            
-        MyClass = dfb.DynamicMetaClass('MyClass', (object,), {})
-        print '**16080** MyClass.uses_dynamic_metaclass = %s' % (
-            MyClass.uses_dynamic_metaclass)
         
-        if filter_attrs.get('dynamic', False):
+        # If the config for this filter has set 'dynamic_meta', use metaclass
+        if filter_attrs.get('dynamic', False) == 'meta':
             class_to_create2 = dfb.DynamicMetaClass(
                 'Dynamic' + class_to_create.__name__,
                 (class_to_create,), {})
         else:
             class_to_create2 = class_to_create        
         
+        new_filter = class_to_create2(**filter_attrs)
+        # Filter has now been made
+        # If config file for filter has set 'dynamic', use reversible method
+        # to make it dynamic. Note the need to test equality with True, because
+        # of the option for the value to be 'meta'.
+        if filter_attrs.get('dynamic', False) == True:
+            new_filter.make_dynamic(True)
         
-        
-        new_filter = class_to_create(**filter_attrs)
-        # Filter now made!!
         if new_filter.name != new_filter.name.lower():
             raise dfb.FilterError, 'Filter name "%s" is not lower case' % (
                                                               new_filter.name)

@@ -151,8 +151,6 @@ class Pipeline(dfb.DataFilter):
         self._parse_config()
         self.route_parser = lex_yacc5.RouteParser(debug=False)
         self._parse_route()
-        if self.dynamic:
-            print '**16090** Make this pipeline dynamic'
             
 
         dfb.DataFilter.__init__(self, **kwargs)
@@ -160,6 +158,16 @@ class Pipeline(dfb.DataFilter):
         ### before the call to dfb.DataFilter.__init__()
         ##kwargs.update(dict(_can_be_refinery=True))  
         ## The name is set externally by the pipeline that includes it
+        
+        # Filter can be made dynamic by 
+        #     (1) setting 'dynamic' as a key
+        #     (2)
+        #     (3)
+        if self.dynamic:
+            self.make_dynamic(True)
+##            self.make_dynamic(False)
+
+            
         if fut.debug > 100:  #pragma: nocover
             if self.refinery == self:
                 level_label = 'REFINERY'
@@ -377,10 +385,6 @@ class Pipeline(dfb.DataFilter):
         route_out, self.connections, fltr_names = parse_fn(self.route)
         if fut.debug > 300:  #pragma: nocover
             print_list = self.route_parser.pipeline_for_print(route_out)
-            ##if hasattr(self, 'name'):
-                ##filter_name = self.name
-            ##else:
-                ##filter_name = '??'
             filter_name = self.name
             print '**13000** route for %s (class %s) =' % (
                 filter_name, self.__class__.__name__)
@@ -448,13 +452,17 @@ class Pipeline(dfb.DataFilter):
         ##else:
             ##self.this_fn_lines.pop(1)  # Remove global line
         # Set the global_params to None, before the function defn starts
-                # Initialise all the global params to None
+        # Initialise all the global params to '$$<unset>$$' rather than None,
+        # so early tests find some value.
+                
         ##init_code_lines = [self._code_line(0, 0, ('%s = None' % param)) 
                            ##for param in sorted(self.all_global_params)]
 
         self.this_fn_lines = \
             self.this_fn_lines[:1] + [
-                self._code_line(300 + line_num, 0, ('%s = None' % param))
+                ##self._code_line(300 + line_num, 0, ('%s = None' % param))
+                self._code_line(300 + line_num, 0, 
+                                ("%s = '%s'" % (param, dfb.k_unset)))
                 for line_num, param 
                 in enumerate(sorted(self.this_fn_global_params))
                 ] + self.this_fn_lines[1:]
@@ -792,7 +800,7 @@ class CheckEssentialKeys(Pipeline):
     ftype = check_essential_keys
     description = Test class with two essential params and one optional param
     keys = foo, bar, baz_opt:16
-    dynamic = True
+    ##dynamic = True
 
     [--route--]
     batch:120

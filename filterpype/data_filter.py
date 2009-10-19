@@ -174,8 +174,8 @@ class Batch(dfb.DataFilter):
                 # N.B. After sending this packet, size and dest may change
                 ##if self.name == 'batch_before':
                     ##print
-                ##print '**13420** %s is sending data "%s" to %s' % (
-                    ##self.name, block, self.fork_dest)
+                print '**13420** %s is sending data "%s" to %s' % (
+                    self.name, block, self.fork_dest)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (
@@ -204,7 +204,9 @@ class Batch(dfb.DataFilter):
                 raise dfb.FilterAttributeError, 'Bad batch size, = %d' % (
                     self.size)
         except TypeError:
-            if not self.size.startswith('%'):
+            if self.size and \
+               self.size != dfb.k_unset and \
+               not dfb.re_caps_params_with_percent.match(self.size):
                 msg = 'Non-integer batch size, = "%s"'
                 raise dfb.FilterAttributeError, msg % self.size
 
@@ -900,6 +902,9 @@ class DedupeData(dfb.DataFilter):
         self.send_on(packet)
         
                 
+##class DistillHeader(dfb.DataFilterDynamic):
+# We need to be able to have filters that are static, unless particularly
+# required to be dynamic in one instance.
 class DistillHeader(dfb.DataFilter):
     """Strip header off, and send header_size bytes to the branch. If
     distill_mode is "once" then the header will be removed only once, from the
