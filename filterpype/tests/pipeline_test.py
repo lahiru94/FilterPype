@@ -246,7 +246,7 @@ class TestEssentialKeys(unittest.TestCase):
     
     def test_essential_keys(self):
         check1 = ppln.CheckEssentialKeys(factory=self.factory, 
-                                         foo=123, bar='asdf')
+                                         foo=123, bar='asdf', dynamic=True)
         self.assertEquals(check1.foo, 123)
         self.assertEquals(check1.bar, 'asdf')
         self.assertEquals(check1.baz_opt, 16)
@@ -353,6 +353,169 @@ class TestDocString(unittest.TestCase):
                           factory=self.factory)
 
 
+class TestDynamicParams(unittest.TestCase):
+
+    def setUp(self):
+        self.factory = ff.DemoFilterFactory()
+        
+        self.config1 = '''\
+        [--main--]
+        ftype = demo_dynamic_pipeline1 
+        description = Pipeline to test dynamic parameter setting
+        keys = foo, bar:27
+        
+        [py_set_param]
+        print '**16120** Setting SPEED to 170'
+        SPEED = 170
+        
+        [--route--]
+        py_set_param >>>
+        pass_through
+        '''
+
+    def tearDown(self):
+        pass
+    
+    def test_static_pipeline(self):
+        pipeline21 = ppln.Pipeline(factory=self.factory, config=self.config1,
+                                   foo='jim')
+        self.assertEquals(pipeline21.foo, 'jim')
+        self.assertEquals(pipeline21.bar, 27)
+        pipeline21.bar = 456
+        self.assertEquals(pipeline21.bar, 456)
+        
+    def test_dynamic_pipeline1(self):
+        # Set dynamic=True in the kwargs passed in
+        pipeline22 = ppln.Pipeline(factory=self.factory, config=self.config1,
+                                   foo='jim', dynamic=True)
+        self.assertEquals(pipeline22.foo, 'jim')
+        self.assertEquals(pipeline22.bar, 27)
+        pipeline22.bar = '%SPEED'
+        # All u/c params should default to dfb.k_unset before packet 
+        # is sent through
+        self.assertEquals(pipeline22.bar, dfb.k_unset) 
+        # Send packet to activate py_set_param
+        packet = dfb.DataPacket('hello')
+        pipeline22.send(packet)
+        self.assertEquals(pipeline22.bar, 170)
+
+    def test_dynamic_pipeline2(self):
+        # Set dynamic=True by calling make_dynamic()
+        pipeline23 = ppln.Pipeline(factory=self.factory, config=self.config1,
+                                   foo='joe')
+        self.assertEquals(pipeline23.foo, 'joe')
+        self.assertEquals(pipeline23.bar, 27)
+        pipeline23.make_dynamic(True)
+        pipeline23.bar = '%SPEED'
+        # All u/c params should default to dfb.k_unset before packet 
+        # is sent through
+        self.assertEquals(pipeline23.bar, dfb.k_unset)
+        # Send packet to activate py_set_param
+        packet = dfb.DataPacket('goodbye')
+        pipeline23.send(packet)
+        self.assertEquals(pipeline23.bar, 170)
+        # Stop the pipeline being dynamic
+        pipeline23.make_dynamic(False)
+        self.assertEquals(pipeline23.bar, '%SPEED')
+
+    def test_dynamic_pipeline3(self):
+        # Set dynamic=True as a key in the pipeline config
+        config2 = '''\
+        [--main--]
+        ftype = demo_dynamic_pipeline2
+        description = Pipeline with dynamic set in main section
+        keys = foo, bar:31
+        dynamic = true
+        
+        [py_set_param]
+        print '**16130** Setting RADALT to 2000'
+        RADALT = 2000
+
+        [--route--]
+        py_set_param >>>
+        pass_through
+        '''
+        pipeline24 = ppln.Pipeline(factory=self.factory, config=config2,
+                                   foo='jane')
+        self.assertEquals(pipeline24.foo, 'jane')
+        self.assertEquals(pipeline24.bar, 31)
+        pipeline24.bar = '%RADALT'
+        # All u/c params should default to None before packet is sent through
+        self.assertEquals(pipeline24.bar, None)
+        # Send packet to activate py_set_param
+        packet = dfb.DataPacket('goodbye')
+        pipeline24.send(packet)
+        self.assertEquals(pipeline24.bar, 2000)
+        
+    def test_dynamic_filter_in_static_pipeline1(self):
+        # Batch is set to be reversibly dynamic in config
+        config3 = '''\
+        [--main--]
+        ftype = demo_static_pipeline3
+        description = Static pipeline with reversible dynamic filter
+        keys = foo, bar:43
+        
+        [py_set_param]
+        print '**16130** Setting BATCH_SIZE to 256'
+        BATCH_SIZE = 256
+        
+        [batch]
+        dynamic = true
+        size = %BATCH_SIZE
+
+        [--route--]
+        py_set_param >>>
+        batch
+        '''
+        pipeline25 = ppln.Pipeline(factory=self.factory, config=config3,
+                                   foo='jim')
+        self.assertEquals(pipeline25.foo, 'jim')
+        self.assertEquals(pipeline25.bar, 43)
+        batch_filter = pipeline25.getf('batch')
+        # Dynamic value not yet set
+        self.assertEquals(batch_filter.size, dfb.k_unset)
+        # Send packet to activate py_set_param
+        packet = dfb.DataPacket('hi')
+        pipeline25.send(packet)
+        self.assertEquals(batch_filter.size, 256)
+        # Stop the pipeline being dynamic
+        batch_filter.make_dynamic(False)
+        self.assertEquals(batch_filter.size, '%BATCH_SIZE')
+        
+    def test_dynamic_filter_in_static_pipeline2(self):
+        # Batch is set to be dynamic in config, using metaclass.
+        # Possibly not so useful, since it is not reversible.
+        config4 = '''\
+        [--main--]
+        ftype = demo_static_pipeline4
+        description = Static pipeline with metaclass dynamic filter
+        keys = foo, bar:55
+        
+        [py_set_param]
+        print '**16140** Setting BATCH_SIZE to 2048'
+        BATCH_SIZE = 2048
+        
+        [batch]
+        dynamic = meta
+        size = %BATCH_SIZE
+
+        [--route--]
+        py_set_param >>>
+        batch
+        '''
+        pipeline26 = ppln.Pipeline(factory=self.factory, config=config4,
+                                   foo='cyrus')
+        self.assertEquals(pipeline26.foo, 'cyrus')
+        self.assertEquals(pipeline26.bar, 55)
+        batch_filter = pipeline26.getf('batch')
+        # Dynamic value not yet set
+        self.assertEquals(batch_filter.size, dfb.k_unset)
+        # Send packet to activate py_set_param
+        packet = dfb.DataPacket('lo')
+        pipeline26.send(packet)
+        self.assertEquals(batch_filter.size, 2048)
+    
+        
 class TestEssentialAndOptionalKeys(unittest.TestCase):
 
     def setUp(self):
@@ -846,40 +1009,25 @@ class TestUpdateLive(unittest.TestCase):
         update_dict = dict([update.split(':') for update in updates]) 
         import pprint
         pprint.pprint(update_dict)
-        
-        
-        
 
         
-
-        
-
 if __name__ == '__main__':  #pragma: nocover
-##    TestPipeline('test_raising_filter_error').run()
-##    TestPipeline('test_closing_context_manager').run()
-##    TestPipeline('test_copy_file').run()
-##    TestPipeline('test_bad_filter_key').run()
-##    TestPipeline('test_duplicate_filter').run()
 ##
-##    TestPipeline('test_ctest_copy_file_from_namereation').run()
-##    TestParameterSetting('test_set_param_in_route_no_config').run()
-#    TestParameterSetting('test_set_param_in_route_once_with_extra_key_1').run()
+    TestParameterSetting('test_count_packet').run()
 #    TestEssentialKeys('test_essential_keys3').run()
 ##    TestEssentialAndOptionalKeys('test_essential_and_optional_keys').run()
 ##    TestParameterSetting('test_set_param_in_route_with_config').run()
 ##    TestFilterTypeSetting('test_type_set_in_config_overrides_name_interp').run()
-##    TestCopyFile('test_copy_file_from_name').run()
-##    TestCopyFile('test_copy_file_obj1').run()
-##    TestParameterSetting('test_count_packet').run()
 ##    TestParameterSetting('test_count_packet').run()
     #TestTankAndSlope('test_height_slope').run()
 #    TestExtractManyAttributes('test_extract_many_attributes').run()
 
 ##    TestEssentialKeys('test_essential_keys3').run()
     ##TestTankQueue('test_pipeline_wrapped_tank_queue').run()
-    ##TestTankQueue('test_pipeline_with_keys').run()
-    ##TestTankQueue('test_pipeline_reduce_expand').run()
-    TestEssentialKeys('test_essential_keys').run()
+##    TestEssentialKeys('test_essential_keys').run()
+#    TestDynamicParams('test_static_pipeline').run()
+#    TestDynamicParams('test_dynamic_pipeline3').run()
+#    TestDynamicParams('test_dynamic_filter_in_static_pipeline1').run()
     print '\n**6205** Finished.'
 
     
