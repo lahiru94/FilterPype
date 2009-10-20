@@ -117,7 +117,7 @@ if __name__ == '__main__':
     class_rst_dict = rst_builder.make_class_rst(class_dict)
     
     # The API file path
-    api_file_name = os.path.join(build_dir, 'api.rst')
+    api_file_name = os.path.join(build_dir, 'api_autogen.rst')
     
     # Write API file
     api_fd = open(api_file_name, 'w')
@@ -128,13 +128,13 @@ if __name__ == '__main__':
     for mod in module_rst_dict:
         mod_file_fd = open(
             os.path.join(
-                build_dir, mod.split('.')[-1]+'.rst'), 'w')
+                build_dir, mod.split('.')[-1]+'_autogen.rst'), 'w')
         mod_file_fd.write(module_rst_dict[mod])
         mod_file_fd.close()
     
     # Write Class files
     for clss in class_rst_dict:
-        clss_file_fd = open(os.path.join(build_dir, clss+'.rst'), 'w')
+        clss_file_fd = open(os.path.join(build_dir, clss+'_autogen.rst'), 'w')
         clss_file_fd.write(class_rst_dict[clss])
         clss_file_fd.close()
 
