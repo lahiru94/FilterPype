@@ -13,7 +13,7 @@ Contents:
    Principles
    Tutorial
    TechExpl
-   api
+   API
 
 Indices and tables
 ==================

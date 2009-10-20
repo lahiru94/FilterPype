@@ -5,6 +5,9 @@ import sys
 from rst_modules import default_mods
 
 class BuildRST(object):
+    
+    autogen_filename = '_autogen'
+    
     def get_classes(self):
         """ Get classes from py files
         """
@@ -43,7 +46,8 @@ class BuildRST(object):
         toctree_str = ''
         for mod in class_dict:
             print "Adding module %s to API" %mod
-            toctree_str += '   ' + mod.split('.')[-1] + '\n'
+            toctree_str += '   ' + mod.split('.')[-1] + \
+                        self.autogen_filename + '\n'
         
         indices_tables_str = '\nIndices and tables\n==================\n\n* :ref:`genindex`\n* :ref:`modindex`\n* :ref:`search`'
         
@@ -61,7 +65,7 @@ class BuildRST(object):
             toctree_str = ''
             for clss in mod_dict[module]:
                 print "\t- class:", clss
-                toctree_str += '   ' + clss + '\n'
+                toctree_str += '   ' + clss + self.autogen_filename + '\n'
             
             rst_dict[module] = hdr_str + toctree_str
         return rst_dict
@@ -117,7 +121,8 @@ if __name__ == '__main__':
     class_rst_dict = rst_builder.make_class_rst(class_dict)
     
     # The API file path
-    api_file_name = os.path.join(build_dir, 'api_autogen.rst')
+    api_file_name = os.path.join(build_dir, 'api' + \
+                                 rst_builder.autogen_filename + '.rst')
     
     # Write API file
     api_fd = open(api_file_name, 'w')
@@ -128,13 +133,15 @@ if __name__ == '__main__':
     for mod in module_rst_dict:
         mod_file_fd = open(
             os.path.join(
-                build_dir, mod.split('.')[-1]+'_autogen.rst'), 'w')
+                build_dir, mod.split('.')[-1]+rst_builder.autogen_filename + \
+                '.rst'), 'w')
         mod_file_fd.write(module_rst_dict[mod])
         mod_file_fd.close()
     
     # Write Class files
     for clss in class_rst_dict:
-        clss_file_fd = open(os.path.join(build_dir, clss+'_autogen.rst'), 'w')
+        clss_file_fd = open(os.path.join(build_dir, clss + \
+                                rst_builder.autogen_filename + '.rst'), 'w')
         clss_file_fd.write(class_rst_dict[clss])
         clss_file_fd.close()
 
