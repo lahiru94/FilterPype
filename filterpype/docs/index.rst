@@ -13,7 +13,7 @@ Contents:
    Principles
    Tutorial
    TechExpl
-   API
+   api_autogen
 
 Indices and tables
 ==================
