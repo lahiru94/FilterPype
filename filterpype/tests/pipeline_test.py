@@ -363,6 +363,8 @@ class TestDynamicParams(unittest.TestCase):
         ftype = demo_dynamic_pipeline1 
         description = Pipeline to test dynamic parameter setting
         keys = foo, bar:27
+        # dynamic can be defined here along with the Pipelines constructor.
+        #dynamic = True
         
         [py_set_param]
         print '**16120** Setting SPEED to 170'
@@ -378,7 +380,7 @@ class TestDynamicParams(unittest.TestCase):
     
     def test_static_pipeline(self):
         pipeline21 = ppln.Pipeline(factory=self.factory, config=self.config1,
-                                   foo='jim')
+                                   foo='jim', dynamic=True)
         self.assertEquals(pipeline21.foo, 'jim')
         self.assertEquals(pipeline21.bar, 27)
         pipeline21.bar = 456
@@ -387,7 +389,7 @@ class TestDynamicParams(unittest.TestCase):
     def test_dynamic_pipeline1(self):
         # Set dynamic=True in the kwargs passed in
         pipeline22 = ppln.Pipeline(factory=self.factory, config=self.config1,
-                                   foo='jim', dynamic=True)
+                                   foo='jim') #, dynamic=True)
         self.assertEquals(pipeline22.foo, 'jim')
         self.assertEquals(pipeline22.bar, 27)
         pipeline22.bar = '%SPEED'

@@ -2,6 +2,8 @@ import os
 import optparse
 import sys
 
+from rst_modules import default_mods
+
 class BuildRST(object):
     def get_classes(self):
         """ Get classes from py files
@@ -15,7 +17,7 @@ class BuildRST(object):
             class_list = []
             try:
                 # Import the module so we can use it
-                exec "import " + module                
+                exec "import " + module
                 mod = eval(module)
                 all_classes = mod.__dict__
                 for clss in all_classes:
@@ -28,7 +30,10 @@ class BuildRST(object):
                     #else:
                         #print all_classes[clss]
             except ImportError, err:
-                print "Oops", err
+                raise ImportError(err.__str__() + '. Please ensure that ' + \
+                                  'your PYTHONPATH is configured according ' + \
+                                  'to how modules are referenced in ' + \
+                                  'rst_modules.py.')
             class_list.sort()
             mod_class_dict[module] = class_list
         return mod_class_dict
@@ -74,17 +79,6 @@ class BuildRST(object):
         return class_rst_dict
 
 if __name__ == '__main__':
-    # Put any modules we always want to build here
-    default_mods = ['filterpype.data_filter',
-                    'filterpype.data_fltr_base',
-                    'filterpype.data_fltr_demo',
-                    'filterpype.embed',
-                    'filterpype.filter_factory',
-                    'filterpype.filter_utils',
-                    'filterpype.pipeline',
-                    'filterpype.ppln_demo',
-                    ]
-    
     # optparse things for getting the user provided arguments:
     # build_dir - is the build directory
     # module_list - are the modules to build
