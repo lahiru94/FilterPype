@@ -174,8 +174,9 @@ class Batch(dfb.DataFilter):
                 # N.B. After sending this packet, size and dest may change
                 ##if self.name == 'batch_before':
                     ##print
-                print '**13420** %s is sending data "%s" to %s' % (
-                    self.name, block, self.fork_dest)
+                # restricted block output as it fills debug with binary output!
+                print '**13420** %s is sending data block[:30] "%s" to %s' % (
+                    self.name, block[:30], self.fork_dest)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (
@@ -932,7 +933,7 @@ class DistillHeader(dfb.DataFilter):
         all_inputs = ''.join(self.inputs)
         self.inputs = []
         self.input_char_count = 0
-        print "**2342** Distill header size: %s \t All inputs: %s" % (self.header_size, all_inputs)
+        print "**2342** Distill header size: %s %s" % (self.header_size, type(self.header_size))
         header = all_inputs[:self.header_size]
         self.remainder = all_inputs[self.header_size:]
 ##        print '**10410** Sending %d data bytes from %s to branch' % (
@@ -1055,7 +1056,7 @@ class EmbedPython(dfb.DataFilter):
         self._remake_python_code()
 ##        self._import_code(self.python_code, self.module_loc.name)
         # Don't pass the module_loc.name, so that all modules use the 
-        # default name: "one_pype_module"
+        # default name: "pype" or "singleton_pype"    ##"one_pype_module"
         self._import_code(self.python_code)
 
 
