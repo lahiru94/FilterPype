@@ -222,7 +222,8 @@ Now the basics of Filters have been covered it seems sensible to talk about scop
 
 1) Python environment: this is stored in the Repository and accessible to all Pipelines.
 
-2) Pipeline keys: parameters that can be passed into the Pipeline upon its creation. These pipeline keys are also stored within the repository.
+2) Pipeline keys: parameters that can be passed into the Pipeline upon its creation. 
+These pipeline keys are also stored globally within the repository and are accessible within a Pipeline's config. To access them, refer to the variable name entirely in upper-case.
 
 3) Filter variables: parameters that can be passed into the Filter upon its creation.
 
