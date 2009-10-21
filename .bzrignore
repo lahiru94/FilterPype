@@ -1,6 +1,7 @@
 *.wpu
 *.pyc
 *.pyo
+*.tmp
 *.egg
 *.egg-info
 *~
