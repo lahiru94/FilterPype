@@ -484,6 +484,58 @@ class TestDynamicParams(unittest.TestCase):
         batch_filter.make_dynamic(False)
         self.assertEquals(batch_filter.size, '%BATCH_SIZE')
         
+    def test_dynamic_filter_in_static_pipeline3(self):
+        # Batch is set to be reversibly dynamic in config
+        config3 = '''\
+        [--main--]
+        ftype = demo_static_pipeline3
+        description = Static pipeline with reversible dynamic filter
+        keys = foo, bar:43
+        #dynamic = true
+        
+        [py_set_param]
+        print '**16130** Setting BATCH_SIZE to 256'
+        BATCH_SIZE_SOMETHING = 256
+        BATCH_SIZE_OTHER = 128
+        
+        
+        [distill_something]
+        ftype = distill_header
+        dynamic = true
+        
+        [distill_other]
+        ftype = distill_header
+        dynamic = true
+
+
+        [--route--]
+        py_set_param >>>
+        distill_something:%BATCH_SIZE_SOMETHING >>>
+            (pass_through)
+        distill_other:%BATCH_SIZE_OTHER >>>
+            (pass_through)
+        sink
+        '''
+        pipeline25 = ppln.Pipeline(factory=self.factory, config=config3,
+                                   foo='jim')
+        self.assertEquals(pipeline25.foo, 'jim')
+        self.assertEquals(pipeline25.bar, 43)
+        something_filter = pipeline25.getf('distill_something')
+        other_filter = pipeline25.getf('distill_other')
+        # Dynamic value not yet set
+        self.assertEquals(something_filter.header_size, dfb.k_unset)
+        # Send packet to activate py_set_param
+        packet = dfb.DataPacket('hi')
+        pipeline25.send(packet)
+        self.assertEquals(something_filter.header_size, 256)
+        self.assertEquals(other_filter.header_size, 128)
+        # Stop the pipeline being dynamic
+        batch_filter.make_dynamic(False)
+        self.assertEquals(something_filter.header_size, \
+                          '%BATCH_SIZE_SOMETHING')
+        self.assertEquals(other_filter.header_size, '%BATCH_SIZE_OTHER')
+        
+        
     def test_dynamic_filter_in_static_pipeline2(self):
         # Batch is set to be dynamic in config, using metaclass.
         # Possibly not so useful, since it is not reversible.
