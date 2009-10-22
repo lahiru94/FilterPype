@@ -30,6 +30,7 @@ import unittest
 
 import filterpype.lex_yacc4
 import filterpype.filter_utils as fut
+import pprint
 
 def setUp():
     pass
