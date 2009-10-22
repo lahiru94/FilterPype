@@ -41,7 +41,7 @@ from configobj import ConfigObj
 import os
 
 ##import filterpype.lex_yacc5
-import filterpype.lex_yacc4 as lex_yacc5
+import filterpype.lex_yacc4
 import filterpype.data_filter as df
 import filterpype.filter_utils as fut
 ## Circular import error if included: import filter_factory as ff
@@ -149,7 +149,11 @@ class Pipeline(dfb.DataFilter):
         # the inherited __init__() can be called.
         self.dynamic = False  # Set True for live updates from embedded Python
         self._parse_config()
-        self.route_parser = lex_yacc5.RouteParser(debug=False)
+##        self.route_parser = lex_yacc5.RouteParser(debug=False)
+##        print '**16230** In %s' % self
+        self.route_parser = filterpype.lex_yacc4.RouteParser(debug=False)
+##        print '**16250** new route_parser at %s' % (
+##            hex(id(self.route_parser)))
         self._parse_route()
             
 
@@ -159,12 +163,12 @@ class Pipeline(dfb.DataFilter):
         ##kwargs.update(dict(_can_be_refinery=True))  
         ## The name is set externally by the pipeline that includes it
         
-        # Filter can be made dynamic by 
-        #     (1) setting 'dynamic' as a key
-        #     (2)
-        #     (3)
-        if self.dynamic:
-            self.make_dynamic(True)
+        ### Filter can be made dynamic by 
+        ###     (1) setting 'dynamic' as a key
+        ###     (2)
+        ###     (3)
+        ##if self.dynamic:
+            ##self.make_dynamic(True)
 ##            self.make_dynamic(False)
 
             
@@ -381,6 +385,8 @@ class Pipeline(dfb.DataFilter):
             raise dfb.PipelineConfigError, msg % self.__class__.__name__ 
         
     def _parse_route(self):
+##        print '**16240** pipeline route_parser at %s' % (
+##            hex(id(self.route_parser)))
         parse_fn = self.route_parser.parse_route
         route_out, self.connections, fltr_names = parse_fn(self.route)
         if fut.debug > 300:  #pragma: nocover
@@ -728,6 +734,12 @@ class Pipeline(dfb.DataFilter):
         pass
 
     
+@dfb.dynamic_params
+class DynamicPipeline(Pipeline):
+    """Pipeline that uses dynamic u/c variables.
+    """
+    
+
 class PipelineForPypes(Pipeline):
     """For testing automatic pipeline creation
     

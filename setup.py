@@ -195,7 +195,7 @@ setup(
     # needed to install it, you can use this option to specify them. It should 
     # be a string or list of strings specifying what other distributions need to 
     # be present for the package's tests to run.     
-    tests_require = ['nose>=0.11', 'figleaf', 'coverage==2.85', 'mock==0.6.0'],
+    tests_require = ['nose>=0.11', 'figleaf', 'coverage>=2.85', 'mock==0.6.0'],
 
 
     # If your project depends on packages that aren't registered in PyPI, you 

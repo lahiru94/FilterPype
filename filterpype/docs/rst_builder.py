@@ -2,7 +2,12 @@ import os
 import optparse
 import sys
 
+from rst_modules import default_mods
+
 class BuildRST(object):
+    
+    autogen_filename = '_autogen'
+    
     def get_classes(self):
         """ Get classes from py files
         """
@@ -15,7 +20,7 @@ class BuildRST(object):
             class_list = []
             try:
                 # Import the module so we can use it
-                exec "import " + module                
+                exec "import " + module
                 mod = eval(module)
                 all_classes = mod.__dict__
                 for clss in all_classes:
@@ -28,7 +33,10 @@ class BuildRST(object):
                     #else:
                         #print all_classes[clss]
             except ImportError, err:
-                print "Oops", err
+                raise ImportError(err.__str__() + '. Please ensure that ' + \
+                                  'your PYTHONPATH is configured according ' + \
+                                  'to how modules are referenced in ' + \
+                                  'rst_modules.py.')
             class_list.sort()
             mod_class_dict[module] = class_list
         return mod_class_dict
@@ -38,7 +46,8 @@ class BuildRST(object):
         toctree_str = ''
         for mod in class_dict:
             print "Adding module %s to API" %mod
-            toctree_str += '   ' + mod.split('.')[-1] + '\n'
+            toctree_str += '   ' + mod.split('.')[-1] + \
+                        self.autogen_filename + '\n'
         
         indices_tables_str = '\nIndices and tables\n==================\n\n* :ref:`genindex`\n* :ref:`modindex`\n* :ref:`search`'
         
@@ -56,7 +65,7 @@ class BuildRST(object):
             toctree_str = ''
             for clss in mod_dict[module]:
                 print "\t- class:", clss
-                toctree_str += '   ' + clss + '\n'
+                toctree_str += '   ' + clss + self.autogen_filename + '\n'
             
             rst_dict[module] = hdr_str + toctree_str
         return rst_dict
@@ -74,17 +83,6 @@ class BuildRST(object):
         return class_rst_dict
 
 if __name__ == '__main__':
-    # Put any modules we always want to build here
-    default_mods = ['filterpype.data_filter',
-                    'filterpype.data_fltr_base',
-                    'filterpype.data_fltr_demo',
-                    'filterpype.embed',
-                    'filterpype.filter_factory',
-                    'filterpype.filter_utils',
-                    'filterpype.pipeline',
-                    'filterpype.ppln_demo',
-                    ]
-    
     # optparse things for getting the user provided arguments:
     # build_dir - is the build directory
     # module_list - are the modules to build
@@ -123,7 +121,8 @@ if __name__ == '__main__':
     class_rst_dict = rst_builder.make_class_rst(class_dict)
     
     # The API file path
-    api_file_name = os.path.join(build_dir, 'api.rst')
+    api_file_name = os.path.join(build_dir, 'api' + \
+                                 rst_builder.autogen_filename + '.rst')
     
     # Write API file
     api_fd = open(api_file_name, 'w')
@@ -134,13 +133,15 @@ if __name__ == '__main__':
     for mod in module_rst_dict:
         mod_file_fd = open(
             os.path.join(
-                build_dir, mod.split('.')[-1]+'.rst'), 'w')
+                build_dir, mod.split('.')[-1]+rst_builder.autogen_filename + \
+                '.rst'), 'w')
         mod_file_fd.write(module_rst_dict[mod])
         mod_file_fd.close()
     
     # Write Class files
     for clss in class_rst_dict:
-        clss_file_fd = open(os.path.join(build_dir, clss+'.rst'), 'w')
+        clss_file_fd = open(os.path.join(build_dir, clss + \
+                                rst_builder.autogen_filename + '.rst'), 'w')
         clss_file_fd.write(class_rst_dict[clss])
         clss_file_fd.close()
 

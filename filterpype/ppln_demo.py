@@ -147,11 +147,6 @@ class Alison(object):
                 return value
         except AttributeError:
             return value
-        
-        
-    
-
-
          
 #=================================================================
         
@@ -164,36 +159,41 @@ class VariableBatchPipeline(ppln.Pipeline):
     description = Pipeline should batch alternately
     
     [batch]
-    size = 2
+    dynamic = true
+    size = %BATCH_SIZE
+    
+    [py_init]
+    if BATCH_SIZE == '$$<unset>$$':
+        BATCH_MODE = 'size'
+        BATCH_SIZE = 2
     
     [py_batch_sizer]
-    ##print '**12550** BATCH_SIZE = %s, PREV_BATCH_MODE = %s' % (
-    ##    BATCH_SIZE, PREV_BATCH_MODE)
+    print '**12550** BATCH_SIZE = %s, PREV_BATCH_MODE = %s' % (
+        BATCH_SIZE, PREV_BATCH_MODE)
     
     if BATCH_MODE == 'size':
         BATCH_SIZE = int(packet.data) 
         BATCH_MODE = 'data'
-    elif BATCH_MODE == 'data':
-        BATCH_MODE = 'size'
-    elif BATCH_SIZE is None:
+    else:
         BATCH_MODE = 'size'
         BATCH_SIZE = 2
         
-    ##print '**12560** BATCH_SIZE = %s, PREV_BATCH_MODE = %s' % (
-    ##    BATCH_SIZE, PREV_BATCH_MODE)
+    print '**12560** BATCH_SIZE = %s, PREV_BATCH_MODE = %s' % (
+        BATCH_SIZE, PREV_BATCH_MODE)
     if PREV_BATCH_MODE == 'data':
         BATCH_SIZE == 2
         PREV_BATCH_MODE = 'size'
     else:  # PREV_BATCH_MODE == 'size'
         BATCH_SIZE = int(packet.data) 
         PREV_BATCH_MODE = 'data'
-    ##print '**12570** BATCH_SIZE = %s, PREV_BATCH_MODE = %s' % (
-    ##    BATCH_SIZE, PREV_BATCH_MODE)
+    print '**12570** BATCH_SIZE = %s, PREV_BATCH_MODE = %s' % (
+        BATCH_SIZE, PREV_BATCH_MODE)
     
     
     [--route--]
-    batch:%BATCH_SIZE >>>
-    py_batch_size_reader >>>
+    py_init >>>
+    batch >>>
+    py_batch_sizer >>>
     sink
     '''
     

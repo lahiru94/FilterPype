@@ -220,23 +220,43 @@ Scope
 -----
 Now the basics of Filters have been covered it seems sensible to talk about scope. There are 3 general levels of scope:
 
-1) Python environment: this is public at the Pipeline level.
+1) Python environment: this is stored in the Repository and accessible to all Pipelines.
 
-2) Pipeline keys: parameters that can be passed into the Pipeline upon its creation
+2) Pipeline keys: parameters that can be passed into the Pipeline upon its creation. 
+These pipeline keys are also stored globally within the repository and are accessible within a Pipeline's config. To access them, refer to the variable name entirely in upper-case.
 
-3) Filter variables: parameters that can be passed into the Filter upon its creation
+3) Filter variables: parameters that can be passed into the Filter upon its creation.
 
 Python environment
 ''''''''''''''''''
-It is completely possible to use the filterpype language and framework without knowing Python and so those who are not familiar with the Python language may wish to skip this section.
+It is completely possible to use the filterpype language and framework without knowing Python. Those who are not familiar with the Python language may wish to skip this section.
 
 The Python environment has two fundamental uses:
  - It allows Python users to quickly insert a block of Python that mimics Filter, without having to go through the process of writing a separate Filter in the framework etc.
- - It allows keys in both Pipelines and Filters to be changed dynamically as the Pipeline executes.  A Filter can have a key that refers to a Python environment variable and thus changes to this variable will propogate through.
+ - It allows global variables to be accessed and modified by any Pipeline in the repository. A Filter can have a key that refers to a Python environment variable and thus changes to this variable will propogate through.
 
 This is an environment where actual Python code can be written. Therefore variables can be created and modified that will be accessible for all Python blocks within the Pipeline. The naming convention for these variables is upper case.
 
-Keys created and changed within the Python environment can be referred to from the Pipeline level. In order to use a Python created key it must be referred to by its (upper case) name but prefixed with a % character.
+Keys created and changed within the Python environment can be referred to from the Pipeline level if the Pipeline is declared as dynamic. This can be achieved in one of two ways, either in a Pipeline's main section:
+
+.. code-block:: none
+   
+   [--main--]
+   ftype = demo_dynamic_pipeline1 
+   description = Pipeline to test dynamic parameter setting
+   keys = foo, bar:27
+   dynamic = True
+
+Or as an argument passed to the Pipeline's constructor:
+
+.. code-block:: python
+
+   import filterpype.pipeline as ppln
+   
+   pipeline = ppln.Pipeline(factory=self.factory, config=self.config1,
+                            foo='jim', dynamic=True)
+
+In order to use a Python created key, the Pipeline must be declared as dynamic and the key must be referenced by its name (upper case) prefixed with a % character.
 
 Python blocks can also refer to Pipeline level keys.  They can refer to these keys by using ${pipeline_key_name} format.
 

@@ -1,6 +1,7 @@
 *.wpu
 *.pyc
 *.pyo
+*.tmp
 *.egg
 *.egg-info
 *~
@@ -10,8 +11,11 @@ build
 .figleaf*
 .nose*
 .build
+.templates
+*_autogen.rst
 .static
 profiling.data
 profiling.txt
 lextab.*
 parsetab.*
+.DS_Store
