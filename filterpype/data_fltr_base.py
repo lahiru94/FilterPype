@@ -63,7 +63,7 @@ class DataError(Exception):
 
 class FilterError(Exception):
     pass
-    
+
 class FilterAttributeError(FilterError):
     pass
 
@@ -129,8 +129,8 @@ def closer(afilter):
             pass
         else:
             raise
-        
-        
+
+
 class DataFilterBase(object):
     """This is the Filter part of the Pipes and Filters design pattern, using
     Python co-routines to push the data from one filter to the next.
@@ -144,23 +144,23 @@ class DataFilterBase(object):
 
     Note that "filter" is a Python reserved word, so use "data_filter" or some
     other variation instead.
-       
+
     The DataFilter has the factory that made it passed in, so if there are
     missing settings in the validation, it can try to get them from its
     factory.
-       
+
     Filters are named with a verb for the transformation, rather than a noun,
     where possible. So we say CountLoops rather than LoopCounter, ReadFileBatch
     rather than FileReader, and Peek rather than Peeker. Then we can talk
     about the ReadFileBatch DataFilter.
-       
+
     """
 
     # Keys are optional if they have a default value, else compulsory,
     #     e.g. ['name1', 'name2:def_val']   
     # Here, name1 is compulsory, but name2 is optional
     # Read-only class attributes
-    
+
     # A filter has a number of essential/optional attributes or keys
     keys = []  # To be used as a read-only class attribute. Copied into
                # self._keys object attribute, to avoid confusion.
@@ -168,11 +168,11 @@ class DataFilterBase(object):
 ##    standard_keys = ['_can_be_refinery', '_class', 'factory', 'ftype', 
     standard_keys = ['_class', '_key_values', '_name', 'factory', 'ftype', 
                      'pipeline', 'dynamic', 'update_live'] + callbacks
-    
+
     ##def __init__(self, factory=None, pipeline=None, **kwargs):
         ##self.factory = factory
         ##self.pipeline = pipeline
-        
+
     def _get_parent_value(self, attr_name):
         """Recurse up to the refinery, looking for the value for attr_name
         """
@@ -202,7 +202,7 @@ class DataFilterBase(object):
             # no parent pipeline exists, so raise attribute error without
             # printing the pipeline __repr__ (which causes a recursive 
             # AttributeError much like the description above).
-            
+
             # By using self.name we can avoid recursive AttributeErrors
             # _get_name first checks the _name attribute (which we've set to
             # None before now), then tries to get the ftype (which it doesn't
@@ -227,13 +227,13 @@ class DataFilterBase(object):
             kwargs['factory'] = None
         if 'pipeline' not in kwargs:
             kwargs['pipeline'] = None
-            
+
         # self.name MUST be set before we do any checks on Attributes (as below)
         # as it is required by the __getattr__ function when printing description
         # around the AttributeError!
         # Set _name to default value before updating __dict__
         self._name = None
-        
+
         try:
             self._config_keys
 ##            print '**10510** self._config_keys =', self._config_keys
@@ -247,7 +247,7 @@ class DataFilterBase(object):
                 ##self._config_keys = self.__class__.keys
             ##except AttributeError:
                 ##self._config_keys = []
-                
+
         ### If the filter is being made by a pipeline, then its parent pipeline 
         ### object will be passed in in kwargs.
         ##self.pipeline = None
@@ -261,10 +261,10 @@ class DataFilterBase(object):
 ##        self._can_be_refinery = False # True for pipelines, not filters
         # Filters will be linked up later by the pipeline
         self.next_filter = None
-        
+
         # TO-DO: Surely callbacks in a pipeline hierarchy should be in the
         # pipeline.py Pipeline base class rather than here?
-        
+
         # When passing results back up a pipeline hierarchy, use a callback
         for callback in self.callbacks:
             self.__dict__[callback] = None
@@ -283,7 +283,7 @@ class DataFilterBase(object):
 ##        if not hasattr(self, 'name'):
         ##if 'name' not in self.__dict__:
             ##self.name = self.__class__.__name__.lower()
-            
+
             ##jjjjjjjjjjjjjjj
         self._primed = False
         self._corout = None
@@ -306,8 +306,8 @@ class DataFilterBase(object):
             self._recursive_set_values_and_connect()
 
         return
-    
-    
+
+
         ### Make the rest callable in _recursive_set_values_and_connect
         ### The top level (refinery) pipeline  
         ###$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -318,7 +318,7 @@ class DataFilterBase(object):
         ### optional keys, to avoid setting an attribute name to something like
         ### "size:0x2000" rather than "size".
         ##self._set_key_values()
-        
+
         ### Set the default values before the init_filter() in case the init
         ### uses something that requires a default value to have been set.        
         ###<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -337,7 +337,7 @@ class DataFilterBase(object):
 ####        self._check_ftype_on_init(**kwargs)
         ##if self.refinery == self:
             ##self._validate()
-                
+
     ##def _all_keys(cls):
         ##return sorted(list(cls._all_keys_as_set()))
     ##_all_keys = classmethod(_all_keys)
@@ -364,7 +364,7 @@ class DataFilterBase(object):
             these_keys = cls.__dict__['keys']
         except KeyError:
             these_keys = []
-            
+
         for _class in cls.__bases__:
             if _class != object:
                 these_keys = _class._all_keys() + these_keys
@@ -387,7 +387,7 @@ class DataFilterBase(object):
         except AttributeError:
             raise FilterAttributeError, 'ftype is missing from class %s' % (
                 self.__class__.__name__)
-            
+
         ##try:
             ### How can this happen? self.__dict__ is updated directly from kwargs
             ##if kwargs['ftype'] != self.ftype:
@@ -395,37 +395,37 @@ class DataFilterBase(object):
                 ##raise FilterAttributeError, msg % (kwargs['ftype'], self.ftype)
         ##except KeyError:
             ##pass  
-                    
+
     def _close(self):
         """Call the coroutine close() to raise the GeneratorExit exception.
         """
         if self._corout:
             self._corout.close()
-            
+
     def _close_filter_next(self):
         """Close the next (main) filter if there is one. 
         HiddenBranchRoute will ensure that branches are called as well.
         """
         if self.next_filter:
             self.next_filter._close()  
-            
+
     def _coded_update_filters(self):
         # This does something only in Pipeline class.
         pass
-    
+
     def _connect_filters(self):
         # This does something only in Pipeline class.
         pass
-    
+
     def _coroutine(self):
         raise FilterError, 'coroutine() not overridden'
-    
+
     def _temp_get_defaults(self):
         return self._really_defaults
     def _temp_set_defaults(self, value):
         self._really_defaults = value
     _defaults = property(_temp_get_defaults, _temp_set_defaults)
-    
+
 
     def _extract_defaults_from_keys(self):
         """Optional keys can be set as a list, or a list with default values
@@ -434,7 +434,7 @@ class DataFilterBase(object):
         'source_file_name' in read_file wouldn't make sense, but it is a
         possible key, in case the file name is set there rather than sending
         it to the filter.
-        
+
         e.g 'foo:45', 'bar', 'baz:space'
         """
         ##if self.ftype == 'read_and_align':
@@ -459,7 +459,7 @@ class DataFilterBase(object):
 ##            print '**12140** <%s>._defaults = %s' % (self.name, self._defaults)
         else:
             self._defaults = {}
-            
+
     def _get_emb_module(self):
         return self.module_loc._emb_module
     def _set_emb_module(self, value):
@@ -473,7 +473,7 @@ class DataFilterBase(object):
         ##"""
         ##return self.module_loc._emb_module
     ##module = property(_get_module, doc='Embedded Python module')
-    
+
     def _get_module_loc(self):
         """Return the location of the embedded Python module, which is placed
         in the pipeline, but not in the parent pipeline's pipeline.
@@ -515,7 +515,7 @@ class DataFilterBase(object):
                 ####pass
         ##return self._need_dynamic_update
     ##need_dynamic_update = property(_get_need_dynamic_update,
-                 ##doc='Do we check embedded Python on receipt of each packet?')
+                    ##doc='Do we check embedded Python on receipt of each packet?')
 
     ##def _get_module_loc(self):
         ##"""Return the location of the embedded Python module, which is placed
@@ -529,14 +529,14 @@ class DataFilterBase(object):
                 ##self._module_loc = self
         ##return self._module_loc
     ##module_loc = property(_get_module_loc, 
-                          ##doc='Location of embedded Python module')
-    
+                            ##doc='Location of embedded Python module')
+
     def _get_refinery(self):   #<<<<<<<TEST-TO-DO<<<<<<<<<<<<
         """Recurse up through the pipelines until you reach a pipeline which
         has no parent pipeline. Thus the refinery is the whole system, as much
         as one pipeline knows about it. It acts as a place to access global
         attributes, in particular "shutting_down".    
-        
+
         This is also the location of the embedded Python module.
         """
         if not self._refinery:            
@@ -546,14 +546,14 @@ class DataFilterBase(object):
                 self._refinery = self
         return self._refinery
     refinery = property(_get_refinery, doc='Top-level pipeline')   
-    
+
     def _get_shutting_down(self):
         """
         """
         return self.refinery._shutting_down 
     shutting_down = property(_get_shutting_down, 
                              doc='Is refinery shutting down (read-only)') 
-    
+
     def _hidden__getattribute__(self, attr_name):
         """Make a filter/pipeline dynamic by setting __getattribute__ to
         point to this function. The superclass allows us to get the attribute
@@ -571,7 +571,7 @@ class DataFilterBase(object):
                 return value
         except TypeError:
             return value
-        
+
     def make_dynamic(self, is_dynamic=True):
         if is_dynamic:
             print '**16090** Making "%s" filter/pipeline dynamic' % (
@@ -591,12 +591,12 @@ class DataFilterBase(object):
     def _make_filters(self):
         # This does something only in Pipeline class.
         pass
-    
+
     def _prime(self):
         """Prime the filter by calling next() on the coroutine, to get it
            ready to receive the first packet of data. This is called 
            just-in-time to allow filter attributes to be prepared.
-           
+
            We call it just in time, as an alternative to the @start_filter 
            decorator approach, because that calls next() within the
            constructor, which may be too soon if some of the filter attributes
@@ -611,12 +611,12 @@ class DataFilterBase(object):
         if self._corout:
             self._corout.next()
         self._primed = True
-        
+
     def _do_recursive_call(self, func_names):
         """This is where the functions are called in turn, at one particular
         level in the recursion. We could pass in general **kwargs, but haven't
         found a use case for it yet.
-        
+
         ROBDOC: It may be useful to metion what 'the functions' are
         (e.g. 'init_filters')
         """
@@ -633,7 +633,7 @@ class DataFilterBase(object):
                 raise
             # execute the function
             func(self)
-        
+
     def _recurse(self, func_names, preorder=True, level=0):
         """Call the func_names for this object, and then recurse for each
         child filter. This will recurse down until it reaches filters with no
@@ -646,32 +646,32 @@ class DataFilterBase(object):
         self.level = level
         if preorder:
             self._do_recursive_call(func_names)
-            
+
         if len(self.filter_list) > 0:
             # TO-DO This is a hack, needs fix for initialising
             # _ordered_filter_list
             for short_name in self._ordered_filter_list:
                 a_filter = self._filter_dict[short_name]
                 a_filter._recurse(func_names, preorder, level + 1)
-            
+
         if not preorder:
             self._do_recursive_call(func_names)
-            
+
     def _print_filters_preorder(self):
         print '**10440** preorder  -- %s%d %s' % (
             ' ' * self.level * 4, self.level, self.name)
-        
+
     def _print_filters_postorder(self):
         print '**10450** postorder -- %s%d %s' % (
             ' ' * self.level * 4, self.level, self.name)
-            
+
     def _recursive_set_values_and_connect(self):
         ##print '**10100** Doing _recursive_set_vals&conn() for class %s' % (
             ##self.__class__.__name__)
-        
+
         # From DataFilterBase.__init__()
         # ==============================
-        
+
         # Recursively create the pipelines/filters in a hierarchy
         self._recurse(['_make_filters'])
         # For debugging
@@ -684,7 +684,7 @@ class DataFilterBase(object):
         # optional keys, to avoid setting an attribute name to something like
         # "size:0x2000" rather than "size".
         # _update_substitutions must be before _coded_update_filters
-        
+
         # Set values for each filter
         # Set the default values before the init_filter() in case the init
         # uses something that requires a default value to have been set.        
@@ -701,12 +701,12 @@ class DataFilterBase(object):
                        '_update_from_factory',
                        '_update_substitutions',
                        ])  
-        
+
 
         # From Pipeline.__init__()
 ##        self._recurse('_update_config_params')
-        
-        
+
+
 ##        self._recurse('_set_defaults')
         # The new refinery may need to update some filters.
         # Collected together in _update_config_params():
@@ -714,19 +714,19 @@ class DataFilterBase(object):
         #        self._update_substitutions()
         #        self._set_defaults()
         #        self._update_from_factory()    
-        
+
         # (1) Copy callback functions from parent to children
         # Check callbacks TO-DO
         self._recurse(['_update_callbacks']) 
         # (5) Option to change the route after connection, where it might
         #     depend on filter parameters
-        
+
         # Note that connection has to be recursed in postorder, to ensure that
         # children are linked before their parents. If parents are linked
         # first then the connections out would be overwritten with None.
         self._recurse(['_connect_filters',
                        '_update_route'], preorder=False)
-        
+
         # (6) Only now can the validation run, after all the filters have
         #     been updated
         # Optionally initialise the coroutine, for instance, to set up 
@@ -742,7 +742,7 @@ class DataFilterBase(object):
 ##            self._validate()
         self._recurse(['_validate'])
 
-        
+
     def _set_defaults(self):
         """If the object has the attribute already, we assume that a
         non-default value has already been set. 
@@ -757,21 +757,21 @@ class DataFilterBase(object):
             # tank_size for an example of this problem.
             if key not in self.__dict__:
                 self.__dict__[key] = value
-                
+
     ##def _get_key_value(self):
         ##if key matches regex:
             ##get from module
         ##else:
             ##return local value
     ##xxx = property
-        
+
     def _set_key_values(self):
         """If there are essential/optional key values passed in from the
         route, they can be set here, unless they change a previously set
         value. We have to allow the same value because one "batch:4096" filter
         may be parsed twice, as a from and a to filter. However, once the
         value is set, it may not be changed during initialisation. 
-           
+
            xxxxxxxxxxxxxx These can't be evaluated here because
            _coded_update_filters() has not yet run.
            Substitute values should be evaluated first, because they override
@@ -792,12 +792,12 @@ class DataFilterBase(object):
                     if self.__dict__[key] not in [k_unset, value] and \
                        not uc_percent:
                         msg = 'Can\'t change the %s.%s parameter value ' + \
-                              'from %s to %s'
+                            'from %s to %s'
                         raise FilterAttributeError, msg % (
                             self.name, key, getattr(self, key), value)
                 else:
                     self.__dict__[key] = value  # Don't try to use setattr()
-                    
+
     def _update_callbacks(self):
         """Default action is to copy callback functions from parent pipeline
         to children. Could be overridden.
@@ -805,7 +805,7 @@ class DataFilterBase(object):
         if self.pipeline:
             for callback in self.callbacks:
                 self.__dict__[callback] = self.pipeline.__dict__[callback]
-    
+
     ##def _update_config_params(self):
         ##"""Perform all parameter setting at one pipeline level before recursing
         ##to the next level.
@@ -815,13 +815,13 @@ class DataFilterBase(object):
         ### (2) Get missing essentials from factory.essentials
         ### (3) Override other defaults or updates with explicitly set
         ###     essential key values (_key_values)
-        
+
         ### Trying this first, so substitutions come after programmed settings
         ##self._coded_update_filters()
         ##self._update_substitutions()
         ##self._set_defaults()
         ##self._update_from_factory()    
-        
+
     def _update_from_factory(self):
         # Try to read default value(s) from factory.essentials if some filter
         # essential key is missing. Don't raise an exception here if something
@@ -833,7 +833,7 @@ class DataFilterBase(object):
 ##                if not hasattr(self, key) and key in self.factory.essentials:
                 if key not in self.__dict__ and key in self.factory.essentials:
                     self.__dict__[key] = self.factory.essentials[key]
-            
+
     def _update_substitutions(self):
         """The filter may have essential or optional keys. Check these for
            substition syntax: ${foo}, and if found, read value from the 
@@ -843,12 +843,12 @@ class DataFilterBase(object):
             # No point looking for substitutions because there is no parent
             # pipeline to get the values from.
             return
-        
+
         # No _keys...        
         for key in self._keys:
             # Optional keys won't yet have been set because the _key_values
             # need to be set before the defaults are applied.
-            
+
             if key in self.__dict__:
                 value1 = self.__dict__.get(key)
                 try:
@@ -863,7 +863,7 @@ class DataFilterBase(object):
                             new_val = getattr(self.pipeline, subst_var)
                         except AttributeError:
                             msg = '**17080** "%s" value not found in ' + \
-                                  'pipeline %s or ancestors'
+                                'pipeline %s or ancestors'
                             print msg % (subst_var, self.pipeline.name)
                             raise FilterAttributeError, msg % (
                                 subst_var, self.pipeline.name)
@@ -871,10 +871,10 @@ class DataFilterBase(object):
                         pass
                             ##msg = '**10150** Substitution: "%s.%s.%s" --> "%s"'
                             ##print msg % (self.pipeline.name, self.name, 
-                                         ##value1, self.__dict__[key])
+                                            ##value1, self.__dict__[key])
                 except AttributeError:  # It isn't a string
                     pass
-    
+
     def _update_route(self):
         pass
 
@@ -894,7 +894,7 @@ class DataFilterBase(object):
 ##        for key in self._all_keys():
             if key and not hasattr(self, key):
                 msg2 = 'Attribute "%s" is missing from key ' + \
-                       'attributes of %s (class %s)\nExpected keys = %s'
+                     'attributes of %s (class %s)\nExpected keys = %s'
                 raise FilterAttributeError, msg2 % (
 ##                    key, self.name, self.__class__.__name__, self._all_keys())
                     key, self.name, self.__class__.__name__, self._keys)
@@ -908,28 +908,28 @@ class DataFilterBase(object):
                           key2, self.__class__.__name__)
         # Lastly, check any custom validations
         self.validate_params()
-        
+
     def after_send_on(self, packet, fork_dest):
         """Hook to execute just after a packet is sent on
         """
         pass
-    
+
     def before_send_on(self, packet, fork_dest):
         """Hook to execute just before a packet is sent on
         """
         pass
-    
+
     def close_filter(self):
         """Override this to add to the closing functionality before the filter
         is finally closed.
         """
         pass
-    
+
     ##def dynamic_update(self):
         ##"""Go through keys, and if any of the values is a string starting with
         ##"%", read the actual value from the embedded Python module, else
         ##return the literal string.
-        
+
         ##This is automatically called before filter_data() and after send_on()
         ##for all filters. The latter enables a subsequent Python filter to
         ##change parameters before the sending filter continues. For instance
@@ -937,46 +937,46 @@ class DataFilterBase(object):
         ##put additional updates wherever you like.
         ##"""
         ##return # <<<<<<<<<<<<<<<<<<<<< dynamic_update TO-DO
-    
+
         ##if self.need_dynamic_update:
             ##for key, value in zip(self._keys, self._key_values):
                 ##try:
                     ##if value.startswith('%') and value.isupper():
                         ##msg = '**14490** %s: Attempting dynamic update of ' + \
-                              ##'key "%s" from value "%s"'
+                                ##'key "%s" from value "%s"'
                         ##print msg % (self.name, key, value)
                         ####setattr(self, key, 
                             ####getattr(self.module_loc.module, value[1:], value))
                         ##setattr(self, key, getattr(self.emb_module, 
-                                                   ##value[1:], value))
+                                                    ##value[1:], value))
                         ##if self.__dict__[key] == value:
                             ### Value not found in module. Reject %XXX as OK
                             ##msg = 'Module is None, or unknown module attr "%s"'
                             ##raise FilterAttributeError, msg % value
                         ##msg = '**14495** %s: Successful dynamic update of ' + \
-                              ##'key "%s" to value "%s"'
+                                ##'key "%s" to value "%s"'
                         ##print msg % (self.name, key, self.__dict__[key])
-                        
+
                 ##except AttributeError:
                     ##raise AttributeError, 'oops'
 
     def filter_data(self, packet):
         raise FilterError, 'Abstract class: inherit from DataFilter ' + \
-                           'or DataFilterExt and override filter_data()'
+              'or DataFilterExt and override filter_data()'
 
     def flush_buffer(self):
         """Override this for clearing out any buffered data: always before
         final close_filter(), but may be needed at intermediate stages.
         """
         pass    
-        
+
     def init_filter(self):
         pass
-    
+
     def send(self, *packets):
         """For the first filter in the pipeline, send in the starting data.
         This must be a DataPacket object.
-        
+
         If not already primed, call _prime() to send a next() call to the
         generator.
         """
@@ -1012,7 +1012,7 @@ class DataFilterBase(object):
                       'Unknown packet fork destination "%s"' % (fork_dest)
 ##        self.dynamic_update()    # Get u/c param values from module
         self.after_send_on(packet, fork_dest)
-        
+
         ##else:
             ### Send on packet for output later when send_queued_packets() runs. 
             ### This will send the packets to the correct destination, and clear 
@@ -1023,8 +1023,8 @@ class DataFilterBase(object):
                 ##self._branch_packet_queue.append(packet)
             ##else:
                 ##raise FilterRoutingError, \
-                      ##'Unknown packet fork destination "%s"' % (fork_dest)
-        
+                        ##'Unknown packet fork destination "%s"' % (fork_dest)
+
 ##    def send_on(self, packet, fork_dest='main', optional=False):
     ##def send_on_now(self, packet, fork_dest='main'):
         ##"""This actually sends the packets, rather than queueing them.
@@ -1042,7 +1042,7 @@ class DataFilterBase(object):
                     ##self.next_filter.send(packet)
             ##else:
                 ##raise FilterRoutingError, \
-                      ##'Unknown packet fork destination "%s"' % (fork_dest)
+                        ##'Unknown packet fork destination "%s"' % (fork_dest)
         ##else:
             ##return None
 
@@ -1050,7 +1050,7 @@ class DataFilterBase(object):
             ### Send on to the branch only if followed by a 
             ### HiddenBranchRoute filter
             ##if fork_dest == 'branch' and \
-               ##self.next_filter.__class__.__name__ != 'HiddenBranchRoute':
+                ##self.next_filter.__class__.__name__ != 'HiddenBranchRoute':
                 ### ROBDOC: The following is a fundamentalish change to the way
                 ### send_on works - if the fork_destination is 'branch' it will
                 ### not be sent on unless there is a HiddenBranchRoute filter as
@@ -1063,8 +1063,8 @@ class DataFilterBase(object):
                 ### Replaced code:
                 ####if not optional:
                     ####raise FilterRoutingError, \
-                              ####'A Branch in the route is required after ("%s"), not "%s"' % (
-                                  ####self.name, self.next_filter.__class__.__name__)
+                                ####'A Branch in the route is required after ("%s"), not "%s"' % (
+                                    ####self.name, self.next_filter.__class__.__name__)
                 ##if optional:
                     ### If the next filter is not a HiddenBranchRoute and the fork
                     ### destination of the packet is 'branch' we do not want the 
@@ -1074,20 +1074,20 @@ class DataFilterBase(object):
                     ### branch (HiddenBranchRoute filter) is required if the fork
                     ### destination is 'branch'
                     ##raise FilterRoutingError, \
-                          ##'A Branch in the route is required after ("%s"), not "%s"' % (
-                              ##self.name, self.next_filter.__class__.__name__)
+                            ##'A Branch in the route is required after ("%s"), not "%s"' % (
+                                ##self.name, self.next_filter.__class__.__name__)
 ####            packet.sent_from = self
 ####            packet.fork_destination = fork_dest
             ##return self.next_filter.send(packet)
         ##else:
             ##return None
-        
+
     def shut_down(self):
         """Shut down the pipeline/filter by setting a shutting_down flag. It
         doesn't work to pass close() straight to the first filter, because the
         generator sequence is still busy and comes back with an error message:
         "ValueError: generator already executing"
-           
+
         Try to close the pipeline, but don't worry if we can't because it's
         busy: there must be a loop somewhere that should be checking the 
         shutting_down read-only property.
@@ -1109,19 +1109,19 @@ class DataFilterBase(object):
         to calculate derived params.
         """
         pass
-    
+
     def zero_inputs(self):
         """During initialisation of a filter, there may be inputs and counters
         that need to be set to zero. By putting these in a separate function,
         we avoid duplicating code where clearing is required repeatedly.
-           
+
         Some filters that use carries and remainders may require clearing
         inputs before each use, to give a consistent one-off answer, for
         something like pump_data().
-           
+
         zero_inputs() is called by the closing() context manager, but not
         until the generator receives its first data packet.
-           
+
         Should this be called init_filter_dynamic  <<<<<< TO-DO <<<<<<
         """
         pass
@@ -1132,7 +1132,7 @@ class DataFilter(DataFilterBase):
     receiving them. Override filter_data() for practical functionality.
     Packet received may be a data packet or a message bottle.
     """
-    
+
     def _coroutine(self):
         with closer(self):
             while True:
@@ -1145,19 +1145,19 @@ class DataFilter(DataFilterBase):
                     self._process_data_packet(packet)
                 else:
                     self._process_message_bottle(packet)
-                        
+
     #def _import_code(self, code, module_name):
         #if not self.module_loc.module:
             #self.module_loc.module = new.module(module_name)
         #self.python_module = self.module_loc.module
         #exec code in self.module_loc.module.__dict__
-        
+
     def _process_data_packet(self, packet):
 ##        self.dynamic_update()    # Get u/c param values from module
         self.before_filter_data(packet)            # Hook 1
         self.filter_data(packet)             # The main filtering is done here
         self.after_filter_data(packet)             # Hook 2
-        
+
     def _process_message_bottle(self, packet):
         # The message bottle never gets sent to filter_data(), just
         # straight on the next filter
@@ -1188,7 +1188,7 @@ class DataFilter(DataFilterBase):
 ##            self.send_on(packet, 'branch', optional=True)
             self.send_on(packet, 'branch')
             self.send_on(packet, 'main')
-            
+
     ##def _send_on_packet_queue(self, fork_dest):
         ##"""Send on all the branch packets generated from one packet arriving.
         ##"""
@@ -1203,13 +1203,13 @@ class DataFilter(DataFilterBase):
                 ##self.send_on(queue_to_go.pop(0), fork_dest, now=True)
             ##except IndexError:
                 ##break  # No more packets to pop from list
-                    
+
     #def _update_filter_live(self):
         #"""For u/c params listed, update their values from the live Python
         #pipeline module. Python modules cannot update themselves in this
         #way. It would get too confusing. Skip this if it is the enclosing
         #pipeline.
-        
+
         #This is used to set the value of a filter key to a value in the
         #pipeline's embedded Python module. The obvious way to do this is
         #to take the key (now forced to be lower case) and match it with the
@@ -1224,13 +1224,13 @@ class DataFilter(DataFilterBase):
 ###                print '**12490** %s filter -- key %s changing from %s to %s' % (
 ###                    self.name, attrib.lower(), old_value, new_value)
                 #setattr(self, attrib.lower(), new_value)
-            
+
     def after_filter_data(self, packet):
         """Override this to perform some action just after the incoming packet
         is processed by filter_data().
         """
         pass
-    
+
     def before_filter_data(self, packet):
         """Override this to perform some action just before the incoming packet
         is processed by filter_data().
@@ -1242,7 +1242,7 @@ class DataFilter(DataFilterBase):
         We know what to do with these general purpose commands, applying
         generally to any filter:
             reset
-            
+
         Other functionality may be needed, specific to one filter. In this
         case, override the open_message_bottle() in the filter. 
         e.g. WriteFile uses this to close one file and open a new file with
@@ -1260,15 +1260,15 @@ class DataFilter(DataFilterBase):
         else:
             e_msg = "'%s' open_message_bottle does not recognise message '%s'"
             raise MessageError, e_msg % (self.name, packet.message)
-                
-        
+
+
 def dynamic_params(static_class):
     """Class decorator to add the functionality to look up from the embedded
     Python environment the current values of attributes whose apparent values
     start with "%" and the name is upper case.
-    
+
     Usage: put "@dynamic_params" on the line before the class decoration
-    
+
     Problem is that this changes the static class for all uses of it. We may
     not want all instances dynamic.
     """
@@ -1289,7 +1289,7 @@ def dynamic_params(static_class):
                 return static_value
         except TypeError:  # value was not a string
             return static_value  
-        
+
     return type('Dynamic' + static_class.__name__ , (static_class,), 
                 dict(__getattribute__=__getattribute__))
 
@@ -1310,7 +1310,7 @@ class DynamicMetaClass(type):
         cls.uses_dynamic_metaclass = True
         cls.__getattribute__ = DataFilterBase._hidden__getattribute__
 
-  
+
 # Mix-in functions (not used, after all)
 
 def mix_in (base, addition):
@@ -1324,7 +1324,7 @@ def mix_in (base, addition):
             base.__dict__[item] = addition.__dict__[item]
             mixed.append (item)
     base._mixed_ = mixed
-        
+
 def mix_in_copy (base, addition):
     """Same as mix_in, but returns a new class instead of modifying
     the base.
@@ -1351,7 +1351,7 @@ class DynamicMixIn(object):
             value + ''  # Check if string
             if re_caps_params_with_percent.match(value):  # e.g. %SOME_VAR
                 msg = '**14505** %s: Attempting dynamic update of ' + \
-                      'key "%s" with current value "%s"'
+                    'key "%s" with current value "%s"'
                 print msg % (self.name, attr_name, value)
                 return getattr(embed.pype, value[1:])
             else:
@@ -1362,16 +1362,16 @@ class DynamicMixIn(object):
         except TypeError:
             # Not a string
             return value
-    
-    
+
+
 ##class DataFilterExt(DataFilterBase):
     ##"""Extension to basic framework for data filter coroutine, sending message
     ##packets within standard structure, before and after receiving data
     ##packets. Override filter_data() for practical functionality.
-    
+
     ##Not sure how this might be used... Leave it for now.
     ##"""
-    
+
     ##def _coroutine(self):
         ##with closer(self):
             ##while True:
@@ -1379,7 +1379,7 @@ class DynamicMixIn(object):
                 ### Send message to branch -- before_filter
                 ##self.filter_data(packet)
                 ### Send message to branch -- after_filter
-                
+
 
 class DataPacket(object):
     """The data is passed through the filters in packets.  These are Python
@@ -1393,7 +1393,7 @@ class DataPacket(object):
 
        When packets are split up, the parameters need to be passed along, with
        the revised data.  This is done by cloning the packet.
-       
+
     """
 
 #    def __init__(self, data=None, **kwargs):
@@ -1405,27 +1405,27 @@ class DataPacket(object):
         self.seq_num = seq_num  # Packets can be numbered with SeqPacket
         self.branch_up_to = 0   # For stripping off leading junk from packets
         self.__dict__.update(kwargs)
-        
+
     def clear_data(self):
         """Clear data from packet, because we can't do that in clone()
         """
         self.data = ''
-    
+
     def clone(self, data='', **kwargs):
         """Create a new packet, with the same parameters and data. We expect
         data as the argument. There may be keywords. If data is given, set the
         data string to this value.
-        
+
         TO-DO: Cloning message bottles?
-        
+
         ROBDOC : When sending on data it would be useful if the data keyword
         would raise an exception if no data is in the packet OR just allow
         there to be no data in the packet (rather than cloning the original
         data if you provide data as ''). This depends on whether you're going
         to allow a packet without any data:
-        
+
         e.g.
-        
+
         .. code-block:: python
 
             clone(self, data=None, ..):
@@ -1434,7 +1434,7 @@ class DataPacket(object):
                 if data is '':
                     raise NoDataInPacketException, 'data is required in the packet'
                 cloned_packet.data = data
-              
+
         """
         cloned_packet = DataPacket()
         # Remember to copy the dictionary with .copy() to avoid pointer passing
@@ -1446,7 +1446,7 @@ class DataPacket(object):
         # Pass remaining parameters into cloned packet
         cloned_packet.__dict__.update(kwargs)
         return cloned_packet
-    
+
     def _get_data_length(self):
         """Use this instead of len(data) because data may not be a string.
         If not, we'll count its length as 0. 
@@ -1468,12 +1468,12 @@ class HiddenBranchRoute(DataFilter):
     'main' goes on to the next_filter as usual.
     'branch' goes to branch_filter, raising an exception if there is none.
     'prev' may link to the filter before the branch.
-    
+
     This is called Hidden... because you shouldn't need to use it explicitly.
     Since it is never created by ftype, we need to set ftype manually.
     """
     ftype = 'hidden_branch_route'
-           
+
     def _close(self):
         """Override base functionality to ensure branches are closed as well.
         """
@@ -1481,7 +1481,7 @@ class HiddenBranchRoute(DataFilter):
         DataFilter._close(self)
     ##def close_filter(self):
         ##self.branch_filter.close()
-        
+
     def filter_data(self, packet):
         fork_destination = packet.fork_dest  # 'main' or 'branch'
         # Don't allow the destination of the packet to persist outside
@@ -1490,13 +1490,13 @@ class HiddenBranchRoute(DataFilter):
         packet.fork_dest = None
         route_dict = dict(main=self.next_filter, branch=self.branch_filter)
         route_dict[fork_destination].send(packet)
-        
-                
+
+
 class MessageBottle(DataPacket):
     """Message is a type of data packet, usually with only one-time use.
     MessageBottle    -----TO-DO-----
     e.g. target = pad_bytes, message = reset:byte_count:100
-    
+
     @destination : can be the filter name or the filter type. If filter type, the
     message is forwarded onto the rest of the pipeline main and branch so that
     other filters of the same type can open the message.
@@ -1521,15 +1521,15 @@ class MessageBottle(DataPacket):
         # Default data to null string
         DataPacket.__init__(self, data='', message=message, values=values, 
                             single_use=single_use, **kwargs)
-        
-        
+
+
 class PriorityQueue(object):
     """Priority queue to enable looping, using TankQueue and TankFeed. List is
     sorted by heapq, using priority as the first sort field. If priorities are
     the same, then time is used to distinguish order. See p.208 of Python
     Cookbook, 2nd ed.
     """
-    
+
     def __init__(self):
         # Queue is held in a list maintained by heapq
         self.queue = []
@@ -1542,11 +1542,11 @@ class PriorityQueue(object):
             data_out = item
         print '**12050** %s, priority=%s, time=%s, data=%s' % (
             action, priority, time_posted, data_out)       
-    
+
     def clear(self):
         "Empty the queue of all items"
         self.queue = []
-        
+
     def push(self, item, priority=None):
         if priority is None:
             # Use incrementing priority counter to avoid random order from
@@ -1556,24 +1556,24 @@ class PriorityQueue(object):
         decorated_item = priority, time.time(), item
         ##self._debug_print('pushing', priority, decorated_item[1], item)
         heapq.heappush(self.queue, decorated_item)
-        
+
     def push_none(self):
         """Push None on to the queue, with maximum (negative) priority so that
         it goes to the front of the queue. This is called when the queue size
         is changed by padding the front.
         """
         self.push(None, priority=-1000)
-        
+
     def pop(self):
         priority, time_posted, item = heapq.heappop(self.queue)
         ##self._debug_print('popping', priority, time_posted, item)
         return item
-    
+
     def queue_size(self):
         return len(self.queue)
-    
+
     def sorted_items(self):
         return heapq.nsmallest(len(self.queue), self.queue)
-        
-                
+
+
 

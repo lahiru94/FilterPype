@@ -225,7 +225,8 @@ def convert_to_2s_complement(str_val):
         converted_value = struct.unpack('>l', str_val)[0]
     else:
         print "Only chars (1 byte), shorts (2 bytes) and longs (4 bytes) " +\
-              "are valid inputs. String of length %s given" % str(len(str_val))
+              "are valid inputs. String of length %s given '%s'" % (
+                  str(len(str_val)), str_val)
         return
     return converted_value
 
