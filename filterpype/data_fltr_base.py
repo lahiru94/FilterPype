@@ -572,21 +572,21 @@ class DataFilterBase(object):
         except TypeError:
             return value
 
-    def make_dynamic(self, is_dynamic=True):
-        if is_dynamic:
-            print '**16090** Making "%s" filter/pipeline dynamic' % (
-                self.name)
-            # Hold default value =
-            #     <slot wrapper '__getattribute__' of 'object' objects>
-            self._hold__getattribute__ = self.__class__.__getattribute__
-            self.__class__.__getattribute__ = self._hidden__getattribute__
-            ##self._hold__getattribute__ = self.__getattribute__
-            ##self.__getattribute__ = self._hidden__getattribute__
-        else:
-            print '**16090** Resetting "%s" filter/pipeline to static' % (
-                self.name)
-            self.__class__.__getattribute__ = self._hold__getattribute__
-            ##self.__getattribute__ = self._hold__getattribute__
+    ##def make_dynamic(self, is_dynamic=True):
+        ##if is_dynamic:
+            ##print '**16090** Making "%s" filter/pipeline dynamic' % (
+                ##self.name)
+            ### Hold default value =
+            ###     <slot wrapper '__getattribute__' of 'object' objects>
+            ##self._hold__getattribute__ = self.__class__.__getattribute__
+            ##self.__class__.__getattribute__ = self._hidden__getattribute__
+            ####self._hold__getattribute__ = self.__getattribute__
+            ####self.__getattribute__ = self._hidden__getattribute__
+        ##else:
+            ##print '**16090** Resetting "%s" filter/pipeline to static' % (
+                ##self.name)
+            ##self.__class__.__getattribute__ = self._hold__getattribute__
+            ####self.__getattribute__ = self._hold__getattribute__
                     
     def _make_filters(self):
         # This does something only in Pipeline class.
@@ -1284,13 +1284,13 @@ def dynamic_params(static_class):
                       'key "%s" with current static_value "%s"'
                 print msg % (static_class.__getattribute__(self, 'name'), 
                              attr_name, static_value)
-                return getattr(embed.pype, static_value[1:])
+                return getattr(embed.pype, static_value[1:], k_unset)
             else:
                 return static_value
         except TypeError:  # value was not a string
             return static_value  
 
-    return type('Dynamic' + static_class.__name__ , (static_class,), 
+    return type('Dyn' + static_class.__name__ , (static_class,), 
                 dict(__getattribute__=__getattribute__))
 
 

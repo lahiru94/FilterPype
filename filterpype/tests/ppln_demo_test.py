@@ -419,7 +419,6 @@ class TestVariableBatch(unittest.TestCase):
         pass
   
     def test_variable_batch1(self):
-##        return
         # Using Python embedded environment, change batch size from 1 to 6
         config = '''\
         [--main--]  

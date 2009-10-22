@@ -150,10 +150,10 @@ class Pipeline(dfb.DataFilter):
         self.dynamic = False  # Set True for live updates from embedded Python
         self._parse_config()
 ##        self.route_parser = lex_yacc5.RouteParser(debug=False)
-        print '**16230** In %s' % self
+##        print '**16230** In %s' % self
         self.route_parser = filterpype.lex_yacc4.RouteParser(debug=False)
-        print '**16250** new route_parser at %s' % (
-            hex(id(self.route_parser)))
+##        print '**16250** new route_parser at %s' % (
+##            hex(id(self.route_parser)))
         self._parse_route()
             
 
@@ -385,8 +385,8 @@ class Pipeline(dfb.DataFilter):
             raise dfb.PipelineConfigError, msg % self.__class__.__name__ 
         
     def _parse_route(self):
-        print '**16240** pipeline route_parser at %s' % (
-            hex(id(self.route_parser)))
+##        print '**16240** pipeline route_parser at %s' % (
+##            hex(id(self.route_parser)))
         parse_fn = self.route_parser.parse_route
         route_out, self.connections, fltr_names = parse_fn(self.route)
         if fut.debug > 300:  #pragma: nocover
@@ -734,6 +734,12 @@ class Pipeline(dfb.DataFilter):
         pass
 
     
+@dfb.dynamic_params
+class DynamicPipeline(Pipeline):
+    """Pipeline that uses dynamic u/c variables.
+    """
+    
+
 class PipelineForPypes(Pipeline):
     """For testing automatic pipeline creation
     

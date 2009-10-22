@@ -1556,7 +1556,7 @@ class TestEmbedPython(unittest.TestCase):
         self.assertEqual(batcher.size, 3)
         
     def test_embedded_batch_sizing(self):
-        return #============================================<<<<<<<<<<<
+        return #==========TestEmbedPython====================<<<<<<<<<<<
         data_in = '15xxxxxyyyyyzzzzz12aaabbbcccddd07eeeeeee04fghj'
         # Pipeline should batch alternately into 2 bytes and the read amount
         filter_with_python2 = ppln_demo.VariableBatchPipeline(
@@ -1570,7 +1570,7 @@ class TestEmbedPython(unittest.TestCase):
 ##        assert 5 == 8
 
     def test_update_live(self):
-        
+        return #==========TestEmbedPython====================<<<<<<<<<<<
         config = '''\
         [--main--]
         ftype = testing_update_live
