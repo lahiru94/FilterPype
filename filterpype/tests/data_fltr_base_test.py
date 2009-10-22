@@ -117,7 +117,6 @@ class TestDataFilter(unittest.TestCase):
     def test_missing_attribute(self):
         #Batch requires size attribute
         print '**16200** test_missing_attribute'
-        df.Batch()
         self.assertRaises(dfb.FilterAttributeError, df.Batch)
 
     def test_missing_attribute2(self):

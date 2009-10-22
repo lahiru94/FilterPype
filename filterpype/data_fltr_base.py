@@ -580,10 +580,13 @@ class DataFilterBase(object):
             #     <slot wrapper '__getattribute__' of 'object' objects>
             self._hold__getattribute__ = self.__class__.__getattribute__
             self.__class__.__getattribute__ = self._hidden__getattribute__
+            ##self._hold__getattribute__ = self.__getattribute__
+            ##self.__getattribute__ = self._hidden__getattribute__
         else:
             print '**16090** Resetting "%s" filter/pipeline to static' % (
                 self.name)
             self.__class__.__getattribute__ = self._hold__getattribute__
+            ##self.__getattribute__ = self._hold__getattribute__
                     
     def _make_filters(self):
         # This does something only in Pipeline class.
@@ -1298,6 +1301,10 @@ class DynamicMetaClass(type):
     a flag for checking that it is being used, and sets __getattribute__ to 
     ensure dynamic processing. This is variable at run time, as to whether we
     use the metaclass or not, but is not reversible.
+    
+    Note that __getattribute__ is a class attribute, not an instance
+    attribute. If we set the instance attribute, it is ignored and thus not
+    dynamic.
     """
     def __init__(cls, name, bases, ns):
         cls.uses_dynamic_metaclass = True

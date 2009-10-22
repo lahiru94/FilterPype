@@ -165,7 +165,7 @@ class TestFactorial(unittest.TestCase):
     """
     def setUp(self):
         self.factory = ff.DemoFilterFactory()
-        self.route_parser = filterpype.lex_yacc4.RouteParser(debug=False)
+        self.route_parser1 = filterpype.lex_yacc4.RouteParser(debug=False)
         
     def tearDown(self):
         pass
@@ -195,12 +195,12 @@ class TestFactorial(unittest.TestCase):
             (tank_feed >>> tank_queue)
         sink
         '''
-        route_out, connections, fltrs = self.route_parser.parse_route(
+        route_out, connections, fltrs = self.route_parser1.parse_route(
             route_in, debug=0, tracking=True)
         print '**2601** route =', route_out
         print '**2611** connections =', connections
         if connections:
-            self.route_parser.print_connections(connections)
+            self.route_parser1.print_connections(connections)
 
 
         
@@ -419,6 +419,7 @@ class TestVariableBatch(unittest.TestCase):
         pass
   
     def test_variable_batch1(self):
+##        return
         # Using Python embedded environment, change batch size from 1 to 6
         config = '''\
         [--main--]  
@@ -430,6 +431,9 @@ class TestVariableBatch(unittest.TestCase):
         
         [py_set_batch_size]
         BATCH_SIZE += 1
+        
+        [batch]
+        dynamic = true
         
         [--route--]
         py_init_batch_size >>>
@@ -453,7 +457,7 @@ class TestVariableBatch(unittest.TestCase):
         [--main--]  
         ftype = variable_batch
         description = Test variable batch passing
-        dynamic = True
+        ##dynamic = true
     
         [py_init_batch_size]
         BATCH_SIZE = 2
@@ -466,10 +470,15 @@ class TestVariableBatch(unittest.TestCase):
             packet.fork_dest = 'branch'
         else:
             init_batch_size()
+            
+        [batch]
+        dynamic = true
+        size = %BATCH_SIZE
         
         [--route--]
         py_init_batch_size >>>
-        batch:%BATCH_SIZE >>>
+        #batch:%BATCH_SIZE >>>
+        batch >>>
         py_read_batch_size >>>
         sink
         '''
@@ -620,9 +629,10 @@ if __name__ == '__main__':  #pragma: nocover
 
 
 ##    TestEmbedPython('test_update_live').run()
-    #TestVariableBatch('test_variable_batch2').run()
+    TestVariableBatch('test_variable_batch2').run()
     ## TestOuterFooInnerBar('test_01').run()
-    TestJane('test_alison_01').run()
+    ## TestJane('test_alison_01').run()
+##    TestSquareNumber('test_square_number').run()
     print '\n**14500** Finished.'
     
 
