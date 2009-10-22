@@ -234,7 +234,7 @@ class FilterFactory(object):
 ##        if filter_attrs.get('dynamic', False) == 'meta':
         if filter_attrs.get('dynamic', False):
             class_to_create2 = dfb.DynamicMetaClass(
-                'Dynamic' + class_to_create.__name__,
+                'DynMeta' + class_to_create.__name__,
                 (class_to_create,), {})
         else:
             class_to_create2 = class_to_create        

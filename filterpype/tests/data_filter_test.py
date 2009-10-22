@@ -41,6 +41,7 @@ import filterpype.data_filter as df
 import filterpype.filter_utils as fut
 import filterpype.filter_factory as ff
 import filterpype.pipeline as ppln
+import filterpype.ppln_demo as ppln_demo
 
 k_run_long_tests = True
 
@@ -1556,21 +1557,16 @@ class TestEmbedPython(unittest.TestCase):
         self.assertEqual(batcher.size, 3)
         
     def test_embedded_batch_sizing(self):
-        return #==========TestEmbedPython====================<<<<<<<<<<<
         data_in = '15xxxxxyyyyyzzzzz12aaabbbcccddd07eeeeeee04fghj'
         # Pipeline should batch alternately into 2 bytes and the read amount
         filter_with_python2 = ppln_demo.VariableBatchPipeline(
                                                        factory=self.factory)
-        module2 = filter_with_python2.module
         print '**10662** %s Embedded Python start %s' % (30 * '-', 30 * '-')
-        print '\n'.join(filter_with_python2.module_loc._python_code_lines)
+        print '\n'.join(filter_with_python2._python_code_lines)
         print '**10662** %s Embedded Python end %s' % (30 * '-', 30 * '-')
-
         filter_with_python2.send(dfb.DataPacket(data_in))
-##        assert 5 == 8
 
     def test_update_live(self):
-        return #==========TestEmbedPython====================<<<<<<<<<<<
         config = '''\
         [--main--]
         ftype = testing_update_live
@@ -1594,22 +1590,18 @@ class TestEmbedPython(unittest.TestCase):
         simple()
         BAZ = 3
         
-        #[batch_one]
-        #dynamic = true
+        [batch_one]
+        dynamic = true
         
         [batch_two]
         dynamic = true
-        #size = %BAR_3
         size = %FOO
-        ##size = 245
         
         [--route--]
         py_simple >>>
         py_call_simple_twice >>>
         batch_one:%FOO >>>
-        # Can't have a second batch here ?? --> "generator already executing"
-        # How is this a loop? Are these not different?
-        #batch_two >>>
+        batch_two >>>
         sink
         '''
         live_updater = ppln.Pipeline(factory=self.factory, 
@@ -1624,13 +1616,11 @@ class TestEmbedPython(unittest.TestCase):
         print '**10670** %s Embedded Python end %s' % (30 * '-', 32 * '-')
         batch1 = live_updater.getf('batch_one')
         for j, expected_size in zip(xrange(6), range(15,91,15)):
-##        for j, expected_size in zip(xrange(6), range(10, 61, 10)):
             packet1 = dfb.DataPacket('hello')
             live_updater.send(packet1)
             # batch_size should start at 15 and increment by 15 each time
             self.assertEqual(batch1.size, expected_size)
             print '\n**10680** batch_size =', batch1.size
-            ##print '**10690** initial_branch_size =', batch1.initial_branch_size
     
     def test_python_embedding_handles_percent_literals(self):
         # Test to make sure that the python embedding handles when a filter key 

@@ -1290,7 +1290,7 @@ def dynamic_params(static_class):
         except TypeError:  # value was not a string
             return static_value  
 
-    return type('Dyn' + static_class.__name__ , (static_class,), 
+    return type('DynDec' + static_class.__name__ , (static_class,), 
                 dict(__getattribute__=__getattribute__))
 
 
