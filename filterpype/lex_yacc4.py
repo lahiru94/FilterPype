@@ -35,7 +35,6 @@ import sys
 import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import TOKEN
-
 import pprint
 
 import filterpype.filter_utils as fut
@@ -120,7 +119,8 @@ class RouteParser(object):
         self.parser = yacc.yacc(module=self, debug=0, optimize=1)   
         self.fork_stack = []
         self.filter_dict = {}
-        print '**3710** RouteParser self.__init__()', self
+##        print '**3710** RouteParser, in self.__init__()'
+##        print '**3715** %s' % self
         
     def _connect_pipes(self, pipe1, pipe2, rule='', type='main'):
         filters1 = [x.strip('()') for x in pipe1.split()]
@@ -210,10 +210,10 @@ class RouteParser(object):
         self.connections = []
         self.filter_dict = {}
         self.token_counter = 0
-        print '**16200** self = %s' % self
-        pprint.pprint(self.__dict__)
-        print '**16210** in parse_route, self.token_counter = %s' % (
-            self.token_counter)
+##        print '**16200** self = %s' % self
+##        pprint.pprint(self.__dict__)
+##        print '**16210** in parse_route, self.token_counter = %s' % (
+##            self.token_counter)
         self.filter_counter = 0
         self.branch_counter = 0
         route2 = route_in.strip()
