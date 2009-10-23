@@ -1513,7 +1513,7 @@ class ReadFileBytes(dfb.DataFilter):
     """
     ftype = 'read_file_bytes'
     keys = ['source_file_name', 'start_byte:0', 'size:-1', 'block_size:2048',
-            'whence:0']
+            'whence:0', 'ack:false']
 
     def filter_data(self, packet):
         file_desc = open(self.source_file_name, 'r')
@@ -1555,6 +1555,15 @@ class ReadFileBytes(dfb.DataFilter):
             # Send on new packet
             self.send_on(pkt_snd)
         file_desc.close()
+        # Send a 'FINAL' packet for things that may want to watch and see
+        # when a read has been finished.
+        # Only send once so the pipeline stops recieving packets properly
+        if self.ack:
+            self.ack = True
+            pkt_fin = packet.clone()
+            pkt_fin.data = ''
+            pkt_fin.FINAL = 1
+            self.send_on(pkt_snd)
 
 
 class ReadLines(dfb.DataFilter):
