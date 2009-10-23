@@ -1440,7 +1440,8 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(len(self.sink.results), 2)
         self.assertEquals(self.sink.results[0].data, 'one two t')
         self.assertEquals(self.sink.results[1].data, 'hree f')
-
+        
+        
 class SomePythonFunctions(ppln.Pipeline):
 
     config = '''
