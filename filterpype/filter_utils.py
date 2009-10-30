@@ -39,10 +39,40 @@ import struct
 _bit_sum_dict = {}
 
 ## debug = 1
-debug = 5
+debug = 3
 quick_test = 50 # Higher the number for faster, e.g. 50
                # 0 for all tests
-               
+           
+def dbg_print(text, level=5):
+    """Print the text to std_out if "debug" in this module is >= debug_level.
+    i.e. If debug_level is 0, then it will always be printed. The higher the
+    debug_level, the less likely it is to be printed.
+    The ">" is inserted just to show which print statements have been converted
+    to dbg_print.
+    """
+    if level <= debug:
+        if text.startswith('\n'):
+            prefix = '\n>'
+            text = text.lstrip()
+        else:
+            prefix = '>'
+        print prefix + text
+
+def define_hex_conversions():
+    global hex_to_dat
+    hex_to_dat = {}
+    for j in xrange(256):
+        ch = chr(j)
+        hex_ch = '%2.2X' % j
+        hex_to_dat[hex_ch] = ch
+        
+def print_hex_conversions():
+    for j in [0x47, 0x48, 0x49, 0x4A, 0x4B]:
+        hex_ch = '%2.2X' % j
+        dbg_print('**14820** hex_ch %s: %2.2X' % (
+            hex_ch, ord(hex_to_dat[hex_ch])))
+define_hex_conversions()
+print_hex_conversions()
 
 # Alternative executable
 #     /Library/Frameworks/Python.framework/Versions/Current_2.6/bin/python
@@ -326,7 +356,7 @@ def data_type(data):
                     return 'none'
                 else:
                     return 'unknown' 
-
+                
 def destruct_filename(filename):
     path, basename = os.path.split(filename)
     base, extension = os.path.splitext(basename)
@@ -354,11 +384,22 @@ def hex_string_to_data(data, space=None):
        apart from base 10 strings.
     """
     # Check that input data is made with spaces/etc in between hex chars
-    bytes = data.split(space)  # NB default to None not ' '
-    if len(bytes) == 1:  
+    bytes2 = data.split(space)  # NB default to None not ' '
+    dbg_print('**14800** bytes2 =   "%s"' % ' '.join(ch for ch in bytes2))
+    if len(bytes2) == 1:  
         # No space found, so assume we have a continuous string of 0-F hex
-        bytes = split_strings(data, 2)
-    return ''.join(chr(int('0x%s' % ch, 16)) for ch in bytes if ch)
+        bytes2 = split_strings(data, 2)
+##    result = ''.join(chr(int('0x%s' % ch, 16)) for ch in bytes2 if ch)
+##    result = ''.join(chr(int('0x%2.2x' % ch, 16)) for ch in bytes2 if ch)
+##    result = ''.join(chr(int(ch, 16)) for ch in bytes2 if ch)
+    result = ''.join(hex_to_dat[ch] for ch in bytes2 if ch)
+    result2 = []
+    for ch in bytes2:
+        result2.append(hex_to_dat[ch])
+    result3 = ''.join(result2)
+    results_ch = ' '.join([('%2.2X' % ord(ch)) for ch in result])
+    dbg_print('**14810** data     = "%s"' % results_ch)
+    return result
 
 def latest_defaults(keys):
     """Take a list with some repeated keys which have different default

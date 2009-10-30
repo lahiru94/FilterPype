@@ -864,7 +864,7 @@ class DataFilterBase(object):
                         except AttributeError:
                             msg = '**17080** "%s" value not found in ' + \
                                 'pipeline %s or ancestors'
-                            print msg % (subst_var, self.pipeline.name)
+                            fut.dbg_print(msg % (subst_var, self.pipeline.name))
                             raise FilterAttributeError, msg % (
                                 subst_var, self.pipeline.name)
                         setattr(self, key, new_val)
@@ -1093,7 +1093,7 @@ class DataFilterBase(object):
         shutting_down read-only property.
         """
         msg = '**12615** %s Shutting down pipeline/filter from "%s" %s'
-        print msg % ('-' * 20, self.name, '-' * 20)
+        fut.dbg_print(msg % ('-' * 20, self.name, '-' * 20))
         self.refinery._shutting_down = True
         try:
             self._close()
