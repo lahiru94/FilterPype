@@ -1,6 +1,7 @@
 import os
 import optparse
 import sys
+import inspect
 
 from rst_modules import default_mods
 
@@ -15,36 +16,55 @@ class BuildRST(object):
     
     def get_module_list(self, modules):
         
-        mod_class_dict = {}
+        mod_class_function_m = {}
         for module in modules:
             class_list = []
+            function_list = []
             try:
                 # Import the module so we can use it
-                exec "import " + module
-                mod = eval(module)
-                all_classes = mod.__dict__
-                for clss in all_classes:
-                    if clss[0] == '_':
-                        # Sphinx won't build docs for private classes or methods
-                        # so ignore them
-                        pass
-                    elif isinstance(all_classes[clss], type):
-                        class_list.append(clss)
-                    #else:
-                        #print all_classes[clss]
-            except ImportError, err:
-                raise ImportError(err.__str__() + '. Please ensure that ' + \
-                                  'your PYTHONPATH is configured according ' + \
-                                  'to how modules are referenced in ' + \
-                                  'rst_modules.py.')
+                exec "import " + module + " as curr_mod"
+                dir_l = dir(curr_mod)
+                for cf in dir_l:
+                    exec 'cf_mod = inspect.getmodule(curr_mod.' + cf + ')'
+                    if dir_l == dir(cf_mod):
+                        exec "is_class = isinstance(curr_mod." + cf + ", type)"
+                        print 'is_class', is_class
+                        exec "is_func = inspect.isfunction(curr_mod." + cf + ")"
+                        if is_class:
+                            print 'success'
+                            class_list.append(cf)
+                        elif is_func:
+                            function_list.append(cf)
+            except:
+                pass
+                #mod = eval(module)
+                #all_classes = mod.__dict__
+                #for clss in all_classes:
+                    #if clss[0] == '_':
+                        ## Sphinx won't build docs for private classes or methods
+                        ## so ignore them
+                        #pass
+                    #elif isinstance(all_classes[clss], type):
+                        #class_list.append(clss)
+                    ##else:
+                        ##print all_classes[clss]
+            #except ImportError, err:
+                #raise ImportError(err.__str__() + '. Please ensure that ' + \
+                                  #'your PYTHONPATH is configured according ' + \
+                                  #'to how modules are referenced in ' + \
+                                  #'rst_modules.py.')
+            #class_list.sort()
+            #mod_class_dict[module] = class_list
             class_list.sort()
-            mod_class_dict[module] = class_list
-        return mod_class_dict
+            function_list.sort()
+            mod_class_function_m[module] = {'classes':class_list, \
+                                            'functions':function_list}
+        return mod_class_function_m
     
-    def make_api_rst(self, class_dict):
+    def make_api_rst(self, modules):
         hdr_str = '.. _API:\n\nAPI\n===\n\nContents:\n\n.. toctree::\n   :maxdepth: 2\n\n'
         toctree_str = ''
-        for mod in class_dict:
+        for mod in modules:
             print "Adding module %s to API" %mod
             toctree_str += '   ' + mod.split('.')[-1] + \
                         self.autogen_filename + '\n'
@@ -56,32 +76,40 @@ class BuildRST(object):
 
     def make_module_rst(self, mod_dict):
         rst_dict = {}
-        for module in mod_dict:
-            print "Building module:", module
-            hdr_str = 'Module ' + module
-            hdr_str += '\n'+ '='*(len(module)+7) + '\n\n.. toctree::'
+        for k, v in mod_dict.items():
+            print "Building module:", k
+            hdr_str = 'Module ' + k
+            hdr_str += '\n'+ '='*(len(k)+7) + '\n\n .. automodule::\n ' + k + \
+                    '\n\n.. toctree::'
             hdr_str += '\n   :maxdepth: 2\n\n'
         
             toctree_str = ''
-            for clss in mod_dict[module]:
+            for clss in v['classes']:
                 print "\t- class:", clss
                 toctree_str += '   ' + clss + self.autogen_filename + '\n'
-            
-            rst_dict[module] = hdr_str + toctree_str
+            func_str = ''
+            if v['functions']:
+                for func in v['functions']:
+                    print "\t- function:", func
+                    func_str += self.make_function_str(k, func)
+            rst_dict[k] = hdr_str + toctree_str + func_str
         return rst_dict
     
-    def make_class_rst(self, class_dict):
+    def make_function_str(self, module, func):
+        return '.. autofunction:: ' + func + '\n\n'
+    
+    def make_class_rst(self, class_function_m):
         class_rst_dict = {}
-        for module in class_dict:
-            for clss in class_dict[module]:
+        for k, v in class_function_m.items():
+            for clss in (v['classes']):
                 hdr_str = 'Class ' + clss + '\n' + '='*(len(clss) + 6) + '\n'
-                automod_str = '.. automodule:: ' + module + '\n\n'
+                automod_str = '.. automodule:: ' + k + '\n\n'
                 auto_clss_str = '.. autoclass:: ' + clss + '\n   :members:'
                 auto_clss_str += '\n   :show-inheritance:\n'
                 if clss not in class_rst_dict.keys():
                     class_rst_dict[clss] = hdr_str+automod_str+auto_clss_str
         return class_rst_dict
-
+    
 if __name__ == '__main__':
     # optparse things for getting the user provided arguments:
     # build_dir - is the build directory
@@ -115,10 +143,10 @@ if __name__ == '__main__':
                 #'filterpypefds.data_fltr_fds', 'filterpypefds.ppln_fds9']
     
     # Get the various module and class information required
-    class_dict = rst_builder.get_module_list(mod_list)
-    api_rst = rst_builder.make_api_rst(class_dict)
-    module_rst_dict = rst_builder.make_module_rst(class_dict)
-    class_rst_dict = rst_builder.make_class_rst(class_dict)
+    class_function_m = rst_builder.get_module_list(mod_list)
+    api_rst = rst_builder.make_api_rst(mod_list)
+    module_rst_dict = rst_builder.make_module_rst(class_function_m)
+    class_rst_dict = rst_builder.make_class_rst(class_function_m)
     
     # The API file path
     api_file_name = os.path.join(build_dir, 'api' + \
