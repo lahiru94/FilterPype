@@ -431,7 +431,7 @@ class DataFilterBase(object):
         """Optional keys can be set as a list, or a list with default values
         embedded, separated by a colon. Extract these if present. Some
         optional keys may not have a default, e.g. a default for
-        'source_file_name' in read_file wouldn't make sense, but it is a
+        'source_file_name' in read_file_batch wouldn't make sense, but it is a
         possible key, in case the file name is set there rather than sending
         it to the filter.
 
@@ -1282,8 +1282,9 @@ def dynamic_params(static_class):
                 # e.g. %SOME_VAR, %SPEED, but not SOME_VAR or %Speed
                 msg = '**14490** %s: Attempting dynamic update of ' + \
                       'key "%s" with current static_value "%s"'
-                print msg % (static_class.__getattribute__(self, 'name'), 
-                             attr_name, static_value)
+                fut.dbg_print(msg % (
+                    static_class.__getattribute__(self, 'name'), 
+                    attr_name, static_value))
                 return getattr(embed.pype, static_value[1:], k_unset)
             else:
                 return static_value

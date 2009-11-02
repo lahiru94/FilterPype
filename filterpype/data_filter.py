@@ -2525,9 +2525,9 @@ class WriteFile(dfb.DataFilter):
     output file until after the initialisation of the generator.
 
     So how do we know when the file has finished and needs closing? The input
-    to read_file could be many files, all to be written to one output file. We
-    can't use a timeout, so closing needs to be done explicitly, or via the
-    closure of the pipeline.
+    to read_file_batch could be many files, all to be written to one output
+    file. We can't use a timeout, so closing needs to be done explicitly, or
+    via the closure of the pipeline.
 
     By providing a message bottle with the message 'change_write_suffix'
     and the packet attribute 'packet.file_name_suffix'
