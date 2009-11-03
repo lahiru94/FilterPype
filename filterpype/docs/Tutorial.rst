@@ -22,9 +22,9 @@ The first step is to know what needs to be done in order to achieve the end goal
     :linenos:
 
     [--route--]
-    read_file
+    read_batch
 
-The [--route--] section header is the only required section for writing Pipeline configs. The read_file line tells the parser that the first Filter in the Pype is read_file.
+The [--route--] section header is the only required section for writing Pipeline configs. The read_batch line tells the parser that the first Filter in the Pype is read_batch.
 
 The next step in this task is likely to be feeding it into a Filter that can break it into chunks:
 
@@ -32,10 +32,10 @@ The next step in this task is likely to be feeding it into a Filter that can bre
     :linenos:
 
     [--route--]
-    read_file >>>
+    read_batch >>>
     split_data:512
 
-This is how our Pipeline config might now look. We have the read_file and split_data Filters. The split_data Filter also has an argument. Arguments are appended after the Filter name and split up by colons. There may be multiple arguments and they must be in the order that the Filter is expecting them to be in, which is to say, the order in which the Filter has been written to accept them in.
+This is how our Pipeline config might now look. We have the read_batch and split_data Filters. The split_data Filter also has an argument. Arguments are appended after the Filter name and split up by colons. There may be multiple arguments and they must be in the order that the Filter is expecting them to be in, which is to say, the order in which the Filter has been written to accept them in.
 
 There is another method in which arguments can be provided to Filters. Instead of writing the configuration as it appears above, it could also have been written like so:
 
@@ -48,7 +48,7 @@ There is another method in which arguments can be provided to Filters. Instead o
     data_chunk_size = 512
 
     [--route--]
-    read_file >>>
+    read_batch >>>
     split_data
 
 This has added a section for the filter that requires a key argument to be passed.
@@ -59,14 +59,14 @@ The last part of the pipeline is the chunk counter:
     :linenos:
 
     [--route--]
-    read_file >>>
+    read_batch >>>
     split_data:512 >>>
     count_packets
 
 Writing a Filter
 ----------------
 
-In our example all we've done is write the configuration for the pipeline, but we haven't actually got all of the Filters in place to actually perform the real work. For the sake of the example lets pretend that we have both the read_file and the count_packets Filters. What we want to do now is write the split_data Filter.
+In our example all we've done is write the configuration for the pipeline, but we haven't actually got all of the Filters in place to actually perform the real work. For the sake of the example lets pretend that we have both the read_batch and the count_packets Filters. What we want to do now is write the split_data Filter.
 
 .. code-block:: python
     :linenos:
@@ -125,7 +125,7 @@ Creating a Pipeline in Python is quite simple. Below is an example of a very sim
         block_size = ${block_size}
     
         [--route--]
-        read_file >>>
+        read_batch >>>
         split_data >>>
         sink
         '''
@@ -157,7 +157,7 @@ Factories have been explained briefly in the principles_ section. A typical fact
         def __init__(self):
             ff.FilterFactory.__init__(self)
             class_map = dict(
-                read_file = df.ReadFile,
+                read_batch = df.ReadBatch,
                 sink = df.Sink,
                 split_data = SplitData,
             )
@@ -225,7 +225,7 @@ Since the branch is executed first, we would be able to write our split packets 
         #dest_file_name = %FILE_NAME
         
         [--route--]
-        read_file >>>
+        read_batch >>>
         split_branch >>>
             (py_change_file_name >>>
             write_file:%FILE_NAME >>>

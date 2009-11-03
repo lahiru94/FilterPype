@@ -49,16 +49,16 @@ import filterpype.pipeline as ppln
     ##[--keys--]          
     ##essential = file_from_name, file_to_name
     
-    ##[read_file]
+    ##[read_batch]
     ##size = 1000  # or 10
 
     ##[--route--]
-    ##read_file:1000 
+    ##read_batch:1000 
     ##write_file
     ##'''
         
     ##def update_filters(self):
-        ##self.getf('read_file').source_file_name = self.file_from_name
+        ##self.getf('read_batch').source_file_name = self.file_from_name
         ##self.getf('write_file').dest_file_name = self.file_to_name
         
         

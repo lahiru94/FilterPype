@@ -79,7 +79,7 @@ class Pipeline(dfb.DataFilter):
 
         ROBDOC : is the following statement True?
         - ftype : Optional. Overwrites the __class__.ftype which is the 
-          string representation of the pipeline class name. e.g. 'read_file'
+          string representation of the pipeline class name. e.g. 'read_batch'
         
         - pipeline : Optional. A link to the parent pipeline. If None, this
           pipeline is the top most pipeline in the hierarchy tree.
@@ -779,14 +779,14 @@ class CopyFile(Pipeline):
     keys = dest_file_name, source_file_name:none
     # Callback removed -- environ:none
             
-    [read_file]
+    [read_batch]
     # Callback removed -- environ:none
     # Since environ is optional, the substitution will only happen if set
     ##environ = ${environ}
     source_file_name = ${source_file_name}
     
     [--route--]
-    read_file >>>
+    read_batch >>>
     write_file:${dest_file_name}
     '''
     # TO-DO: Check the template system -- ${dest_file_name}  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<

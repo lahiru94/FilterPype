@@ -175,8 +175,8 @@ class Batch(dfb.DataFilter):
                 ##if self.name == 'batch_before':
                     ##print
                 # restricted block output as it fills debug with binary output!
-                print '**13420** %s is sending data block[:30] "%s" to %s' % (
-                    self.name, block[:30], self.fork_dest)
+                #print '**13420** %s is sending data block[:30] "%s" to %s' % (
+                    #self.name, block[:30], self.fork_dest)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (
@@ -273,7 +273,7 @@ class BranchIf(dfb.DataFilter):
             raise FilterLogicError, 'Unknown comparison "%s"' % (
                 comparison)
         if result:
-            self.send_on(packet, 'branch') 
+            self.send_on(packet, 'branch')
         else:
             self.send_on(packet, 'main')
 
@@ -933,7 +933,7 @@ class DistillHeader(dfb.DataFilter):
         all_inputs = ''.join(self.inputs)
         self.inputs = []
         self.input_char_count = 0
-        print "**2342** Distill header size: %s %s" % (self.header_size, type(self.header_size))
+        #print "**2342** Distill header size: %s %s" % (self.header_size, type(self.header_size))
         header = all_inputs[:self.header_size]
         self.remainder = all_inputs[self.header_size:]
 ##        print '**10410** Sending %d data bytes from %s to branch' % (
@@ -1287,12 +1287,12 @@ class PrintParam(dfb.DataFilter):
             self.pipeline_name = 'no_pipeline'
 
 
-class ReadFileBatch(dfb.DataFilter):
+class ReadBatch(dfb.DataFilter):
     """Chop file up into string blocks to pass inside packets into pipeline.
 
     We need a file object to read from. This can be provided directly or
     indirectly, with either the open file object or the file name being
-    sent to ReadFileBatch.
+    sent to ReadBatch.
 
     This can also be done by setting the source_file_name as a fixed
     parameter for the filter, but this stops more than one file being read and
@@ -1309,7 +1309,7 @@ class ReadFileBatch(dfb.DataFilter):
           originally supplied with. In other words, use this at the start of
           a pipeline or in an external wrapper pipeline.
     """  
-    ftype = 'read_file'
+    ftype = 'read_batch'
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
@@ -1355,7 +1355,7 @@ class ReadFileBatch(dfb.DataFilter):
             packet attribute 'packet.read_percent'.
             If no bytes_read provided, -1 is returned.
         """
-        # TO-DO  I think this extends the ReadFileBatch filter too much. We could
+        # TO-DO  I think this extends the ReadBatch filter too much. We could
         # handle file_size in a separate filter, or at least a descendant.
         if bytes_read == 'unknown':
             return -1
@@ -1494,8 +1494,8 @@ class ReadFileBatch(dfb.DataFilter):
         self.file_size = None
 
 
-class ReadFileBytes(dfb.DataFilter):
-    """ Simple ReadFile filter to read files using bytes
+class ReadBytes:
+    """ Simple ReadBytes filter to read files using bytes
 
         Notes about keys:
 
@@ -1511,11 +1511,12 @@ class ReadFileBytes(dfb.DataFilter):
                  1 - End of file
 
     """
-    ftype = 'read_file_bytes'
+    ftype = 'read_bytes'
     keys = ['source_file_name', 'start_byte:0', 'size:-1', 'block_size:2048',
             'whence:0', 'ack:false']
 
     def filter_data(self, packet):
+        packet.FINAL = False
         file_desc = open(self.source_file_name, 'r')
         total_file_size = os.path.getsize(self.source_file_name)
         counter = 0
@@ -1558,13 +1559,16 @@ class ReadFileBytes(dfb.DataFilter):
         # Send a 'FINAL' packet for things that may want to watch and see
         # when a read has been finished.
         # Only send once so the pipeline stops recieving packets properly
-        if self.ack:
-            self.ack = True
+        if self.final and self.ack:
+            ##self.ack = False
+            self.final = False
             pkt_fin = packet.clone()
             pkt_fin.data = ''
-            pkt_fin.FINAL = 1
-            self.send_on(pkt_snd)
+            pkt_fin.FINAL = True
+            self.send_on(pkt_fin)
 
+    def init_filter(self):
+        self.final = True
 
 class ReadLines(dfb.DataFilter):
     """Read lines of a text file, in normal or reversed order.
@@ -2516,7 +2520,7 @@ class WriteFile(dfb.DataFilter):
     output file until after the initialisation of the generator.
 
     So how do we know when the file has finished and needs closing? The input
-    to read_file could be many files, all to be written to one output file. We
+    to read_batch could be many files, all to be written to one output file. We
     can't use a timeout, so closing needs to be done explicitly, or via the
     closure of the pipeline.
 
