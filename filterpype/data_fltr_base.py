@@ -432,6 +432,7 @@ class DataFilterBase(object):
         embedded, separated by a colon. Extract these if present. Some
         optional keys may not have a default, e.g. a default for
         'source_file_name' in read_batch wouldn't make sense, but it is a
+
         possible key, in case the file name is set there rather than sending
         it to the filter.
 
@@ -864,7 +865,7 @@ class DataFilterBase(object):
                         except AttributeError:
                             msg = '**17080** "%s" value not found in ' + \
                                 'pipeline %s or ancestors'
-                            print msg % (subst_var, self.pipeline.name)
+                            fut.dbg_print(msg % (subst_var, self.pipeline.name))
                             raise FilterAttributeError, msg % (
                                 subst_var, self.pipeline.name)
                         setattr(self, key, new_val)
@@ -1093,7 +1094,7 @@ class DataFilterBase(object):
         shutting_down read-only property.
         """
         msg = '**12615** %s Shutting down pipeline/filter from "%s" %s'
-        print msg % ('-' * 20, self.name, '-' * 20)
+        fut.dbg_print(msg % ('-' * 20, self.name, '-' * 20))
         self.refinery._shutting_down = True
         try:
             self._close()
@@ -1282,8 +1283,9 @@ def dynamic_params(static_class):
                 # e.g. %SOME_VAR, %SPEED, but not SOME_VAR or %Speed
                 msg = '**14490** %s: Attempting dynamic update of ' + \
                       'key "%s" with current static_value "%s"'
-                print msg % (static_class.__getattribute__(self, 'name'), 
-                             attr_name, static_value)
+                fut.dbg_print(msg % (
+                    static_class.__getattribute__(self, 'name'), 
+                    attr_name, static_value))
                 return getattr(embed.pype, static_value[1:], k_unset)
             else:
                 return static_value

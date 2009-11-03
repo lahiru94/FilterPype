@@ -130,6 +130,7 @@ class Batch(dfb.DataFilter):
     3) Split string into blocks, leaving a remainder.
     4) Send on each block.
     5) Put remainder back as the only item in inputs.
+    
     Wrong:
     An added feature is that we can set an initial_branch_size that sends the
     first N bytes off to a branch. This enables us to strip off junk at the
@@ -156,6 +157,8 @@ class Batch(dfb.DataFilter):
         to a silly value, e.g. 0, which will just carry on sending the same 
         data ad infinitum.
         """
+        fut.dbg_print('**14740** pkt.data = "%s"' % (
+            fut.data_to_hex_string(packet.data[:100])))
         self.inputs.append(packet.data)
         ##print '**13540** %s received packet %d = "%s"' % (
             ##self.name, packet.seq_num, packet.data)
@@ -164,6 +167,8 @@ class Batch(dfb.DataFilter):
             return  # Not enough input data to make up even one batch block
 
         all_inputs = ''.join(self.inputs)
+        fut.dbg_print('**14750** all_inps = "%s"' % (
+            fut.data_to_hex_string(all_inputs[:100])))
         while True:
             if int(self.size) <= 0:
                 msg = 'Bad batch size, = %d, should be >= 1'
@@ -175,8 +180,12 @@ class Batch(dfb.DataFilter):
                 ##if self.name == 'batch_before':
                     ##print
                 # restricted block output as it fills debug with binary output!
-                #print '**13420** %s is sending data block[:30] "%s" to %s' % (
-                    #self.name, block[:30], self.fork_dest)
+
+                msg = '**13420** %s (%d) is sending data block[:40] "%s" to %s'
+                fut.dbg_print(msg % (self.name, self.size, 
+                                     fut.data_to_hex_string(block[:40]), 
+                                     self.fork_dest))
+
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (
@@ -819,6 +828,7 @@ class CountPackets(dfb.DataFilter):
     def filter_data(self, packet): 
         cpfn = self.count_packets_field_name
         self.__dict__[cpfn] = self.__dict__[cpfn] + 1
+        fut.dbg_print('**14830**, packet %d' % getattr(self, cpfn), 3)
         self.send_on(packet)
 
     def zero_inputs(self):
@@ -933,7 +943,10 @@ class DistillHeader(dfb.DataFilter):
         all_inputs = ''.join(self.inputs)
         self.inputs = []
         self.input_char_count = 0
-        #print "**2342** Distill header size: %s %s" % (self.header_size, type(self.header_size))
+
+        fut.dbg_print("**2342** Distill header size: %s %s" % (
+            self.header_size, type(self.header_size)))
+
         header = all_inputs[:self.header_size]
         self.remainder = all_inputs[self.header_size:]
 ##        print '**10410** Sending %d data bytes from %s to branch' % (
@@ -1309,7 +1322,9 @@ class ReadBatch(dfb.DataFilter):
           originally supplied with. In other words, use this at the start of
           a pipeline or in an external wrapper pipeline.
     """  
+
     ftype = 'read_batch'
+
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
@@ -2523,6 +2538,7 @@ class WriteFile(dfb.DataFilter):
     to read_batch could be many files, all to be written to one output file. We
     can't use a timeout, so closing needs to be done explicitly, or via the
     closure of the pipeline.
+
 
     By providing a message bottle with the message 'change_write_suffix'
     and the packet attribute 'packet.file_name_suffix'

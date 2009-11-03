@@ -80,6 +80,7 @@ class Pipeline(dfb.DataFilter):
         ROBDOC : is the following statement True?
         - ftype : Optional. Overwrites the __class__.ftype which is the 
           string representation of the pipeline class name. e.g. 'read_batch'
+
         
         - pipeline : Optional. A link to the parent pipeline. If None, this
           pipeline is the top most pipeline in the hierarchy tree.
