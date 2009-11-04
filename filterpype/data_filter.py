@@ -2544,16 +2544,22 @@ class WriteFile(dfb.DataFilter):
     and the packet attribute 'packet.file_name_suffix'
     the current file will be closed and a new one will
     be opened with the suffix appended to it.
+    
+    compress : currenly only 'bzip' is enabled (true / bzip resolves to bzip2)
     """
     ftype = 'write_file'
     keys = ['dest_file_name', 'append:False', 'binary_mode:true', 
-            'do_write_file:True']
+            'do_write_file:True', 'compress:none']
 
     def _ensure_file_closed(self):
         """Check that the file has been closed, or close it.
         """
         if hasattr(self, 'out_file'):
             if self.out_file and not self.out_file.closed:
+                # if compression, flush any remaining data
+                if self.compress:
+                    # NB: Assumes all compressor types have a flush method
+                    self.out_file.write(self.compressor.flush())
                 self.out_file.close()
         else:
             self.out_file = None
@@ -2571,7 +2577,10 @@ class WriteFile(dfb.DataFilter):
 
         if self.do_write_file:
             try:
-                self.out_file.write(data)
+                if self.compress:
+                    self.out_file.write(self.compressor.compress(data))
+                else:
+                    self.out_file.write(data)
             except AttributeError:
                 if self.binary_mode:
                     mode2 = 'b'
@@ -2583,7 +2592,18 @@ class WriteFile(dfb.DataFilter):
                     self.out_file = open(self._get_dest_file_name(), 'w' + mode2)
                 ##print '**10900** Writing to file: ...%s' % (
                     ##self._get_dest_file_name()[-55:])
-                self.out_file.write(data)
+                if self.compress in ('bzip', 'bzip2', True):
+                    self.compressor = bz2.BZ2Compressor()
+                elif self.compress:
+                    raise dfb.FilterAttributeError, "Compression '%s' not supported" % self.compress
+                
+                if self.compress:
+                    self.out_file.write(self.compressor.compress(data))
+                else:
+                    print "123123 Writing to new file: %s" % os.path.basename(self.out_file.name)
+                    self.out_file.write(data)
+                
+                ##self.out_file.write(data)
 
     def close_filter(self):
         self._ensure_file_closed()
@@ -2596,7 +2616,7 @@ class WriteFile(dfb.DataFilter):
             self.out_file.isatty
         except AttributeError:
             return
-        if self.out_file.name != self.dest_file_name:
+        if self.out_file.name != self._get_dest_file_name(): ##self.dest_file_name:
             self._ensure_file_closed()
             self.out_file = None
 

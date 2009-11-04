@@ -35,6 +35,7 @@ import timeit
 import os
 import shutil
 import mock
+import bz2
 
 import filterpype.data_fltr_base as dfb
 import filterpype.data_filter as df
@@ -495,6 +496,20 @@ class TestBZip2Filter(unittest.TestCase):
         # Flush data from compression buffer
         self.bzip_compressor.shut_down()
         self.assertEquals('|'.join(self.sink.all_data), '||' + input2)  # TO-DO why ||??
+    
+    def test_bzip_compress_to_file(self):
+        dest_file_name = os.path.join(data_dir5, 'compressed.tmp')
+        write_file = df.WriteFile(dest_file_name=dest_file_name)
+        self.bzip_compressor.next_filter = write_file
+        input3 = 'abcdef'
+        self.bzip_compressor.send(dfb.DataPacket(input3))
+        input4 = 'efghc'
+        self.bzip_compressor.send(dfb.DataPacket(input4))
+        self.bzip_compressor.shut_down()
+        out_file_handle = bz2.BZ2File(dest_file_name, 'r')
+        self.assertEqual(out_file_handle.read(), input3 + input4)
+        out_file_handle.close()
+        os.remove(dest_file_name)
 
         
 class TestCalcSlope(unittest.TestCase):
@@ -2154,6 +2169,123 @@ class TestSeqPacket(unittest.TestCase):
         ##self.assertEquals(self.sink.results[-1].seq_num, 5)
         ##self.assertEquals(self.sink.plug_size, 3.5)
 
+class TestSetAttributesToData(unittest.TestCase):
+    def setUp(self):
+        self.sink = df.Sink()
+
+    def tearDown(self):
+        pass
+    
+    def test_set_attributes_gets_attributes(self):
+        packet = dfb.DataPacket(data='')
+        packet.ATTR1 = 'foo'
+        packet.ATTR2 = 'bar'
+        packet.ATTR3 = 'wibble'
+        packet.ATTR4 = 3
+        packet.ATTR5 = 'dont deal with me'
+        
+        attributes_to_set = ['ATTR1', 'ATTR2', 'ATTR3', 'ATTR4']
+
+        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
+                                         separator='', 
+                                         eol='', write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 'foobarwibble3')
+
+    def test_set_attributes_empty(self):
+        packet = dfb.DataPacket(data='wibblefish')
+        
+        attributes_to_set = []
+
+        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
+                                         write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 'wibblefish')
+
+    def test_set_attributes_no_attributes_given(self):
+        packet = dfb.DataPacket(data='thecakeisalie')
+
+        filter1 = df.SetAttributesToData(write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 'thecakeisalie')
+        
+    def test_set_attributes_list_params(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
+                                strs=['hey','hi','woo'],)
+        
+        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        # Changed by Rob -- is this right?
+        ##self.assertEquals(self.sink.results[-1].data, '1,hey\n2,hi\n3,woo')
+        self.assertEquals(self.sink.results[-1].data, '\n1,hey\n2,hi\n3,woo')
+    
+    def test_set_attributes_list_params_using_diff_output_formats(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,15], 
+                                strs=['hey','hi','woo'],)
+        # Test Hex
+        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False,
+                                         output_format='hex')
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        # Changed by Rob -- is this right?
+##        self.assertEquals(self.sink.results[-1].data, '0x1,hey\n0x2,hi\n0xf,woo')
+        self.assertEquals(self.sink.results[-1].data, 
+                          '\n0x1,hey\n0x2,hi\n0xf,woo')
+        # Test Binary
+        filter2 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False,
+                                         output_format='binary')
+        filter2.next_filter = self.sink
+        filter2.send(packet)
+        # Changed by Rob -- is this right?
+##        self.assertEquals(self.sink.results[-1].data, '0b1,hey\n0b10,hi\n0b1111,woo')
+        self.assertEquals(self.sink.results[-1].data, 
+                          '\n0b1,hey\n0b10,hi\n0b1111,woo')
+        # Test Octal
+        filter3 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False,
+                                         output_format='octal')
+        filter3.next_filter = self.sink
+        filter3.send(packet)
+        # Changed by Rob -- is this right?
+##        self.assertEquals(self.sink.results[-1].data, '01,hey\n02,hi\n017,woo')
+        self.assertEquals(self.sink.results[-1].data, 
+                          '\n01,hey\n02,hi\n017,woo')
+    
+        
+    def test_set_headers(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
+                                strs=['hey','hi','woo'],)
+        
+        filter1 = df.SetAttributesToData(write_field_headers=True,
+                                         attribute_list=['nums','strs'])
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 
+                          'nums,strs\n1,hey\n2,hi\n3,woo')
+
+    def test_with_line_nos(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,3], strs=['hey','hi','woo'])
+        
+        filter1 = df.SetAttributesToData(write_field_headers=True,
+                                         attribute_list=['nums','strs'],
+                                         line_numbers=True)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data,
+                          'line,nums,strs\n1,1,hey\n2,2,hi\n3,3,woo')
+        
 
 class TestSink(unittest.TestCase):
     
@@ -2469,10 +2601,11 @@ class TestWrap(unittest.TestCase):
 
 class TestWriteFile(unittest.TestCase):
     def setUp(self):
-        self.file_name_out = os.path.join(data_dir5, 'short.out')
+        self.file_name_out = os.path.join(data_dir5, 'short.tmp')
 
     def tearDown(self):
-        pass
+        if os.path.exists(self.file_name_out):
+            os.remove(self.file_name_out)
 
     def test_write_file(self):
         write_file = df.WriteFile(dest_file_name=self.file_name_out)
@@ -2516,126 +2649,40 @@ class TestWriteFile(unittest.TestCase):
         dir_content = os.listdir(os.path.dirname(self.file_name_out))
         expected_file_name = 'short.out.new'
         self.assertEqual(dir_content.count(expected_file_name), 1)
+        
+    def test_write_file_bzip2(self):
+        write_file = df.WriteFile(dest_file_name = self.file_name_out, \
+                                  compress='bzip')
+        test_data = 'abcdef'
+        write_file.send(dfb.DataPacket(data=test_data))
+        write_file.shut_down()
+        open_bz2 = bz2.BZ2File(self.file_name_out, mode='r')
+        self.assertEqual(open_bz2.read(), test_data)
+        open_bz2.close()
+        
+    def test_write_file_with_suffix_bzip2(self):
+        write_file = df.WriteFile(dest_file_name = self.file_name_out, \
+                                  compress='bzip')
+        write_file.name = 'writer'
+        suffix_messenger = dfb.MessageBottle('writer',
+                                             'change_write_suffix',
+                                             file_name_suffix='tmp')
+        string_1 = 'first file'
+        string_2 = 'second file'
+        data_to_write_1 = dfb.DataPacket(data=string_1)
+        data_to_write_2 = dfb.DataPacket(data=string_2)
+        write_file.send(data_to_write_1)
+        write_file.send(suffix_messenger)
+        write_file.send(data_to_write_2)
+        write_file.shut_down()
+        open_bz2_1 = bz2.BZ2File(self.file_name_out, mode='r')
+        open_bz2_2 = bz2.BZ2File(self.file_name_out + '.tmp', mode='r')
+        self.assertEqual(open_bz2_1.read(), string_1)
+        self.assertEqual(open_bz2_2.read(), string_2)
+        for fhandle in (open_bz2_1, open_bz2_2):
+            fhandle.close()
+        os.remove(self.file_name_out + '.tmp')
 
-        
-class TestSetAttributesToData(unittest.TestCase):
-    def setUp(self):
-        self.sink = df.Sink()
-
-    def tearDown(self):
-        pass
-    
-    def test_set_attributes_gets_attributes(self):
-        packet = dfb.DataPacket(data='')
-        packet.ATTR1 = 'foo'
-        packet.ATTR2 = 'bar'
-        packet.ATTR3 = 'wibble'
-        packet.ATTR4 = 3
-        packet.ATTR5 = 'dont deal with me'
-        
-        attributes_to_set = ['ATTR1', 'ATTR2', 'ATTR3', 'ATTR4']
-
-        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
-                                         separator='', 
-                                         eol='', write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 'foobarwibble3')
-
-    def test_set_attributes_empty(self):
-        packet = dfb.DataPacket(data='wibblefish')
-        
-        attributes_to_set = []
-
-        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
-                                         write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 'wibblefish')
-
-    def test_set_attributes_no_attributes_given(self):
-        packet = dfb.DataPacket(data='thecakeisalie')
-
-        filter1 = df.SetAttributesToData(write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 'thecakeisalie')
-        
-    def test_set_attributes_list_params(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
-                                strs=['hey','hi','woo'],)
-        
-        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        # Changed by Rob -- is this right?
-        ##self.assertEquals(self.sink.results[-1].data, '1,hey\n2,hi\n3,woo')
-        self.assertEquals(self.sink.results[-1].data, '\n1,hey\n2,hi\n3,woo')
-    
-    def test_set_attributes_list_params_using_diff_output_formats(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,15], 
-                                strs=['hey','hi','woo'],)
-        # Test Hex
-        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False,
-                                         output_format='hex')
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        # Changed by Rob -- is this right?
-##        self.assertEquals(self.sink.results[-1].data, '0x1,hey\n0x2,hi\n0xf,woo')
-        self.assertEquals(self.sink.results[-1].data, 
-                          '\n0x1,hey\n0x2,hi\n0xf,woo')
-        # Test Binary
-        filter2 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False,
-                                         output_format='binary')
-        filter2.next_filter = self.sink
-        filter2.send(packet)
-        # Changed by Rob -- is this right?
-##        self.assertEquals(self.sink.results[-1].data, '0b1,hey\n0b10,hi\n0b1111,woo')
-        self.assertEquals(self.sink.results[-1].data, 
-                          '\n0b1,hey\n0b10,hi\n0b1111,woo')
-        # Test Octal
-        filter3 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False,
-                                         output_format='octal')
-        filter3.next_filter = self.sink
-        filter3.send(packet)
-        # Changed by Rob -- is this right?
-##        self.assertEquals(self.sink.results[-1].data, '01,hey\n02,hi\n017,woo')
-        self.assertEquals(self.sink.results[-1].data, 
-                          '\n01,hey\n02,hi\n017,woo')
-    
-        
-    def test_set_headers(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
-                                strs=['hey','hi','woo'],)
-        
-        filter1 = df.SetAttributesToData(write_field_headers=True,
-                                         attribute_list=['nums','strs'])
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 
-                          'nums,strs\n1,hey\n2,hi\n3,woo')
-
-    def test_with_line_nos(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,3], strs=['hey','hi','woo'])
-        
-        filter1 = df.SetAttributesToData(write_field_headers=True,
-                                         attribute_list=['nums','strs'],
-                                         line_numbers=True)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data,
-                          'line,nums,strs\n1,1,hey\n2,2,hi\n3,3,woo')
-        
-                                
 
 
 if __name__ == '__main__':  #pragma: nocover
