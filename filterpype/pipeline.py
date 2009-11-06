@@ -798,7 +798,43 @@ class CopyFile(Pipeline):
         
     def close_filter(self):
         self.getf('write_file').close_output_file()
-                    
+        
+        
+class CopyFileCompression(Pipeline):
+    """Adds basic compression to the Copy File example above along with
+    callback environment in order to report on read progress.
+    
+    Source file name is optional, as it can also accept the filename / file
+    object as the data parameter within the first packet passed into the
+    pipeline.
+    
+    Uses callback and environ to make progress reports.
+    """
+    config = '''
+    [--main--]
+    ftype = copy_file_compression
+    keys = dest_file_name, source_file_name:none, callback:none, environ:none
+    
+    [read_batch]
+    source_file_name = ${source_file_name}
+    
+    [callback_read_progress]
+    ftype = callback_on_attribute
+    watch_attr = read_percent
+    callback = ${callback}
+    environ = ${environ}
+    watch_for_change = True
+    
+    [write_with_compression]
+    ftype = write_file
+    compress = bzip
+    dest_file_name = ${dest_file_name}
+    
+    [--route--]
+    read_batch >>>
+    callback_read_progress >>>
+    write_with_compression
+    '''
      
 class Refinery(Pipeline):
     pass
