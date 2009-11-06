@@ -2682,6 +2682,14 @@ class TestWriteFile(unittest.TestCase):
         for fhandle in (open_bz2_1, open_bz2_2):
             fhandle.close()
         os.remove(self.file_name_out + '.tmp')
+        
+    def test_write_file_none(self):
+        # Ensure None does not raise an exception.
+        write_file = df.WriteFile(dest_file_name = None)
+        string_1 = 'first file'
+        data_to_write_1 = dfb.DataPacket(data=string_1)
+        write_file.send(data_to_write_1)
+        write_file.shut_down()
 
 
 
