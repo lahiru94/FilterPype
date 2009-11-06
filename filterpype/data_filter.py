@@ -2570,12 +2570,37 @@ class WriteFile(dfb.DataFilter):
         else:
             file_name = os.extsep.join([self.dest_file_name, self.write_suffix])
             return file_name
+    
+    def init_filter(self):
+        self.enabled = True
+        if self.dest_file_name is None:
+            print "'%s' not writing any data as dest_file_name is None" % self.name
+            #return
+            self.enabled = False
+
 
     def _write_data(self, data):     # TO-DO
         ##if True:  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             ##data = data.encode('utf-8')
 
         if self.do_write_file:
+            # TODO: Glen to write a nice little test to ensure this works 
+            
+            # this feature will allow us to have lots of different write_file
+            # filters in a pipeline (very useful for testing etc) but also
+            # have the ability only write out data to the write_file filters
+            # that we need to. To do so, set dest_file_name to None (as a
+            # default key in the pipeline) to disable the writing to that file.
+            
+            # do this in init_filter()
+            #if self.dest_file_name is None:
+                #print "'%s' not writing any data as dest_file_name is None" % self.name
+                ##return
+                #self.enabled = False
+
+            if not self.enabled:
+                return
+                
             try:
                 if self.compress:
                     self.out_file.write(self.compressor.compress(data))
@@ -2586,6 +2611,7 @@ class WriteFile(dfb.DataFilter):
                     mode2 = 'b'
                 else:
                     mode2 = ''
+                
                 if self.append:
                     self.out_file = open(self._get_dest_file_name(), 'a' + mode2)
                 else:
