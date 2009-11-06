@@ -2361,7 +2361,7 @@ class SetAttributesToData(dfb.DataFilter):
                     # Otherwise, treat it like a literal value
                     value = attr_val                    
             except AttributeError:
-                raise AttributeError, "There is no such attribute:", attribute
+                raise AttributeError, "There is no such attribute:" + attribute
             try:
                 value.append('')
                 value.pop()
