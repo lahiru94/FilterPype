@@ -1328,8 +1328,7 @@ class ReadBatch(dfb.DataFilter):
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
-            ##'results_callback:none', 'environ:none',  # callback function removed to CallbackOnAttribute
-            'file_size:none']
+            'file_size']
 
     def _ensure_file_closed(self):
         """Check that the file has been closed, or close it.
@@ -1376,69 +1375,29 @@ class ReadBatch(dfb.DataFilter):
             return -1
         else:
             if self.file_size is None:
-                # try to get the file size from the environ
+                ### try to get the file size from the environ
+                ##try:
+                    ##self.file_size = self.environ['file_size']
+                ##except (TypeError, KeyError, AttributeError):
+                    ### environ doesn't have the file size in it
+                    ### or the environ hasn't been set (is None)
+                    ### try to get it from the file object
                 try:
-                    self.file_size = self.environ['file_size']
-                except (KeyError, AttributeError):
-                    # environ doesn't have the file size in it
-                    # or the environ hasn't been set (is None)
-                    # try to get it from the file object
-                    try:
-                        self.file_size = os.path.getsize(self.file1.name)
-                    except OSError:
-                        # cannot get file size for raw usb devices
-                        raise dfb.FilterAttributeError(\
-"file_size could not be obtained. Required in 'environ' or as a "+
-"filter attribute. If both fail, os.path.getsize('%s') is queried." \
-% self.file1.name)
+                    self.file_size = os.path.getsize(self.file1.name)
+                except OSError:
+                    # cannot get file size for raw usb devices
+                    raise dfb.FilterAttributeError(\
+                      "file_size could not be obtained. Required as a filter "+
+                      "attribute. If not, os.path.getsize('%s') is queried." \
+                      % self.file1.name)
+            try:
+                progress = int(bytes_read * 100.0 / self.file_size)
+            except ZeroDivisionError, err:
+                print "Progress cannot be estimated as self.file_size is '%s'. %s" % (self.file_size, err)
 
-            return int(bytes_read * 100.0 / self.file_size)
+            return progress
 
 
-    ##def _report_progress(self, bytes_read='unknown'):
-        ##"""Use the callback, if one is available, to report how much of the
-        ##file has been read. This can be passed in explicitly
-        ##"""
-        ##if not self.environ:
-            ##return
-####        print '**8055** environ =', self.environ    
-####           hasattr(self, 'file_size') and \
-
-        ##if hasattr(self, 'results_callback') and \
-            ##hasattr(self, 'environ') and self.environ != '${environ}':
-
-            ####file_size = self.environ['file_size']
-            ##if bytes_read == 'unknown':
-                ##percent = -1
-####                self.environ['read_percent'] = -1
-            ##else:
-                ##if self.file_size is None:
-                    ### try to get the file size from the environ
-                    ##try:
-                        ##self.file_size = self.environ['file_size']
-                    ##except KeyError:
-                        ### environ doesn't have the file size in it
-                        ### try to get it from the file object
-                        ##try:
-                            ##self.file_size = os.path.getsize(self.file1.name)
-                        ##except OSError:
-                            ### cannot get file size for raw usb devices
-                            ##raise dfb.FilterAttributeError(\
-##"file_size could not be obtained. Required in 'environ' or as a "+
-##"filter attribute. If both fail, os.path.getsize('%s') is queried." \
-##% self.file1.name)
-
-                ##percent = int(bytes_read * 100.0 / self.file_size)
-            ##if percent != self.percent_read:
-                ##self.environ['bytes_read'] = bytes_read
-                ##self.environ['read_percent'] = percent
-                ####print '**8060** %d of %d bytes_read, = %d%% progress' % (
-                    ####bytes_read, file_size, percent)
-
-####            msg = '**8040** read_progress results_callback, environ = "%s"'
-####            print msg % self.environ             
-                ##self.results_callback('read_progress', **self.environ)
-                ##self.percent_read = percent
 
     def close_filter(self):
 ##        if self.refinery:
@@ -1506,10 +1465,10 @@ class ReadBatch(dfb.DataFilter):
 ## Once a pipeline has been shut down, it can't be reopened.
 ##        self.shutting_down = False  # TO-DO  self.refinery.shutting_down = False
         ##self.percent_read = None
-        self.file_size = None
+        ##self.file_size = None
 
 
-class ReadBytes:
+class ReadBytes(dfb.DataFilter):
     """ Simple ReadBytes filter to read files using bytes
 
         Notes about keys:
@@ -1525,6 +1484,8 @@ class ReadBytes:
                  0 - Start of file
                  1 - End of file
 
+                 
+        **TODO: Include the file_size for percentage read like in ReadBatch
     """
     ftype = 'read_bytes'
     keys = ['source_file_name', 'start_byte:0', 'size:-1', 'block_size:2048',
