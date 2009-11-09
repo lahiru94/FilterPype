@@ -1304,12 +1304,12 @@ class PrintParam(dfb.DataFilter):
             self.pipeline_name = 'no_pipeline'
 
 
-class ReadFileBatch(dfb.DataFilter):
+class ReadBatch(dfb.DataFilter):
     """Chop file up into string blocks to pass inside packets into pipeline.
 
     We need a file object to read from. This can be provided directly or
     indirectly, with either the open file object or the file name being
-    sent to ReadFileBatch.
+    sent to ReadBatch.
 
     This can also be done by setting the source_file_name as a fixed
     parameter for the filter, but this stops more than one file being read and
@@ -1326,7 +1326,7 @@ class ReadFileBatch(dfb.DataFilter):
           originally supplied with. In other words, use this at the start of
           a pipeline or in an external wrapper pipeline.
     """  
-    ftype = 'read_file_batch'
+    ftype = 'read_batch'
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
@@ -1373,7 +1373,7 @@ class ReadFileBatch(dfb.DataFilter):
         If no bytes_read provided or file_size has been set to -1 then -1 is
         returned.
         """
-        # TO-DO  I think this extends the ReadFileBatch filter too much. We could
+        # TO-DO  I think this extends the ReadBatch filter too much. We could
         # handle file_size in a separate filter, or at least a descendant.
         if bytes_read == 'unknown' or self.file_size == -1:
             return -1
@@ -1518,7 +1518,7 @@ class ReadFileBatch(dfb.DataFilter):
         pass
 
 
-class ReadFileBytes(dfb.DataFilter):
+class ReadBytes(dfb.DataFilter):
     """ Simple ReadFile filter to read files using bytes
 
         Notes about keys:
@@ -1535,7 +1535,7 @@ class ReadFileBytes(dfb.DataFilter):
                  1 - End of file
 
     """
-    ftype = 'read_file_bytes'
+    ftype = 'read_bytes'
     keys = ['source_file_name', 'start_byte:0', 'size:-1', 'block_size:2048',
             'whence:0', 'ack:false']
 
@@ -2544,7 +2544,7 @@ class WriteFile(dfb.DataFilter):
     output file until after the initialisation of the generator.
 
     So how do we know when the file has finished and needs closing? The input
-    to read_file_batch could be many files, all to be written to one output
+    to read_batch could be many files, all to be written to one output
     file. We can't use a timeout, so closing needs to be done explicitly, or
     via the closure of the pipeline.
 
