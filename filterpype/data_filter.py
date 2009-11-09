@@ -1377,23 +1377,27 @@ class ReadFileBatch(dfb.DataFilter):
             return -1
         else:
             if self.file_size is None:
-                # try to get the file size from the environ
+                ### try to get the file size from the environ
+                ##try:
+                    ##self.file_size = self.environ['file_size']
+                ##except (TypeError, KeyError, AttributeError):
+                    ### environ doesn't have the file size in it
+                    ### or the environ hasn't been set (is None)
+                    ### try to get it from the file object
                 try:
-                    self.file_size = self.environ['file_size']
-                except (KeyError, AttributeError):
-                    # environ doesn't have the file size in it
-                    # or the environ hasn't been set (is None)
-                    # try to get it from the file object
-                    try:
-                        self.file_size = os.path.getsize(self.file1.name)
-                    except OSError:
-                        # cannot get file size for raw usb devices
-                        raise dfb.FilterAttributeError(\
-"file_size could not be obtained. Required in 'environ' or as a "+
-"filter attribute. If both fail, os.path.getsize('%s') is queried." \
-% self.file1.name)
+                    self.file_size = os.path.getsize(self.file1.name)
+                except OSError:
+                    # cannot get file size for raw usb devices
+                    raise dfb.FilterAttributeError(\
+                      "file_size could not be obtained. Required as a filter "+
+                      "attribute. If not, os.path.getsize('%s') is queried." \
+                      % self.file1.name)
+            try:
+                progress = int(bytes_read * 100.0 / self.file_size)
+            except ZeroDivisionError, err:
+                print "Progress cannot be estimated as self.file_size is '%s'. %s" % (self.file_size, err)
 
-            return int(bytes_read * 100.0 / self.file_size)
+            return progress
 
 
     ##def _report_progress(self, bytes_read='unknown'):
@@ -1507,7 +1511,7 @@ class ReadFileBatch(dfb.DataFilter):
 ## Once a pipeline has been shut down, it can't be reopened.
 ##        self.shutting_down = False  # TO-DO  self.refinery.shutting_down = False
         ##self.percent_read = None
-        self.file_size = None
+        ##self.file_size = None
 
 
 class ReadFileBytes(dfb.DataFilter):
@@ -1532,6 +1536,7 @@ class ReadFileBytes(dfb.DataFilter):
             'whence:0', 'ack:false']
 
     def filter_data(self, packet):
+        packet.FINAL = False
         file_desc = open(self.source_file_name, 'r')
         total_file_size = os.path.getsize(self.source_file_name)
         counter = 0
@@ -1574,13 +1579,16 @@ class ReadFileBytes(dfb.DataFilter):
         # Send a 'FINAL' packet for things that may want to watch and see
         # when a read has been finished.
         # Only send once so the pipeline stops recieving packets properly
-        if self.ack:
-            self.ack = True
+        if self.final and self.ack:
+            ##self.ack = False
+            self.final = False
             pkt_fin = packet.clone()
             pkt_fin.data = ''
-            pkt_fin.FINAL = 1
-            self.send_on(pkt_snd)
+            pkt_fin.FINAL = True
+            self.send_on(pkt_fin)
 
+    def init_filter(self):
+        self.final = True
 
 class ReadLines(dfb.DataFilter):
     """Read lines of a text file, in normal or reversed order.
@@ -2358,7 +2366,7 @@ class SetAttributesToData(dfb.DataFilter):
                     # Otherwise, treat it like a literal value
                     value = attr_val                    
             except AttributeError:
-                raise AttributeError, "There is no such attribute:", attribute
+                raise AttributeError, "There is no such attribute:" + attribute
             try:
                 value.append('')
                 value.pop()
@@ -2540,16 +2548,22 @@ class WriteFile(dfb.DataFilter):
     and the packet attribute 'packet.file_name_suffix'
     the current file will be closed and a new one will
     be opened with the suffix appended to it.
+    
+    compress : currenly only 'bzip' is enabled (true / bzip resolves to bzip2)
     """
     ftype = 'write_file'
     keys = ['dest_file_name', 'append:False', 'binary_mode:true', 
-            'do_write_file:True']
+            'do_write_file:True', 'compress:none']
 
     def _ensure_file_closed(self):
         """Check that the file has been closed, or close it.
         """
         if hasattr(self, 'out_file'):
             if self.out_file and not self.out_file.closed:
+                # if compression, flush any remaining data
+                if self.compress:
+                    # NB: Assumes all compressor types have a flush method
+                    self.out_file.write(self.compressor.flush())
                 self.out_file.close()
         else:
             self.out_file = None
@@ -2560,26 +2574,66 @@ class WriteFile(dfb.DataFilter):
         else:
             file_name = os.extsep.join([self.dest_file_name, self.write_suffix])
             return file_name
+    
+    def init_filter(self):
+        self.enabled = True
+        if self.dest_file_name is None:
+            print "'%s' not writing any data as dest_file_name is None" % self.name
+            #return
+            self.enabled = False
+
 
     def _write_data(self, data):     # TO-DO
         ##if True:  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             ##data = data.encode('utf-8')
 
         if self.do_write_file:
+            # TODO: Glen to write a nice little test to ensure this works 
+            
+            # this feature will allow us to have lots of different write_file
+            # filters in a pipeline (very useful for testing etc) but also
+            # have the ability only write out data to the write_file filters
+            # that we need to. To do so, set dest_file_name to None (as a
+            # default key in the pipeline) to disable the writing to that file.
+            
+            # do this in init_filter()
+            #if self.dest_file_name is None:
+                #print "'%s' not writing any data as dest_file_name is None" % self.name
+                ##return
+                #self.enabled = False
+
+            if not self.enabled:
+                return
+                
             try:
-                self.out_file.write(data)
+                if self.compress:
+                    self.out_file.write(self.compressor.compress(data))
+                else:
+                    self.out_file.write(data)
             except AttributeError:
                 if self.binary_mode:
                     mode2 = 'b'
                 else:
                     mode2 = ''
+                
                 if self.append:
                     self.out_file = open(self._get_dest_file_name(), 'a' + mode2)
                 else:
                     self.out_file = open(self._get_dest_file_name(), 'w' + mode2)
                 ##print '**10900** Writing to file: ...%s' % (
                     ##self._get_dest_file_name()[-55:])
-                self.out_file.write(data)
+                if self.compress in ('bzip', 'bzip2', True):
+                    self.compressor = bz2.BZ2Compressor()
+                elif self.compress:
+                    raise dfb.FilterAttributeError, "Compression '%s' not supported" % self.compress
+                
+                if self.compress:
+                    self.out_file.write(self.compressor.compress(data))
+                else:
+                    print "123123 Writing to new file: %s" % os.path.basename(self.out_file.name)
+                    self.out_file.write(data)
+                
+                ##self.out_file.write(data)
 
     def close_filter(self):
         self._ensure_file_closed()
@@ -2592,7 +2646,7 @@ class WriteFile(dfb.DataFilter):
             self.out_file.isatty
         except AttributeError:
             return
-        if self.out_file.name != self.dest_file_name:
+        if self.out_file.name != self._get_dest_file_name(): ##self.dest_file_name:
             self._ensure_file_closed()
             self.out_file = None
 

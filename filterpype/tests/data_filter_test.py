@@ -35,6 +35,7 @@ import timeit
 import os
 import shutil
 import mock
+import bz2
 
 import filterpype.data_fltr_base as dfb
 import filterpype.data_filter as df
@@ -495,6 +496,20 @@ class TestBZip2Filter(unittest.TestCase):
         # Flush data from compression buffer
         self.bzip_compressor.shut_down()
         self.assertEquals('|'.join(self.sink.all_data), '||' + input2)  # TO-DO why ||??
+    
+    def test_bzip_compress_to_file(self):
+        dest_file_name = os.path.join(data_dir5, 'compressed.tmp')
+        write_file = df.WriteFile(dest_file_name=dest_file_name)
+        self.bzip_compressor.next_filter = write_file
+        input3 = 'abcdef'
+        self.bzip_compressor.send(dfb.DataPacket(input3))
+        input4 = 'efghc'
+        self.bzip_compressor.send(dfb.DataPacket(input4))
+        self.bzip_compressor.shut_down()
+        out_file_handle = bz2.BZ2File(dest_file_name, 'r')
+        self.assertEqual(out_file_handle.read(), input3 + input4)
+        out_file_handle.close()
+        os.remove(dest_file_name)
 
         
 class TestCalcSlope(unittest.TestCase):
@@ -1227,7 +1242,7 @@ class TestDistillHeader(unittest.TestCase):
         self.assertEquals(len(self.main_sink.results), 1)
         
 
-class TestReadFileBatch(unittest.TestCase):
+class TestReadBatch(unittest.TestCase):
 
     def setUp(self):
         self.sink = df.Sink()
@@ -1242,34 +1257,34 @@ class TestReadFileBatch(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_read_file(self):
-        read_file1 = df.ReadFileBatch(batch_size=10)
-        read_file1.next_filter = self.sink
-        read_file1.send(dfb.DataPacket(self.file_name1))
-        read_file1.shut_down()
+    def test_read_batch(self):
+        read_batch1 = df.ReadBatch(batch_size=10)
+        read_batch1.next_filter = self.sink
+        read_batch1.send(dfb.DataPacket(self.file_name1))
+        read_batch1.shut_down()
         self.assertEquals(self.sink.results[0].data, 'one two th')
         self.assertEquals(self.sink.results[1].data, 'ree four f')
         self.assertEquals(self.sink.results[2].data, 'ive six')
         
-    def test_read_file_with_file_obj(self):
-        read_file1 = df.ReadFileBatch(batch_size=10)
-        read_file1.next_filter = self.sink
+    def test_read_batch_with_file_obj(self):
+        read_batch1 = df.ReadBatch(batch_size=10)
+        read_batch1.next_filter = self.sink
         file_obj = open(self.file_name1, 'rb')
-        read_file1.send(dfb.DataPacket(file_obj))
-        read_file1.shut_down()
+        read_batch1.send(dfb.DataPacket(file_obj))
+        read_batch1.shut_down()
         self.assertEquals(self.sink.results[0].data, 'one two th')
         self.assertEquals(self.sink.results[1].data, 'ree four f')
         self.assertEquals(self.sink.results[2].data, 'ive six')
 
-    def test_read_file_with_two_file_objs(self):
-        read_file1 = df.ReadFileBatch(batch_size=10)
-        read_file1.next_filter = self.sink
+    def test_read_batch_with_two_file_objs(self):
+        read_batch1 = df.ReadBatch(batch_size=10)
+        read_batch1.next_filter = self.sink
         file_obj1 = open(self.file_name1, 'rb')
-        read_file1.send(dfb.DataPacket(file_obj1))
+        read_batch1.send(dfb.DataPacket(file_obj1))
         file_obj2 = open(self.file_name1, 'rb')
-        read_file1.batch_size = 7
-        read_file1.send(dfb.DataPacket(file_obj2))
-        read_file1.shut_down()
+        read_batch1.batch_size = 7
+        read_batch1.send(dfb.DataPacket(file_obj2))
+        read_batch1.shut_down()
         self.assertEquals(self.sink.results[0].data, 'one two th')
         self.assertEquals(self.sink.results[1].data, 'ree four f')
         self.assertEquals(self.sink.results[2].data, 'ive six')
@@ -1278,76 +1293,76 @@ class TestReadFileBatch(unittest.TestCase):
         self.assertEquals(self.sink.results[5].data, 'four fi')
         self.assertEquals(self.sink.results[6].data, 've six')
 
-    def test_read_file_sending_file_name(self):
-        read_file2 = df.ReadFileBatch(batch_size=1000)
+    def test_read_batch_sending_file_name(self):
+        read_batch2 = df.ReadBatch(batch_size=1000)
         sink2 = df.Sink()
-        read_file2.next_filter = sink2
-        read_file2.send(dfb.DataPacket(self.file_name1))
-        read_file2.shut_down()
+        read_batch2.next_filter = sink2
+        read_batch2.send(dfb.DataPacket(self.file_name1))
+        read_batch2.shut_down()
         self.assertEquals(sink2.results[0].data, 'one two three four five six')
         self.assertEquals(sink2.results[0].source_file_name, self.file_name1)
 
-    def test_read_file_using_default_batch_size(self):
-        read_file2 = df.ReadFileBatch()
+    def test_read_batch_using_default_batch_size(self):
+        read_batch2 = df.ReadBatch()
         sink2 = df.Sink()
-        read_file2.next_filter = sink2
-        read_file2.send(dfb.DataPacket(self.file_name1))
-        read_file2.shut_down()
+        read_batch2.next_filter = sink2
+        read_batch2.send(dfb.DataPacket(self.file_name1))
+        read_batch2.shut_down()
         self.assertEquals(sink2.results[0].data, 'one two three four five six')
         self.assertEquals(sink2.results[0].source_file_name, self.file_name1)
 
-    def test_read_file_with_file_name_attribute(self):
-        read_file2 = df.ReadFileBatch(source_file_name=self.file_name1,
+    def test_read_batch_with_file_name_attribute(self):
+        read_batch2 = df.ReadBatch(source_file_name=self.file_name1,
                                  batch_size=1000)
         sink2 = df.Sink()
-        read_file2.next_filter = sink2
-        read_file2.send(dfb.DataPacket(None))
-        read_file2.shut_down()
+        read_batch2.next_filter = sink2
+        read_batch2.send(dfb.DataPacket(None))
+        read_batch2.shut_down()
         self.assertEquals(sink2.results[0].data, 'one two three four five six')
         self.assertEquals(sink2.results[0].source_file_name, self.file_name1)
         
-    def test_read_file_with_initial_skip(self):
-        read_file3 = df.ReadFileBatch(batch_size=10, initial_skip=1)
+    def test_read_batch_with_initial_skip(self):
+        read_batch3 = df.ReadBatch(batch_size=10, initial_skip=1)
         sink3 = df.Sink()
-        read_file3.next_filter = sink3
-        read_file3.send(dfb.DataPacket(self.file_name1))
-        read_file3.shut_down()
+        read_batch3.next_filter = sink3
+        read_batch3.send(dfb.DataPacket(self.file_name1))
+        read_batch3.shut_down()
         self.assertEquals(sink3.results[0].data, 'ree four f')
         self.assertEquals(sink3.results[1].data, 'ive six')
-        read_file4 = df.ReadFileBatch(batch_size=3, initial_skip=4)
+        read_batch4 = df.ReadBatch(batch_size=3, initial_skip=4)
         sink4 = df.Sink()
-        read_file4.next_filter = sink4
-        read_file4.send(dfb.DataPacket(self.file_name1))
-        read_file4.shut_down()
+        read_batch4.next_filter = sink4
+        read_batch4.send(dfb.DataPacket(self.file_name1))
+        read_batch4.shut_down()
         self.assertEquals(sink4.results[-5].data, 'e f')
         self.assertEquals(sink4.results[-4].data, 'our')
         self.assertEquals(sink4.results[-3].data, ' fi')
         self.assertEquals(sink4.results[-2].data, 've ')
         self.assertEquals(sink4.results[-1].data, 'six')
 
-    def test_read_file_with_max_reads(self):
+    def test_read_batch_with_max_reads(self):
         max_reads = 2
-        read_file1 = df.ReadFileBatch(batch_size=10, max_reads=max_reads)
-        read_file1.next_filter = self.sink
-        read_file1.send(dfb.DataPacket(self.file_name1))
-        read_file1.shut_down()
+        read_batch1 = df.ReadBatch(batch_size=10, max_reads=max_reads)
+        read_batch1.next_filter = self.sink
+        read_batch1.send(dfb.DataPacket(self.file_name1))
+        read_batch1.shut_down()
         self.assertEquals(len(self.sink.results), max_reads)
         self.assertEquals(self.sink.results[0].data, 'one two th')
         self.assertEquals(self.sink.results[1].data, 'ree four f')
 
         max_reads = 0  # No limit
         sink5 = df.Sink()
-        read_file2 = df.ReadFileBatch(batch_size=10, max_reads=max_reads)
-        read_file2.next_filter = sink5
-        read_file2.send(dfb.DataPacket(self.file_name1))
-        read_file2.shut_down()
+        read_batch2 = df.ReadBatch(batch_size=10, max_reads=max_reads)
+        read_batch2.next_filter = sink5
+        read_batch2.send(dfb.DataPacket(self.file_name1))
+        read_batch2.shut_down()
         self.assertEquals(len(sink5.results), 3)
         self.assertEquals(sink5.results[0].data, 'one two th')
         self.assertEquals(sink5.results[1].data, 'ree four f')
         self.assertEquals(sink5.results[2].data, 'ive six')
 
 
-class TestReadFileBytes(unittest.TestCase):
+class TestReadBytes(unittest.TestCase):
     def setUp(self):
         self.sink = df.Sink()
         self.file_name1 = os.path.join(data_dir5, 'short2.dat')
@@ -1361,7 +1376,7 @@ class TestReadFileBytes(unittest.TestCase):
         pass
 
     def test_read_start(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=0,
                                        size=20, block_size=20)
         read_filter.next_filter = self.sink
@@ -1371,7 +1386,7 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(self.sink.results[-1].data, 'one two three four f')
     
     def test_read_end(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=-20, size=-1, whence=1)
         read_filter.next_filter = self.sink
         packet = dfb.DataPacket(data='')
@@ -1380,7 +1395,7 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(self.sink.results[-1].data, 'ight nine ten eleven')
     
     def test_read_middle(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=10, size=38, block_size=19)
         read_filter.next_filter = self.sink
         packet = dfb.DataPacket(data='')
@@ -1390,7 +1405,7 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(self.sink.results[1].data, 'even eight nine ten')
     
     def test_read_all(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=0, size=-1)
         read_filter.next_filter = self.sink
         packet = dfb.DataPacket(data='')
@@ -1401,7 +1416,7 @@ class TestReadFileBytes(unittest.TestCase):
             'one two three four five six seven eight nine ten eleven')
     
     def test_read_chunk_from_end(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=-20, size=10, whence=1)
         read_filter.next_filter = self.sink
         packet = dfb.DataPacket(data='')
@@ -1410,7 +1425,7 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(self.sink.results[-1].data, 'ight nine ')
 
     def test_read_multiple_chunks_from_end(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=-40, size=-1, whence=1,
                                        block_size=5)
         read_filter.next_filter = self.sink
@@ -1421,7 +1436,7 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(self.sink.results[-1].data, 'leven')
     
     def test_read_too_much(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=0, size=30000)
         read_filter.next_filter = self.sink
         packet = dfb.DataPacket(data='')
@@ -1432,7 +1447,7 @@ class TestReadFileBytes(unittest.TestCase):
             'one two three four five six seven eight nine ten eleven')
 
     def test_stops_reading_at_expected_point(self):
-        read_filter = df.ReadFileBytes(source_file_name=self.file_name1,
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
                                        start_byte=0, size=15, block_size=9)
         read_filter.next_filter = self.sink
         packet = dfb.DataPacket(data='')
@@ -1440,8 +1455,26 @@ class TestReadFileBytes(unittest.TestCase):
         self.assertEquals(len(self.sink.results), 2)
         self.assertEquals(self.sink.results[0].data, 'one two t')
         self.assertEquals(self.sink.results[1].data, 'hree f')
-        
-        
+    
+    def test_reads_end_of_file_with_large_batch_size(self):
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
+                                       start_byte=0, size=55, block_size=15)
+        read_filter.next_filter = self.sink
+        packet = dfb.DataPacket(data='')
+        read_filter.send(packet)
+        self.assertEquals(len(self.sink.results), 4)
+        self.assertEquals(self.sink.results[-1].data, 'ten eleven')
+    
+    def test_read_small_data_bigger_total_block(self):
+        read_filter = df.ReadBytes(source_file_name=self.file_name1,
+                                       start_byte=0,
+                                       size=20, block_size=7)
+        read_filter.next_filter = self.sink
+        packet = dfb.DataPacket(data='')
+        read_filter.send(packet)
+        self.assertEquals(len(self.sink.results), 3)
+        self.assertEquals(self.sink.results[-1].data, 'four f')
+
 class SomePythonFunctions(ppln.Pipeline):
 
     config = '''
@@ -1625,7 +1658,7 @@ class TestEmbedPython(unittest.TestCase):
     
     def test_python_embedding_handles_percent_literals(self):
         # Test to make sure that the python embedding handles when a filter key 
-        # literal value begins with a % character. EG, read_file:%OUTFILE.out 
+        # literal value begins with a % character. EG, read_batch:%OUTFILE.out 
         # when we want to read from a file called "%OUTFILE.out"
         
         config = '''
@@ -2136,6 +2169,123 @@ class TestSeqPacket(unittest.TestCase):
         ##self.assertEquals(self.sink.results[-1].seq_num, 5)
         ##self.assertEquals(self.sink.plug_size, 3.5)
 
+class TestSetAttributesToData(unittest.TestCase):
+    def setUp(self):
+        self.sink = df.Sink()
+
+    def tearDown(self):
+        pass
+    
+    def test_set_attributes_gets_attributes(self):
+        packet = dfb.DataPacket(data='')
+        packet.ATTR1 = 'foo'
+        packet.ATTR2 = 'bar'
+        packet.ATTR3 = 'wibble'
+        packet.ATTR4 = 3
+        packet.ATTR5 = 'dont deal with me'
+        
+        attributes_to_set = ['ATTR1', 'ATTR2', 'ATTR3', 'ATTR4']
+
+        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
+                                         separator='', 
+                                         eol='', write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 'foobarwibble3')
+
+    def test_set_attributes_empty(self):
+        packet = dfb.DataPacket(data='wibblefish')
+        
+        attributes_to_set = []
+
+        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
+                                         write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 'wibblefish')
+
+    def test_set_attributes_no_attributes_given(self):
+        packet = dfb.DataPacket(data='thecakeisalie')
+
+        filter1 = df.SetAttributesToData(write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 'thecakeisalie')
+        
+    def test_set_attributes_list_params(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
+                                strs=['hey','hi','woo'],)
+        
+        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        # Changed by Rob -- is this right?
+        ##self.assertEquals(self.sink.results[-1].data, '1,hey\n2,hi\n3,woo')
+        self.assertEquals(self.sink.results[-1].data, '\n1,hey\n2,hi\n3,woo')
+    
+    def test_set_attributes_list_params_using_diff_output_formats(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,15], 
+                                strs=['hey','hi','woo'],)
+        # Test Hex
+        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False,
+                                         output_format='hex')
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        # Changed by Rob -- is this right?
+##        self.assertEquals(self.sink.results[-1].data, '0x1,hey\n0x2,hi\n0xf,woo')
+        self.assertEquals(self.sink.results[-1].data, 
+                          '\n0x1,hey\n0x2,hi\n0xf,woo')
+        # Test Binary
+        filter2 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False,
+                                         output_format='binary')
+        filter2.next_filter = self.sink
+        filter2.send(packet)
+        # Changed by Rob -- is this right?
+##        self.assertEquals(self.sink.results[-1].data, '0b1,hey\n0b10,hi\n0b1111,woo')
+        self.assertEquals(self.sink.results[-1].data, 
+                          '\n0b1,hey\n0b10,hi\n0b1111,woo')
+        # Test Octal
+        filter3 = df.SetAttributesToData(attribute_list=['nums','strs'],
+                                         write_field_headers=False,
+                                         output_format='octal')
+        filter3.next_filter = self.sink
+        filter3.send(packet)
+        # Changed by Rob -- is this right?
+##        self.assertEquals(self.sink.results[-1].data, '01,hey\n02,hi\n017,woo')
+        self.assertEquals(self.sink.results[-1].data, 
+                          '\n01,hey\n02,hi\n017,woo')
+    
+        
+    def test_set_headers(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
+                                strs=['hey','hi','woo'],)
+        
+        filter1 = df.SetAttributesToData(write_field_headers=True,
+                                         attribute_list=['nums','strs'])
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data, 
+                          'nums,strs\n1,hey\n2,hi\n3,woo')
+
+    def test_with_line_nos(self):
+        packet = dfb.DataPacket(data = '',nums=[1,2,3], strs=['hey','hi','woo'])
+        
+        filter1 = df.SetAttributesToData(write_field_headers=True,
+                                         attribute_list=['nums','strs'],
+                                         line_numbers=True)
+        filter1.next_filter = self.sink
+        filter1.send(packet)
+        
+        self.assertEquals(self.sink.results[-1].data,
+                          'line,nums,strs\n1,1,hey\n2,2,hi\n3,3,woo')
+        
 
 class TestSink(unittest.TestCase):
     
@@ -2451,21 +2601,22 @@ class TestWrap(unittest.TestCase):
 
 class TestWriteFile(unittest.TestCase):
     def setUp(self):
-        self.file_name_out = os.path.join(data_dir5, 'short.out')
+        self.file_name_out = os.path.join(data_dir5, 'short.tmp')
 
     def tearDown(self):
-        pass
+        if os.path.exists(self.file_name_out):
+            os.remove(self.file_name_out)
 
     def test_write_file(self):
         write_file = df.WriteFile(dest_file_name=self.file_name_out)
         packet = dfb.DataPacket(data='abcdef')
         write_file.send(packet)
         write_file.shut_down()
-        read_file2 = df.ReadFileBatch(batch_size=0x2000)
+        read_batch2 = df.ReadBatch(batch_size=0x2000)
         sink2 = df.Sink()
-        read_file2.next_filter = sink2
-        read_file2.send(dfb.DataPacket(self.file_name_out))
-        read_file2.shut_down()
+        read_batch2.next_filter = sink2
+        read_batch2.send(dfb.DataPacket(self.file_name_out))
+        read_batch2.shut_down()
         self.assertEquals(sink2.results[0].data, 'abcdef')
 
     def test_write_file_append(self):
@@ -2478,11 +2629,11 @@ class TestWriteFile(unittest.TestCase):
         packet2 = dfb.DataPacket(data='ghijkl')
         write_file2.send(packet2)
         write_file2.shut_down()
-        read_file2 = df.ReadFileBatch(batch_size=0x2000)
+        read_batch2 = df.ReadBatch(batch_size=0x2000)
         sink2 = df.Sink()
-        read_file2.next_filter = sink2
-        read_file2.send(dfb.DataPacket(self.file_name_out))
-        read_file2.shut_down()
+        read_batch2.next_filter = sink2
+        read_batch2.send(dfb.DataPacket(self.file_name_out))
+        read_batch2.shut_down()
         self.assertEquals(sink2.results[0].data, 'abcdefghijkl')
         
     def test_write_file_with_suffix(self):
@@ -2498,126 +2649,48 @@ class TestWriteFile(unittest.TestCase):
         dir_content = os.listdir(os.path.dirname(self.file_name_out))
         expected_file_name = 'short.out.new'
         self.assertEqual(dir_content.count(expected_file_name), 1)
+        
+    def test_write_file_bzip2(self):
+        write_file = df.WriteFile(dest_file_name = self.file_name_out, \
+                                  compress='bzip')
+        test_data = 'abcdef'
+        write_file.send(dfb.DataPacket(data=test_data))
+        write_file.shut_down()
+        open_bz2 = bz2.BZ2File(self.file_name_out, mode='r')
+        self.assertEqual(open_bz2.read(), test_data)
+        open_bz2.close()
+        
+    def test_write_file_with_suffix_bzip2(self):
+        write_file = df.WriteFile(dest_file_name = self.file_name_out, \
+                                  compress='bzip')
+        write_file.name = 'writer'
+        suffix_messenger = dfb.MessageBottle('writer',
+                                             'change_write_suffix',
+                                             file_name_suffix='tmp')
+        string_1 = 'first file'
+        string_2 = 'second file'
+        data_to_write_1 = dfb.DataPacket(data=string_1)
+        data_to_write_2 = dfb.DataPacket(data=string_2)
+        write_file.send(data_to_write_1)
+        write_file.send(suffix_messenger)
+        write_file.send(data_to_write_2)
+        write_file.shut_down()
+        open_bz2_1 = bz2.BZ2File(self.file_name_out, mode='r')
+        open_bz2_2 = bz2.BZ2File(self.file_name_out + '.tmp', mode='r')
+        self.assertEqual(open_bz2_1.read(), string_1)
+        self.assertEqual(open_bz2_2.read(), string_2)
+        for fhandle in (open_bz2_1, open_bz2_2):
+            fhandle.close()
+        os.remove(self.file_name_out + '.tmp')
+        
+    def test_write_file_none(self):
+        # Ensure None does not raise an exception.
+        write_file = df.WriteFile(dest_file_name = None)
+        string_1 = 'first file'
+        data_to_write_1 = dfb.DataPacket(data=string_1)
+        write_file.send(data_to_write_1)
+        write_file.shut_down()
 
-        
-class TestSetAttributesToData(unittest.TestCase):
-    def setUp(self):
-        self.sink = df.Sink()
-
-    def tearDown(self):
-        pass
-    
-    def test_set_attributes_gets_attributes(self):
-        packet = dfb.DataPacket(data='')
-        packet.ATTR1 = 'foo'
-        packet.ATTR2 = 'bar'
-        packet.ATTR3 = 'wibble'
-        packet.ATTR4 = 3
-        packet.ATTR5 = 'dont deal with me'
-        
-        attributes_to_set = ['ATTR1', 'ATTR2', 'ATTR3', 'ATTR4']
-
-        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
-                                         separator='', 
-                                         eol='', write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 'foobarwibble3')
-
-    def test_set_attributes_empty(self):
-        packet = dfb.DataPacket(data='wibblefish')
-        
-        attributes_to_set = []
-
-        filter1 = df.SetAttributesToData(attribute_list=attributes_to_set,
-                                         write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 'wibblefish')
-
-    def test_set_attributes_no_attributes_given(self):
-        packet = dfb.DataPacket(data='thecakeisalie')
-
-        filter1 = df.SetAttributesToData(write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 'thecakeisalie')
-        
-    def test_set_attributes_list_params(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
-                                strs=['hey','hi','woo'],)
-        
-        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        # Changed by Rob -- is this right?
-        ##self.assertEquals(self.sink.results[-1].data, '1,hey\n2,hi\n3,woo')
-        self.assertEquals(self.sink.results[-1].data, '\n1,hey\n2,hi\n3,woo')
-    
-    def test_set_attributes_list_params_using_diff_output_formats(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,15], 
-                                strs=['hey','hi','woo'],)
-        # Test Hex
-        filter1 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False,
-                                         output_format='hex')
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        # Changed by Rob -- is this right?
-##        self.assertEquals(self.sink.results[-1].data, '0x1,hey\n0x2,hi\n0xf,woo')
-        self.assertEquals(self.sink.results[-1].data, 
-                          '\n0x1,hey\n0x2,hi\n0xf,woo')
-        # Test Binary
-        filter2 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False,
-                                         output_format='binary')
-        filter2.next_filter = self.sink
-        filter2.send(packet)
-        # Changed by Rob -- is this right?
-##        self.assertEquals(self.sink.results[-1].data, '0b1,hey\n0b10,hi\n0b1111,woo')
-        self.assertEquals(self.sink.results[-1].data, 
-                          '\n0b1,hey\n0b10,hi\n0b1111,woo')
-        # Test Octal
-        filter3 = df.SetAttributesToData(attribute_list=['nums','strs'],
-                                         write_field_headers=False,
-                                         output_format='octal')
-        filter3.next_filter = self.sink
-        filter3.send(packet)
-        # Changed by Rob -- is this right?
-##        self.assertEquals(self.sink.results[-1].data, '01,hey\n02,hi\n017,woo')
-        self.assertEquals(self.sink.results[-1].data, 
-                          '\n01,hey\n02,hi\n017,woo')
-    
-        
-    def test_set_headers(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,3], 
-                                strs=['hey','hi','woo'],)
-        
-        filter1 = df.SetAttributesToData(write_field_headers=True,
-                                         attribute_list=['nums','strs'])
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data, 
-                          'nums,strs\n1,hey\n2,hi\n3,woo')
-
-    def test_with_line_nos(self):
-        packet = dfb.DataPacket(data = '',nums=[1,2,3], strs=['hey','hi','woo'])
-        
-        filter1 = df.SetAttributesToData(write_field_headers=True,
-                                         attribute_list=['nums','strs'],
-                                         line_numbers=True)
-        filter1.next_filter = self.sink
-        filter1.send(packet)
-        
-        self.assertEquals(self.sink.results[-1].data,
-                          'line,nums,strs\n1,1,hey\n2,2,hi\n3,3,woo')
-        
-                                
 
 
 if __name__ == '__main__':  #pragma: nocover

@@ -79,7 +79,8 @@ class Pipeline(dfb.DataFilter):
 
         ROBDOC : is the following statement True?
         - ftype : Optional. Overwrites the __class__.ftype which is the 
-          string representation of the pipeline class name. e.g. 'read_file_batch'
+          string representation of the pipeline class name. e.g. 'read_batch'
+
         
         - pipeline : Optional. A link to the parent pipeline. If None, this
           pipeline is the top most pipeline in the hierarchy tree.
@@ -779,14 +780,14 @@ class CopyFile(Pipeline):
     keys = dest_file_name, source_file_name:none
     # Callback removed -- environ:none
             
-    [read_file_batch]
+    [read_batch]
     # Callback removed -- environ:none
     # Since environ is optional, the substitution will only happen if set
     ##environ = ${environ}
     source_file_name = ${source_file_name}
     
     [--route--]
-    read_file_batch >>>
+    read_batch >>>
     write_file:${dest_file_name}
     '''
     # TO-DO: Check the template system -- ${dest_file_name}  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -797,7 +798,45 @@ class CopyFile(Pipeline):
         
     def close_filter(self):
         self.getf('write_file').close_output_file()
-                    
+        
+        
+class CopyFileCompression(Pipeline):
+    """Adds basic compression to the Copy File example above along with
+    callback environment in order to report on read progress.
+    
+    Source file name is optional, as it can also accept the filename / file
+    object as the data parameter within the first packet passed into the
+    pipeline.
+    
+    Uses callback and environ to make progress reports.
+    """
+    config = '''
+    [--main--]
+    ftype = copy_file_compression
+    keys1 = dest_file_name, source_file_name:none
+    keys2 = callback:none, environ:none, file_size:none
+    
+    [read_batch]
+    source_file_name = ${source_file_name}
+    file_size = ${file_size}
+    
+    [callback_read_progress]
+    ftype = callback_on_attribute
+    watch_attr = read_percent
+    callback = ${callback}
+    environ = ${environ}
+    watch_for_change = True
+    
+    [write_with_compression]
+    ftype = write_file
+    compress = bzip
+    dest_file_name = ${dest_file_name}
+    
+    [--route--]
+    read_batch >>>
+    callback_read_progress >>>
+    write_with_compression
+    '''
      
 class Refinery(Pipeline):
     pass

@@ -150,9 +150,9 @@ class DataFilterBase(object):
     factory.
 
     Filters are named with a verb for the transformation, rather than a noun,
-    where possible. So we say CountLoops rather than LoopCounter, ReadFileBatch
+    where possible. So we say CountLoops rather than LoopCounter, ReadBatch
     rather than FileReader, and Peek rather than Peeker. Then we can talk
-    about the ReadFileBatch DataFilter.
+    about the ReadBatch DataFilter.
 
     """
 
@@ -431,7 +431,8 @@ class DataFilterBase(object):
         """Optional keys can be set as a list, or a list with default values
         embedded, separated by a colon. Extract these if present. Some
         optional keys may not have a default, e.g. a default for
-        'source_file_name' in read_file_batch wouldn't make sense, but it is a
+        'source_file_name' in read_batch wouldn't make sense, but it is a
+
         possible key, in case the file name is set there rather than sending
         it to the filter.
 
