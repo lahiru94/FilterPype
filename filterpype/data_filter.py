@@ -158,7 +158,7 @@ class Batch(dfb.DataFilter):
         data ad infinitum.
         """
         fut.dbg_print('**14740** pkt.data = "%s"' % (
-            fut.data_to_hex_string(packet.data[:100])))
+            fut.data_to_hex_string(packet.data[:100])), 8)
         self.inputs.append(packet.data)
         ##print '**13540** %s received packet %d = "%s"' % (
             ##self.name, packet.seq_num, packet.data)
@@ -168,7 +168,7 @@ class Batch(dfb.DataFilter):
 
         all_inputs = ''.join(self.inputs)
         fut.dbg_print('**14750** all_inps = "%s"' % (
-            fut.data_to_hex_string(all_inputs[:100])))
+            fut.data_to_hex_string(all_inputs[:100])), 8)
         while True:
             if int(self.size) <= 0:
                 msg = 'Bad batch size, = %d, should be >= 1'
@@ -180,12 +180,10 @@ class Batch(dfb.DataFilter):
                 ##if self.name == 'batch_before':
                     ##print
                 # restricted block output as it fills debug with binary output!
-
                 msg = '**13420** %s (%d) is sending data block[:40] "%s" to %s'
                 fut.dbg_print(msg % (self.name, self.size, 
                                      fut.data_to_hex_string(block[:40]), 
-                                     self.fork_dest))
-
+                                     self.fork_dest), 8)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (
@@ -282,7 +280,7 @@ class BranchIf(dfb.DataFilter):
             raise FilterLogicError, 'Unknown comparison "%s"' % (
                 comparison)
         if result:
-            self.send_on(packet, 'branch')
+            self.send_on(packet, 'branch') 
         else:
             self.send_on(packet, 'main')
 
@@ -779,18 +777,25 @@ class CollectData(dfb.DataFilter):
 class CountBytes(dfb.DataFilter):
     """Count the number of bytes passing a filter. Unlike SeqPacket and
     CountLoops, nothing is written to the packet, just to the filter.
+    Count packets as well, but not in a custom field.
     """
     ftype = 'count_bytes'
-    keys = ['count_bytes_field_name:counted']
+    keys = ['count_bytes_field_name:counted_bytes']
 
     def filter_data(self, packet):  
         cbfn = self.count_bytes_field_name
-##        self.__dict__[cbfn] = self.__dict__[cbfn] + packet.data_length
         setattr(self, cbfn, getattr(self, cbfn) + packet.data_length)
+        self.counted_packets += 1
+        if self.counted_packets <= 50 or self.counted_packets % 10 == 0:
+            msg = '**14840** Received another %d bytes (total %d bytes ' + \
+                  'in %d packets)'
+            fut.dbg_print(msg % (packet.data_length,
+                getattr(self, cbfn), self.counted_packets), 3)
         self.send_on(packet)
 
     def zero_inputs(self):
         setattr(self, self.count_bytes_field_name, 0)
+        self.counted_packets = 0
 
 
 class CountLoops(dfb.DataFilter):
@@ -822,13 +827,13 @@ class CountPackets(dfb.DataFilter):
     CountLoops, nothing is written to the packet, just to the filter.
     """    
     ftype = 'count_packets'
-    keys = ['count_packets_field_name:counted',
+    keys = ['count_packets_field_name:counted_packets',
             'include_message_bottles:false']
 
     def filter_data(self, packet): 
         cpfn = self.count_packets_field_name
         self.__dict__[cpfn] = self.__dict__[cpfn] + 1
-        fut.dbg_print('**14830**, packet %d' % getattr(self, cpfn), 3)
+        fut.dbg_print('**14830** packets = %d' % getattr(self, cpfn), 3)
         self.send_on(packet)
 
     def zero_inputs(self):
@@ -943,10 +948,8 @@ class DistillHeader(dfb.DataFilter):
         all_inputs = ''.join(self.inputs)
         self.inputs = []
         self.input_char_count = 0
-
         fut.dbg_print("**2342** Distill header size: %s %s" % (
             self.header_size, type(self.header_size)))
-
         header = all_inputs[:self.header_size]
         self.remainder = all_inputs[self.header_size:]
 ##        print '**10410** Sending %d data bytes from %s to branch' % (
@@ -1300,12 +1303,12 @@ class PrintParam(dfb.DataFilter):
             self.pipeline_name = 'no_pipeline'
 
 
-class ReadBatch(dfb.DataFilter):
+class ReadFileBatch(dfb.DataFilter):
     """Chop file up into string blocks to pass inside packets into pipeline.
 
     We need a file object to read from. This can be provided directly or
     indirectly, with either the open file object or the file name being
-    sent to ReadBatch.
+    sent to ReadFileBatch.
 
     This can also be done by setting the source_file_name as a fixed
     parameter for the filter, but this stops more than one file being read and
@@ -1322,9 +1325,7 @@ class ReadBatch(dfb.DataFilter):
           originally supplied with. In other words, use this at the start of
           a pipeline or in an external wrapper pipeline.
     """  
-
-    ftype = 'read_batch'
-
+    ftype = 'read_file_batch'
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
@@ -1370,29 +1371,33 @@ class ReadBatch(dfb.DataFilter):
             packet attribute 'packet.read_percent'.
             If no bytes_read provided, -1 is returned.
         """
-        # TO-DO  I think this extends the ReadBatch filter too much. We could
+        # TO-DO  I think this extends the ReadFileBatch filter too much. We could
         # handle file_size in a separate filter, or at least a descendant.
         if bytes_read == 'unknown':
             return -1
         else:
             if self.file_size is None:
-                # try to get the file size from the environ
+                ### try to get the file size from the environ
+                ##try:
+                    ##self.file_size = self.environ['file_size']
+                ##except (TypeError, KeyError, AttributeError):
+                    ### environ doesn't have the file size in it
+                    ### or the environ hasn't been set (is None)
+                    ### try to get it from the file object
                 try:
-                    self.file_size = self.environ['file_size']
-                except (KeyError, AttributeError):
-                    # environ doesn't have the file size in it
-                    # or the environ hasn't been set (is None)
-                    # try to get it from the file object
-                    try:
-                        self.file_size = os.path.getsize(self.file1.name)
-                    except OSError:
-                        # cannot get file size for raw usb devices
-                        raise dfb.FilterAttributeError(\
-"file_size could not be obtained. Required in 'environ' or as a "+
-"filter attribute. If both fail, os.path.getsize('%s') is queried." \
-% self.file1.name)
+                    self.file_size = os.path.getsize(self.file1.name)
+                except OSError:
+                    # cannot get file size for raw usb devices
+                    raise dfb.FilterAttributeError(\
+                      "file_size could not be obtained. Required as a filter "+
+                      "attribute. If not, os.path.getsize('%s') is queried." \
+                      % self.file1.name)
+            try:
+                progress = int(bytes_read * 100.0 / self.file_size)
+            except ZeroDivisionError, err:
+                print "Progress cannot be estimated as self.file_size is '%s'. %s" % (self.file_size, err)
 
-            return int(bytes_read * 100.0 / self.file_size)
+            return progress
 
 
     ##def _report_progress(self, bytes_read='unknown'):
@@ -1506,11 +1511,11 @@ class ReadBatch(dfb.DataFilter):
 ## Once a pipeline has been shut down, it can't be reopened.
 ##        self.shutting_down = False  # TO-DO  self.refinery.shutting_down = False
         ##self.percent_read = None
-        self.file_size = None
+        ##self.file_size = None
 
 
-class ReadBytes:
-    """ Simple ReadBytes filter to read files using bytes
+class ReadFileBytes(dfb.DataFilter):
+    """ Simple ReadFile filter to read files using bytes
 
         Notes about keys:
 
@@ -1526,7 +1531,7 @@ class ReadBytes:
                  1 - End of file
 
     """
-    ftype = 'read_bytes'
+    ftype = 'read_file_bytes'
     keys = ['source_file_name', 'start_byte:0', 'size:-1', 'block_size:2048',
             'whence:0', 'ack:false']
 
@@ -2361,7 +2366,7 @@ class SetAttributesToData(dfb.DataFilter):
                     # Otherwise, treat it like a literal value
                     value = attr_val                    
             except AttributeError:
-                raise AttributeError, "There is no such attribute:", attribute
+                raise AttributeError, "There is no such attribute:" + attribute
             try:
                 value.append('')
                 value.pop()
@@ -2535,10 +2540,9 @@ class WriteFile(dfb.DataFilter):
     output file until after the initialisation of the generator.
 
     So how do we know when the file has finished and needs closing? The input
-    to read_batch could be many files, all to be written to one output file. We
-    can't use a timeout, so closing needs to be done explicitly, or via the
-    closure of the pipeline.
-
+    to read_file_batch could be many files, all to be written to one output
+    file. We can't use a timeout, so closing needs to be done explicitly, or
+    via the closure of the pipeline.
 
     By providing a message bottle with the message 'change_write_suffix'
     and the packet attribute 'packet.file_name_suffix'

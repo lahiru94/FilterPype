@@ -813,10 +813,12 @@ class CopyFileCompression(Pipeline):
     config = '''
     [--main--]
     ftype = copy_file_compression
-    keys = dest_file_name, source_file_name:none, callback:none, environ:none
+    keys1 = dest_file_name, source_file_name:none
+    keys2 = callback:none, environ:none, file_size:none
     
     [read_batch]
     source_file_name = ${source_file_name}
+    file_size = ${file_size}
     
     [callback_read_progress]
     ftype = callback_on_attribute
