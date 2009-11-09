@@ -39,7 +39,9 @@ import struct
 _bit_sum_dict = {}
 
 ## debug = 1
-debug = 3
+## debug = 3  # Important debug messages
+debug = 5  # Lots of messages
+
 quick_test = 50 # Higher the number for faster, e.g. 50
                # 0 for all tests
            
@@ -70,9 +72,9 @@ def print_hex_conversions():
     for j in [0x47, 0x48, 0x49, 0x4A, 0x4B]:
         hex_ch = '%2.2X' % j
         dbg_print('**14820** hex_ch %s: %2.2X' % (
-            hex_ch, ord(hex_to_dat[hex_ch])))
+            hex_ch, ord(hex_to_dat[hex_ch])), 8)
 define_hex_conversions()
-print_hex_conversions()
+##print_hex_conversions()
 
 # Alternative executable
 #     /Library/Frameworks/Python.framework/Versions/Current_2.6/bin/python
@@ -385,7 +387,7 @@ def hex_string_to_data(data, space=None):
     """
     # Check that input data is made with spaces/etc in between hex chars
     bytes2 = data.split(space)  # NB default to None not ' '
-    dbg_print('**14800** bytes2 =   "%s"' % ' '.join(ch for ch in bytes2))
+    dbg_print('**14800** bytes2 =   "%s"' % ' '.join(ch for ch in bytes2), 8)
     if len(bytes2) == 1:  
         # No space found, so assume we have a continuous string of 0-F hex
         bytes2 = split_strings(data, 2)
@@ -398,7 +400,7 @@ def hex_string_to_data(data, space=None):
         result2.append(hex_to_dat[ch])
     result3 = ''.join(result2)
     results_ch = ' '.join([('%2.2X' % ord(ch)) for ch in result])
-    dbg_print('**14810** data     = "%s"' % results_ch)
+    dbg_print('**14810** data     = "%s"' % results_ch, 8)
     return result
 
 def latest_defaults(keys):

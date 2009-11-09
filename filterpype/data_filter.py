@@ -158,7 +158,7 @@ class Batch(dfb.DataFilter):
         data ad infinitum.
         """
         fut.dbg_print('**14740** pkt.data = "%s"' % (
-            fut.data_to_hex_string(packet.data[:100])))
+            fut.data_to_hex_string(packet.data[:100])), 8)
         self.inputs.append(packet.data)
         ##print '**13540** %s received packet %d = "%s"' % (
             ##self.name, packet.seq_num, packet.data)
@@ -168,7 +168,7 @@ class Batch(dfb.DataFilter):
 
         all_inputs = ''.join(self.inputs)
         fut.dbg_print('**14750** all_inps = "%s"' % (
-            fut.data_to_hex_string(all_inputs[:100])))
+            fut.data_to_hex_string(all_inputs[:100])), 8)
         while True:
             if int(self.size) <= 0:
                 msg = 'Bad batch size, = %d, should be >= 1'
@@ -183,7 +183,7 @@ class Batch(dfb.DataFilter):
                 msg = '**13420** %s (%d) is sending data block[:40] "%s" to %s'
                 fut.dbg_print(msg % (self.name, self.size, 
                                      fut.data_to_hex_string(block[:40]), 
-                                     self.fork_dest))
+                                     self.fork_dest), 8)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (
@@ -777,18 +777,25 @@ class CollectData(dfb.DataFilter):
 class CountBytes(dfb.DataFilter):
     """Count the number of bytes passing a filter. Unlike SeqPacket and
     CountLoops, nothing is written to the packet, just to the filter.
+    Count packets as well, but not in a custom field.
     """
     ftype = 'count_bytes'
-    keys = ['count_bytes_field_name:counted']
+    keys = ['count_bytes_field_name:counted_bytes']
 
     def filter_data(self, packet):  
         cbfn = self.count_bytes_field_name
-##        self.__dict__[cbfn] = self.__dict__[cbfn] + packet.data_length
         setattr(self, cbfn, getattr(self, cbfn) + packet.data_length)
+        self.counted_packets += 1
+        if self.counted_packets <= 50 or self.counted_packets % 10 == 0:
+            msg = '**14840** Received another %d bytes (total %d bytes ' + \
+                  'in %d packets)'
+            fut.dbg_print(msg % (packet.data_length,
+                getattr(self, cbfn), self.counted_packets), 3)
         self.send_on(packet)
 
     def zero_inputs(self):
         setattr(self, self.count_bytes_field_name, 0)
+        self.counted_packets = 0
 
 
 class CountLoops(dfb.DataFilter):
@@ -820,13 +827,13 @@ class CountPackets(dfb.DataFilter):
     CountLoops, nothing is written to the packet, just to the filter.
     """    
     ftype = 'count_packets'
-    keys = ['count_packets_field_name:counted',
+    keys = ['count_packets_field_name:counted_packets',
             'include_message_bottles:false']
 
     def filter_data(self, packet): 
         cpfn = self.count_packets_field_name
         self.__dict__[cpfn] = self.__dict__[cpfn] + 1
-        fut.dbg_print('**14830**, packet %d' % getattr(self, cpfn), 3)
+        fut.dbg_print('**14830** packets = %d' % getattr(self, cpfn), 3)
         self.send_on(packet)
 
     def zero_inputs(self):
