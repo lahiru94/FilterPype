@@ -463,7 +463,7 @@ class CallbackOnAttribute(dfb.DataFilter):
 
     self.callback('not_found:holy')
 
-    allowed_inconsistencies ....?????              <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TODO
+    allowed_inconsistencies:
     self.callback('inconsistency_value_exceeded:holy')
 
     count_to_confirm is the number of identical values of the watched attribute
@@ -544,6 +544,7 @@ class CallbackOnAttribute(dfb.DataFilter):
             if len(self.value_dict) - 1 > self.allowed_inconsistencies:
                 # We have had too many inconsistent values
                 self._populate_environ(packet)
+                self.environ['values_found'] = self.value_dict.keys()
                 self.callback('inconsistency_value_exceeded:' + self.watch_attr,
                               **self.environ)
                 self.value_dict = {value:1}
@@ -1328,7 +1329,7 @@ class ReadBatch(dfb.DataFilter):
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
-            'file_size']
+            'file_size:none']
 
     def _ensure_file_closed(self):
         """Check that the file has been closed, or close it.
@@ -1367,35 +1368,37 @@ class ReadBatch(dfb.DataFilter):
     def _calculate_progress(self, bytes_read='unknown'):
         """ Stores the current progress (percent of data read) within the
             packet attribute 'packet.read_percent'.
-            If no bytes_read provided, -1 is returned.
+            
+        If no bytes_read provided or file_size has been set to -1 then -1 is
+        returned.
         """
         # TO-DO  I think this extends the ReadBatch filter too much. We could
         # handle file_size in a separate filter, or at least a descendant.
-        if bytes_read == 'unknown':
+        if bytes_read == 'unknown' or self.file_size == -1:
             return -1
-        else:
-            if self.file_size is None:
-                ### try to get the file size from the environ
-                ##try:
-                    ##self.file_size = self.environ['file_size']
-                ##except (TypeError, KeyError, AttributeError):
-                    ### environ doesn't have the file size in it
-                    ### or the environ hasn't been set (is None)
-                    ### try to get it from the file object
+        
+        if self.file_size is None:
+            try:
+                self.file_size = os.path.getsize(self.file1.name)
+                if self.file_size == 0L:
+                    # getsize on raw usb can return 0L on Unix
+                    raise OSError
+            except OSError:
+                # some special file objects can have a file_size attribute
                 try:
-                    self.file_size = os.path.getsize(self.file1.name)
-                except OSError:
+                    self.file_size = self.file1.file_size
+                except AttributeError:
                     # cannot get file size for raw usb devices
                     raise dfb.FilterAttributeError(\
-                      "file_size could not be obtained. Required as a filter "+
-                      "attribute. If not, os.path.getsize('%s') is queried." \
-                      % self.file1.name)
-            try:
-                progress = int(bytes_read * 100.0 / self.file_size)
-            except ZeroDivisionError, err:
-                print "Progress cannot be estimated as self.file_size is '%s'. %s" % (self.file_size, err)
+                        "file_size could not be obtained. Required as a filter "+
+                        "attribute. If not, os.path.getsize('%s') is queried." \
+                        % self.file1.name)
+        #try:
+        progress = int(bytes_read * 100.0 / self.file_size)
+        #except ZeroDivisionError, err:
+            #print "**4322** Progress cannot be estimated as file_size is '%s'. %s" % (self.file_size, err)
 
-            return progress
+        return progress
 
 
 
@@ -1466,6 +1469,8 @@ class ReadBatch(dfb.DataFilter):
 ##        self.shutting_down = False  # TO-DO  self.refinery.shutting_down = False
         ##self.percent_read = None
         ##self.file_size = None
+    def init_filter(self):
+        pass
 
 
 class ReadBytes(dfb.DataFilter):
