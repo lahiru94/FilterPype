@@ -536,6 +536,7 @@ class CallbackOnAttribute(dfb.DataFilter):
                     return
                 else:
                     # values are the same, we're not interested
+                    if not packet.message: self.send_on(packet)
                     return
 
 
@@ -2574,9 +2575,12 @@ class WriteFile(dfb.DataFilter):
 
     def _get_dest_file_name(self):
         if not hasattr(self, 'write_suffix'):
-            return self.dest_file_name
+            file_name = self.dest_file_name
         else:
             file_name = os.extsep.join([self.dest_file_name, self.write_suffix])
+        if self.compress in ('bzip', 'bzip2', True):
+            return file_name + '.bz2'
+        else:
             return file_name
     
     def init_filter(self):
