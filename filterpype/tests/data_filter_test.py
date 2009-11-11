@@ -2656,7 +2656,7 @@ class TestWriteFile(unittest.TestCase):
         test_data = 'abcdef'
         write_file.send(dfb.DataPacket(data=test_data))
         write_file.shut_down()
-        open_bz2 = bz2.BZ2File(self.file_name_out, mode='r')
+        open_bz2 = bz2.BZ2File(self.file_name_out + '.bz2', mode='r')
         self.assertEqual(open_bz2.read(), test_data)
         open_bz2.close()
         
@@ -2675,13 +2675,13 @@ class TestWriteFile(unittest.TestCase):
         write_file.send(suffix_messenger)
         write_file.send(data_to_write_2)
         write_file.shut_down()
-        open_bz2_1 = bz2.BZ2File(self.file_name_out, mode='r')
-        open_bz2_2 = bz2.BZ2File(self.file_name_out + '.tmp', mode='r')
+        open_bz2_1 = bz2.BZ2File(self.file_name_out + '.bz2', mode='r')
+        open_bz2_2 = bz2.BZ2File(self.file_name_out + '.tmp' + '.bz2', mode='r')
         self.assertEqual(open_bz2_1.read(), string_1)
         self.assertEqual(open_bz2_2.read(), string_2)
         for fhandle in (open_bz2_1, open_bz2_2):
             fhandle.close()
-        os.remove(self.file_name_out + '.tmp')
+        os.remove(self.file_name_out + '.tmp' + '.bz2')
         
     def test_write_file_none(self):
         # Ensure None does not raise an exception.
