@@ -157,8 +157,9 @@ class Batch(dfb.DataFilter):
         to a silly value, e.g. 0, which will just carry on sending the same 
         data ad infinitum.
         """
-        fut.dbg_print('**14740** pkt.data = "%s"' % (
-            fut.data_to_hex_string(packet.data[:100])), 8)
+        # ONLY enable during debugging, otherwise this is REALLY slow
+        #fut.dbg_print('**14740** pkt.data = "%s"' % (
+            #fut.data_to_hex_string(packet.data[:100])), 8)
         self.inputs.append(packet.data)
         ##print '**13540** %s received packet %d = "%s"' % (
             ##self.name, packet.seq_num, packet.data)
@@ -167,8 +168,9 @@ class Batch(dfb.DataFilter):
             return  # Not enough input data to make up even one batch block
 
         all_inputs = ''.join(self.inputs)
-        fut.dbg_print('**14750** all_inps = "%s"' % (
-            fut.data_to_hex_string(all_inputs[:100])), 8)
+        # ONLY enable during debugging, otherwise this is REALLY slow
+        #fut.dbg_print('**14750** all_inps = "%s"' % (
+            #fut.data_to_hex_string(all_inputs[:100])), 8)
         while True:
             if int(self.size) <= 0:
                 msg = 'Bad batch size, = %d, should be >= 1'
@@ -180,10 +182,11 @@ class Batch(dfb.DataFilter):
                 ##if self.name == 'batch_before':
                     ##print
                 # restricted block output as it fills debug with binary output!
-                msg = '**13420** %s (%d) is sending data block[:40] "%s" to %s'
-                fut.dbg_print(msg % (self.name, self.size, 
-                                     fut.data_to_hex_string(block[:40]), 
-                                     self.fork_dest), 8)
+                # ONLY enable during debugging, otherwise this is REALLY slow
+                #msg = '**13420** %s (%d) is sending data block[:40] "%s" to %s'
+                #fut.dbg_print(msg % (self.name, self.size, 
+                                     #fut.data_to_hex_string(block[:40]), 
+                                     #self.fork_dest), 8)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
                 ##print '**13425** %s has remainder = "%s"' % (

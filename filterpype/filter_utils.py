@@ -38,17 +38,19 @@ import struct
 
 _bit_sum_dict = {}
 
+debug = -1 # for production
 ## debug = 1
 ## debug = 3  # Important debug messages
-debug = 5  # Lots of messages
+##debug = 5  # Lots of messages
 
 quick_test = 50 # Higher the number for faster, e.g. 50
                # 0 for all tests
            
 def dbg_print(text, level=5):
-    """Print the text to std_out if "debug" in this module is >= debug_level.
-    i.e. If debug_level is 0, then it will always be printed. The higher the
-    debug_level, the less likely it is to be printed.
+    """
+    Print the text to std_out if "debug" in this module is >= level.
+    i.e. If level is 0, then it will always be printed. The higher the
+    level, the less likely it is to be printed.
     The ">" is inserted just to show which print statements have been converted
     to dbg_print.
     """
