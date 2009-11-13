@@ -597,6 +597,59 @@ def unindent(lines):
         return [line[min_spaces:] for line in lines]
     else:
         return []
+   
     
+bcd_msg = "Input values must be in in the BCD range 00 to 99 (A-F not supported)." 
+BCD_lookUp = {chr(0):"00", chr(1):"01", chr(2):"02", chr(3):"03", chr(4):"04",
+          chr(5):"05", chr(6):"06", chr(7):"07", chr(8):"08", chr(9):"09",
+          chr(16):"10", chr(17):"11", chr(18):"12", chr(19):"13", chr(20):"14",
+          chr(21):"15", chr(22):"16", chr(23):"17", chr(24):"18", chr(25):"19",
+          chr(32):"20", chr(33):"21", chr(34):"22", chr(35):"23", chr(36):"24",
+          chr(37):"25", chr(38):"26", chr(39):"27", chr(40):"28", chr(41):"29",
+          chr(48):"30", chr(49):"31", chr(50):"32", chr(51):"33", chr(52):"34",
+          chr(53):"35", chr(54):"36", chr(55):"37", chr(56):"38", chr(57):"39",
+          chr(64):"40", chr(65):"41", chr(66):"42", chr(67):"43", chr(68):"44",
+          chr(69):"45", chr(70):"46", chr(71):"47", chr(72):"48", chr(73):"49",
+          chr(80):"50", chr(81):"51", chr(82):"52", chr(83):"53", chr(84):"54",
+          chr(85):"55", chr(86):"56", chr(87):"57", chr(88):"58", chr(89):"59",
+          chr(96):"60", chr(97):"61", chr(98):"62", chr(99):"63", chr(100):"64",
+          chr(101):"65", chr(102):"66", chr(103):"67", chr(104):"68", chr(105):"69",
+          chr(112):"70", chr(113):"71", chr(114):"72", chr(115):"73", chr(116):"74",
+          chr(117):"75", chr(118):"76", chr(119):"77", chr(120):"78", chr(121):"79",
+          chr(128):"80", chr(129):"81", chr(130):"82", chr(131):"83", chr(132):"84",
+          chr(133):"85",  chr(134):"86", chr(135):"87", chr(136):"88", chr(137):"89",
+          chr(144):"90",  chr(145):"91", chr(146):"92", chr(147):"93", chr(148):"94",
+          chr(149):"95",  chr(150):"96", chr(151):"97", chr(152):"98", chr(153):"99",
+          }
+
+def bcd3(x,y,z,space=''):
+    """
+    e.g. bcd3('A','B','C',space=' ') -> '41 42 43' 
+    """
+    try:
+        return BCD_lookUp[x]+space+BCD_lookUp[y]+space+BCD_lookUp[z]
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
+
+def bcd2(x,y,space=''):
+    """
+    """
+    try:
+        return BCD_lookUp[x]+space+BCD_lookUp[y]
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
+    
+def bcd(values,space=''):
+    """
+    Convert input values (as a list) into a BCD string.
+    Note: If number of values is 2 or 3 use bcd3 or bcd2 they work 2x faster.
+    """
+    try:
+        ret = ''
+        for value in values:
+            ret += BCD_lookUp[value]+space
+        return ret[:-1]
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
     
     

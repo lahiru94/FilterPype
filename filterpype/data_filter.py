@@ -743,9 +743,13 @@ class ConvertFilenameToPath(dfb.DataFilter):
     """ Join a file path to a file name to give a full file name
     """
     ftype = 'convert_filename_to_path'
-    keys = ['input_file_name:.', 'in_attr', 'out_attr']
+    keys = ['input_file_name:none', 'in_attr', 'out_attr']
 
     def filter_data(self, packet):
+        if not self.input_file_name:
+            self.input_file_name = '.'
+        source_file_name = getattr(packet, 'source_file_name',
+                                   self.input_file_name)
         if not hasattr(packet, self.in_attr):
             msg = 'Packet attribute "%s" is not defined'
             raise dfb.FilterAttributeError, msg % self.in_attr
@@ -755,7 +759,7 @@ class ConvertFilenameToPath(dfb.DataFilter):
 
         filename = getattr(packet, self.in_attr)
         full_path = os.path.join(
-            os.path.dirname(self.input_file_name), filename)
+            os.path.dirname(source_file_name), filename)
         setattr(packet, self.out_attr, full_path)
         self.send_on(packet)
 
