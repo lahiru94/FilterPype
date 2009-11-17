@@ -505,6 +505,11 @@ class CallbackOnAttribute(dfb.DataFilter):
         the packet. (TO-DO discuss) <-- there should be a tidier way of doing
         this!
         """
+        if self.callback is None:
+            # allow None, but print error message
+            print "'%s' filter cannot perform callback as it is set to None" % self.name
+            return
+        
         if self.attribute_found and self.watch_for_change is False:
             if not packet.message: self.send_on(packet)
             return

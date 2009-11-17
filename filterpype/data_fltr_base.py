@@ -916,7 +916,7 @@ class DataFilterBase(object):
         pass
 
     def before_send_on(self, packet, fork_dest):
-        """Hook to execute just before a packet is sent on
+        """Hook to execute just before a packet is sent o
         """
         pass
 
