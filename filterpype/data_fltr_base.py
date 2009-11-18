@@ -285,6 +285,8 @@ class DataFilterBase(object):
             ##self.name = self.__class__.__name__.lower()
 
             ##jjjjjjjjjjjjjjj
+        # returned from send() method  -- TODO: set only on refinery
+        self.return_value = None
         self._primed = False
         self._corout = None
         self.flushing = False  # Starting to flush_buffer() on close
@@ -1102,6 +1104,8 @@ class DataFilterBase(object):
 ##            msg = '**12617** Tried to close %s, but couldn\'t: "%s"'
 ##            print msg % (self.name, err)
             pass
+        # return the refinery return value if set (default None)
+        return self.refinery.return_value 
 
 
     def validate_params(self):

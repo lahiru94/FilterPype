@@ -629,7 +629,8 @@ def bcd3(x,y,z,space=''):
     try:
         return BCD_lookUp[x]+space+BCD_lookUp[y]+space+BCD_lookUp[z]
     except KeyError, e:
-        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
+        raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
+            str(e), hex(ord(e.args[0])))
 
 def bcd2(x,y,space=''):
     """
@@ -637,7 +638,8 @@ def bcd2(x,y,space=''):
     try:
         return BCD_lookUp[x]+space+BCD_lookUp[y]
     except KeyError, e:
-        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
+        raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
+            str(e), hex(ord(e.args[0])))
     
 def bcd(values,space=''):
     """
@@ -650,6 +652,7 @@ def bcd(values,space=''):
             ret += BCD_lookUp[value]+space
         return ret[:-1]
     except KeyError, e:
-        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
+        raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
+            str(e), hex(ord(e.args[0])))
     
     
