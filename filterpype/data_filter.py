@@ -483,6 +483,11 @@ class CallbackOnAttribute(dfb.DataFilter):
 
     if the parameter is not found by the time the pipeline closes down, the 
     response is made "not_found:<watch_attr>"
+    
+    if the watch_attr = None, it is ignored
+    
+    changes the refinery send() method's return value to 'found', 'not_found'
+    or 'inconsistant'
     """
     ftype = 'callback_on_attribute'
     keys = ['watch_attr', 'callback', 'environ:none', 'count_to_confirm:1', 
@@ -504,7 +509,16 @@ class CallbackOnAttribute(dfb.DataFilter):
         on automatically, we don't want to send it if there is a message in
         the packet. (TO-DO discuss) <-- there should be a tidier way of doing
         this!
+        
+        TODO: Split the getattr and functionality within try except into
+        seperate private function, then send_on can be handled outside of that
+        function.
         """
+        if self.callback is None:
+            # allow None, but print error message`0
+            print "'%s' filter cannot perform callback as it is set to None" % self.name
+            return
+        
         if self.attribute_found and self.watch_for_change is False:
             if not packet.message: self.send_on(packet)
             return
@@ -520,6 +534,10 @@ class CallbackOnAttribute(dfb.DataFilter):
             value = getattr(packet, self.watch_attr)
             "count values found until confirm number is met"
             # number of times we have seen the current value 
+            if value is None:
+                # we're not monitoring for None values
+                if not packet.message: self.send_on(packet)
+                return
             self.value_dict[value] = self.value_dict.get(value, 0) + 1
             ##self.value_dict[value] = current_value_count
             if self.watch_for_change is True:
@@ -535,6 +553,7 @@ class CallbackOnAttribute(dfb.DataFilter):
                     # If the pipeline does not need to do anything else, let it
                     # shutdown after the attribute is found
                     if self.close_when_found and self.pipeline:
+                        self.refinery.return_value = 'found'
                         self.pipeline.shut_down()
                     return
                 else:
@@ -550,6 +569,10 @@ class CallbackOnAttribute(dfb.DataFilter):
                 self.callback('inconsistency_value_exceeded:' + self.watch_attr,
                               **self.environ)
                 self.value_dict = {value:1}
+                if self.close_when_found and self.pipeline:
+                    self.refinery.return_value = 'inconsistant'
+                    self.pipeline.shut_down()
+                    return
 
             # if we have seen the current value for the number of times required
             # by count_to_confirm, we have found the attribute
@@ -628,6 +651,7 @@ class CallbackOnAttribute(dfb.DataFilter):
         """
         if not self.attribute_found and self.num_watch_pkts == None:
             self.callback('not_found:' + self.watch_attr, **self.environ)
+            self.refinery.return_value = 'not_found'
 
 
 class CentrifugeOne(dfb.DataFilter):  # TO-DO
@@ -870,14 +894,14 @@ class DataLength(dfb.DataFilter):
         # TODO: if this is slow, try to improve with a comparison of a packet 
         # lengths worth of no_data:
         ##assert len(not_data) == 1
-        ##if not_data * len(packet.data) == packet.data:
+        ##if not_data * packet.data_length == packet.data:
             ##self.send_on(packet)
             ##return
         # requires packet.data to be a string
         data_only = packet.data.rstrip(self.not_data)
         if data_only:
             self.data_last_seen = self.bytes_seen + len(data_only)
-        self.bytes_seen += len(packet.data)
+        self.bytes_seen += packet.data_length
         self.send_on(packet)
 
     def init_filter(self):
@@ -1700,14 +1724,14 @@ class SwapTwoBytes(dfb.DataFilter):
             raise TypeError, 'Cannot swap on a non-string'
 
         # Check to see if packet.data is divisible by two.
-        if (len(packet.data) % 2) != 0:
+        if (packet.data_length % 2) != 0:
             print "Found uneven data in packet. Cropping"
             hanging_char = packet.data[-1]
             packet.data = packet.data[:-1]
         packet.data = ''.join(
             (str_byte[1] + str_byte[0]) for str_byte in (
                 packet.data[count:count + 2] for count in xrange(
-                    0,len(packet.data),2))
+                    0,packet.data_length,2))
         )
         # If we took a character off of the end (due to the string not
         # being even) put it back on (??? should it be put back on?)

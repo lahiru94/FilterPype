@@ -826,7 +826,8 @@ class TestCallbackOnAttribute(unittest.TestCase):
         # number are found?? This assertion would suggest it should.
         self.assertEqual(self.mocked_method.call_count, 2)
         self.assertEqual(self.mocked_method.call_args, 
-                         ( ("not_found:watch",), {'watch': ''} ) 
+                         ( ("not_found:watch",), {'values_found': ['', 'out'],
+                                                  'watch': ''} ) 
                          )
     def test_callback_on_attribute_change(self):
         # watch for the attribute in the packet to change value
@@ -1065,14 +1066,14 @@ class TestCountBytes(unittest.TestCase):
         for j in xrange(10):
             packet = dfb.DataPacket('X' * j)
             self.byte_counter.send(packet)
-        self.assertEquals(self.byte_counter.counted, 45)
+        self.assertEquals(self.byte_counter.counted_bytes, 45)
 
     def test_double_counting_bytes(self):
         for j in xrange(10):
             packet = dfb.DataPacket('xy' * j)
             self.byte_counter.send(packet)
             self.byte_counter.send(packet)
-        self.assertEquals(self.byte_counter.counted, 180)
+        self.assertEquals(self.byte_counter.counted_bytes, 180)
 
     
 class TestCountLoops(unittest.TestCase):
@@ -1117,14 +1118,14 @@ class TestCountPackets(unittest.TestCase):
         for j in xrange(10):
             packet = dfb.DataPacket()
             self.packet_counter.send(packet)
-        self.assertEquals(self.packet_counter.counted, 10)
+        self.assertEquals(self.packet_counter.counted_packets, 10)
 
     def test_double_counting_packets(self):
         for j in xrange(10):
             packet = dfb.DataPacket()
             self.packet_counter.send(packet)
             self.packet_counter.send(packet)
-        self.assertEquals(self.packet_counter.counted, 20)
+        self.assertEquals(self.packet_counter.counted_packets, 20)
 
         
 class TestDistillHeader(unittest.TestCase):
