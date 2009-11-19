@@ -286,6 +286,7 @@ class DemoFilterFactory(FilterFactory):
             temp_space         = dfd.TempSpace,
             temp_text_after    = dfd.TempTextAfter,
             temp_text_before   = dfd.TempTextBefore,
+            copyfile_compress  = ppln.CopyFileCompression,
             
         )
         self._apply_class_map(class_map)

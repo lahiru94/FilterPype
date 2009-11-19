@@ -32,6 +32,7 @@ import sys
 import unittest 
 import time
 import configobj
+import mock
 
 import filterpype.data_fltr_base as dfb
 import filterpype.data_filter as df
@@ -330,6 +331,82 @@ class TestCopyFile(unittest.TestCase):
         copy_file_ppln.shut_down()
         self.assertEquals(os.path.getsize(self.file_name_out), 27)
 
+class TestCopyFileCompression(unittest.TestCase):
+    """ Tests for the CopyFileCompression Pipeline
+    """
+    
+    def setUp(self):
+        self.factory = ff.DemoFilterFactory()
+        self.file_name = os.path.join(data_dir5, 'short_tst3.dat')
+        self.file_name_out = os.path.join(data_dir5, 'short_tst3.dat.bz2')
+        self.file_contents = 'one two three four five six'
+        f2 = open(self.file_name, 'wb')
+        try:
+            f2.write(self.file_contents)
+        finally:
+            f2.close()
+        # Empty target file
+        #f3 = open(self.file_name_out, 'wb')
+        #f3.close()
+    
+    def tearDown(self):
+        pass
+
+    def test_copy_file_obj1(self):
+        if os.path.exists(self.file_name_out):
+            os.remove(self.file_name_out)
+        copy_file_comp_ppln = ppln.CopyFileCompression(
+            factory=self.factory, dest_file_name=self.file_name,
+            callback=mock.Mock())
+        file_obj = open(self.file_name, 'rb')
+        copy_file_comp_ppln.send(dfb.DataPacket(file_obj))
+        copy_file_comp_ppln.shut_down()
+
+        # Uncompress file and check its size and content
+        import bz2
+        decomp = bz2.BZ2Decompressor()
+        out_file_fd = open(self.file_name_out, 'r')
+        new_file_data = bz2.decompress(out_file_fd.read())
+        out_file_fd.close()
+        
+        self.assertEquals(len(new_file_data), 27)
+        self.assertEquals(len(new_file_data), os.path.getsize(self.file_name))
+        self.assertEquals(new_file_data, self.file_contents)
+        print "**1835** sizes are equal"
+    
+    def test_pipeline_for_memory_leaks(self):
+        self.assertEquals(self.function_for_tst_pipeline_for_memory_leaks(), 3)
+
+    def function_for_tst_pipeline_for_memory_leaks(self):
+        """ Function to help with test_pipeline_for_memory_leaks.
+        
+            This is not a test all on its own
+        """
+        file_name = os.path.join(data_dir5, 'short_tst4.dat')
+        test_file_fd = open(file_name, 'w')
+        
+        test_file_fd.write(1000*'A')
+        test_file_fd.close()
+
+        
+        for x in xrange(3000):
+            copy_file_comp_ppln = ppln.CopyFileCompression(
+                factory=self.factory, dest_file_name=self.file_name,
+                callback=mock.Mock())
+
+            if os.path.exists(self.file_name_out):
+                os.remove(self.file_name_out)
+            file_obj = open(self.file_name, 'rb')
+            
+            copy_file_comp_ppln.send(dfb.DataPacket(file_obj))
+            copy_file_comp_ppln.flush_buffer()
+            copy_file_comp_ppln.shut_down()
+
+        if os.path.exists(os.path.join(data_dir5, 'short_tst4.dat')):
+            os.remove(os.path.join(data_dir5, 'short_tst4.dat'))
+        copy_file_comp_ppln.shut_down()
+        
+        return 3
 
 class TestDocString(unittest.TestCase):
     # Test for the existence of either __doc__ or description.

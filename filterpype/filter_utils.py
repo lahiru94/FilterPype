@@ -38,17 +38,19 @@ import struct
 
 _bit_sum_dict = {}
 
+debug = -1 # for production
 ## debug = 1
 ## debug = 3  # Important debug messages
-debug = 5  # Lots of messages
+##debug = 5  # Lots of messages
 
 quick_test = 50 # Higher the number for faster, e.g. 50
                # 0 for all tests
            
 def dbg_print(text, level=5):
-    """Print the text to std_out if "debug" in this module is >= debug_level.
-    i.e. If debug_level is 0, then it will always be printed. The higher the
-    debug_level, the less likely it is to be printed.
+    """
+    Print the text to std_out if "debug" in this module is >= level.
+    i.e. If level is 0, then it will always be printed. The higher the
+    level, the less likely it is to be printed.
     The ">" is inserted just to show which print statements have been converted
     to dbg_print.
     """
@@ -595,8 +597,9 @@ def unindent(lines):
         return [line[min_spaces:] for line in lines]
     else:
         return []
+   
     
-    
+bcd_msg = "Input values must be in in the BCD range 00 to 99 (A-F not supported)." 
 BCD_lookUp = {chr(0):"00", chr(1):"01", chr(2):"02", chr(3):"03", chr(4):"04",
           chr(5):"05", chr(6):"06", chr(7):"07", chr(8):"08", chr(9):"09",
           chr(16):"10", chr(17):"11", chr(18):"12", chr(19):"13", chr(20):"14",
@@ -619,31 +622,34 @@ BCD_lookUp = {chr(0):"00", chr(1):"01", chr(2):"02", chr(3):"03", chr(4):"04",
           chr(149):"95",  chr(150):"96", chr(151):"97", chr(152):"98", chr(153):"99",
           }
 
-
 def bcd3(x,y,z,space=''):
-    """ e.g. bcd3('A','B','C',space=' ') -> '41 42 43' """
+    """
+    e.g. bcd3('A','B','C',space=' ') -> '41 42 43' 
+    """
     try:
         return BCD_lookUp[x]+space+BCD_lookUp[y]+space+BCD_lookUp[z]
-    except:
-        raise ValueError
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
 
-    
 def bcd2(x,y,space=''):
+    """
+    """
     try:
         return BCD_lookUp[x]+space+BCD_lookUp[y]
-    except:
-        raise ValueError
-
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
     
 def bcd(values,space=''):
-    """If number of values is 2 or 3 use bcd3 or bcd2 they work x2 faster."""
+    """
+    Convert input values (as a list) into a BCD string.
+    Note: If number of values is 2 or 3 use bcd3 or bcd2 they work 2x faster.
+    """
     try:
         ret = ''
         for value in values:
             ret += BCD_lookUp[value]+space
         return ret[:-1]
-    except Exception,e:
-        raise ValueError
-    
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s'" % str(e)
     
     
