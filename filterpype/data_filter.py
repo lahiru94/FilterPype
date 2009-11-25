@@ -650,7 +650,8 @@ class CallbackOnAttribute(dfb.DataFilter):
             num_watch_pkts is set to None (which watches forever)
         """
         if not self.attribute_found and self.num_watch_pkts == None:
-            self.callback('not_found:' + self.watch_attr, **self.environ)
+            if getattr(self, 'callback', None):
+                self.callback('not_found:' + self.watch_attr, **self.environ)
             self.refinery.return_value = 'not_found'
 
 
@@ -1599,18 +1600,23 @@ class ReadBytes(dfb.DataFilter):
             self.block_size = size
 
         # Read the file in chunks
-        while counter < size:
+        to_read = size
+        while to_read > 0:
+        #while counter < size:
             # Clone the packet so we don't just send on a reference to the
             # one passed in
             pkt_snd = packet.clone()
             # Check to see if the amount left to read is smaller than the next
             # block_size, otherwise it may read too much!
-            if self.block_size > size - counter:
-                self.block_size = size - counter
+            #if self.block_size > size - counter:
+                #self.block_size = size - counter
+            if self.block_size > to_read:
+                self.block_size = to_read
             pkt_snd.data = file_desc.read(self.block_size)
             counter += self.block_size
             # Send on new packet
             self.send_on(pkt_snd)
+            to_read -= self.block_size
         file_desc.close()
         # Send a 'FINAL' packet for things that may want to watch and see
         # when a read has been finished.
