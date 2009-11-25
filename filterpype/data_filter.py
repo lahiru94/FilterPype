@@ -1601,18 +1601,23 @@ class ReadBytes(dfb.DataFilter):
             self.block_size = size
 
         # Read the file in chunks
-        while counter < size:
+        to_read = size
+        while to_read > 0:
+        #while counter < size:
             # Clone the packet so we don't just send on a reference to the
             # one passed in
             pkt_snd = packet.clone()
             # Check to see if the amount left to read is smaller than the next
             # block_size, otherwise it may read too much!
-            if self.block_size > size - counter:
-                self.block_size = size - counter
+            #if self.block_size > size - counter:
+                #self.block_size = size - counter
+            if self.block_size > to_read:
+                self.block_size = to_read
             pkt_snd.data = file_desc.read(self.block_size)
             counter += self.block_size
             # Send on new packet
             self.send_on(pkt_snd)
+            to_read -= self.block_size
         file_desc.close()
         # Send a 'FINAL' packet for things that may want to watch and see
         # when a read has been finished.
@@ -2602,6 +2607,10 @@ class WriteFile(dfb.DataFilter):
                 if self.compress:
                     # NB: Assumes all compressor types have a flush method
                     self.out_file.write(self.compressor.flush())
+                    # Set compressor to None to make sure the object goes away,
+                    # otherwise we can end up with a memory leak
+                    if getattr(self, 'compressor'):
+                        self.compressor = None
                 self.out_file.close()
         else:
             self.out_file = None
@@ -2663,8 +2672,14 @@ class WriteFile(dfb.DataFilter):
                     self.out_file = open(self._get_dest_file_name(), 'w' + mode2)
                 ##print '**10900** Writing to file: ...%s' % (
                     ##self._get_dest_file_name()[-55:])
+
                 if self.compress in ('bzip', 'bzip2', True):
-                    self.compressor = bz2.BZ2Compressor()
+                    try:
+                        self.compressor = bz2.BZ2Compressor()
+                    except MemoryError, err:
+                        msg = "Memory Error in WriteFile filter: %" % err
+                        raise MemoryError, msg
+                        
                 elif self.compress:
                     raise dfb.FilterAttributeError, "Compression '%s' not supported" % self.compress
                 
