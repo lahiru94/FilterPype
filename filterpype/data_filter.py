@@ -647,11 +647,12 @@ class CallbackOnAttribute(dfb.DataFilter):
 
     def close_filter(self):
         """ Make a not_found callback if the attribute was not found and
-            num_watch_pkts is set to None (which watches forever)
+        num_watch_pkts is set to None (which watches forever) and we haven't
+        made an inconsistent call
         """
-        if not self.attribute_found and self.num_watch_pkts == None:
-            if getattr(self, 'callback', None):
-                self.callback('not_found:' + self.watch_attr, **self.environ)
+        if not self.attribute_found and self.num_watch_pkts == None \
+           and self.refinery.return_value != 'inconsistant':
+            self.callback('not_found:' + self.watch_attr, **self.environ)
             self.refinery.return_value = 'not_found'
 
 

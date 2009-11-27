@@ -817,6 +817,7 @@ class CopyFileCompression(Pipeline):
     keys2 = callback:none, environ:none, file_size:none
     
     [read_batch]
+    batch_size = 4194304  # 4 MB for fast reading
     source_file_name = ${source_file_name}
     file_size = ${file_size}
     
