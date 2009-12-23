@@ -60,9 +60,9 @@ except ImportError:  #pragma: nocover
     import profile
 
 import os.path
-import pstats
 import hotshot
 import hotshot.stats
+import pstats
 import marshal
 import time
 import copy
