@@ -1584,6 +1584,11 @@ class ReadBytes(dfb.DataFilter):
             seek_whence = 2
         else:
             seek_whence = 0
+        # Setting the start byte to the end if the user has specified a starting
+        # point beyond the end of the file is not useful in itself but will
+        # help to avoid errors being raised.
+        if self.start_byte > total_file_size:
+            self.start_byte = total_file_size
         file_desc.seek(self.start_byte, seek_whence)
 
         # Set up size to read
@@ -2483,6 +2488,16 @@ def transposed2(lists, defval=0):
         return map(lambda *row: [elem or defval for elem in row], *lists)
 
         """
+
+        try:
+            self.attribute_list.append('')
+            self.attribute_list.pop()
+        except AttributeError:
+            # attribute_list is not a list so make it one
+            self.attribute_list = [self.attribute_list]
+        if len(self.attribute_list) == 1:
+            self.separator = ''
+
         if self.attribute_list:
             header_row = self._set_up_headers()
 
@@ -2549,14 +2564,14 @@ def transposed2(lists, defval=0):
         self.count = 0
         self.headers_written = False
         self.max_attr_length = 0
-        try:
-            self.attribute_list.append('')
-            self.attribute_list.pop()
-        except AttributeError:
-            # attribute_list is not a list so make it one
-            self.attribute_list = [self.attribute_list]
-        if len(self.attribute_list) == 1:
-            self.separator = ''
+        #try:
+            #self.attribute_list.append('')
+            #self.attribute_list.pop()
+        #except AttributeError:
+            ## attribute_list is not a list so make it one
+            #self.attribute_list = [self.attribute_list]
+        #if len(self.attribute_list) == 1:
+            #self.separator = ''
         if self.eol == 'ret':
             self.eol = os.linesep
         self.convert = str # currently the default
