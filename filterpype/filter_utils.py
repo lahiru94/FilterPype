@@ -640,6 +640,17 @@ def bcd2(x,y,space=''):
         raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
             str(e), hex(ord(e.args[0])))
     
+def bcd1(x):
+    """
+Single character bcd conversion.
+    """
+    try:
+        return BCD_lookUp[x]
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
+            str(e), hex(ord(e.args[0])))
+    
+    
 def bcd(values,space=''):
     """
     Convert input values (as a list) into a BCD string.
@@ -653,5 +664,51 @@ def bcd(values,space=''):
     except KeyError, e:
         raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
             str(e), hex(ord(e.args[0])))
+
+# Glen - 05/01/10 - Requiring equivalents of standard library functions 
+# converting network order endianness to host order, and vice versa,
+# htons, htonl, ntohs, ntohl were copied from:
+# http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+
+def htons(num):
+    """
+Converts a short from network order (big-endian) to a string of length 2 in host order.
+
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.pack('!H', num)
+
+def htonl(num):
+    """
+Converts a long from network order (big-endian) to a string of length 4 in host order.    
     
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.pack('!I', num)
+
+def ntohs(data):
+    """
+Converts a string of length two from network order (big-endian) to a short in host order.
+    
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.unpack('!H', data)[0]
+
+def ntohl(data):
+    """
+Converts a string of length four from network order (big-endian) to a long in host order.
+    
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.unpack('!I', data)[0]
+
+a = 5
     
