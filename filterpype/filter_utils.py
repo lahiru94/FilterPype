@@ -655,12 +655,14 @@ def bcd(values,space=''):
     """
     Convert input values (as a list) into a BCD string.
     Note: If number of values is 2 or 3 use bcd3 or bcd2 they work 2x faster.
+
+Glen - 07/01/10 - Changed logic incase space is an empty string.
     """
     try:
         ret = ''
-        for value in values:
+        for value in values[:-1]:
             ret += BCD_lookUp[value]+space
-        return ret[:-1]
+        return ret + BCD_lookUp[values[-1]]
     except KeyError, e:
         raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
             str(e), hex(ord(e.args[0])))
