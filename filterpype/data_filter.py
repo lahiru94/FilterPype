@@ -2798,7 +2798,6 @@ class WriteFile(dfb.DataFilter):
 
     def open_message_bottle(self, packet):
         if packet.message == 'change_write_suffix':
-            print 20 * "\n" + "Changing write suffix to %s" % packet.file_name_suffix + 20 * "\n"
             self._ensure_file_closed()
             self.out_file = None
             self.write_suffix = packet.file_name_suffix
