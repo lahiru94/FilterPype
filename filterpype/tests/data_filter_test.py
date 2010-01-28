@@ -76,6 +76,86 @@ ABC_EFG_IJK_MNP_\
 XXX_XXX_XXX_XXX_\
 '''
 
+class TestAttributeChangeDetection(unittest.TestCase):
+    """ Test that the AttributeChangeDetection filter properly
+assigns an attribute to a packet.
+    """
+    def setUp(self):
+        pass
+    
+    def tearDown(self):
+        pass
+    
+    def test_raises_attribute_error(self):
+        """
+Change if filter starts handling exceptions on missing packet attributes.
+        """
+        fltr = df.AttributeChangeDetection(attributes=("test_attr",), 
+                                           packet_change_flag="change_flag")
+        pkt = dfb.DataPacket()
+        self.assertRaises(AttributeError, fltr.send, pkt)
+    
+    def test_single_attribute(self):
+        fltr = df.AttributeChangeDetection(attributes=("test_attr",), 
+                                           packet_change_flag="change_flag")
+        initial = 1
+        changed_1 = 2
+        changed_2 = 3
+        initial_pkt = dfb.DataPacket(test_attr=initial)
+        unchanged_pkt = dfb.DataPacket(test_attr=initial)
+        changed_pkt = dfb.DataPacket(test_attr=changed_1)
+        revert_pkt = dfb.DataPacket(test_attr=initial)
+        last_pkt = dfb.DataPacket(test_attr=changed_2)
+        fltr.send(initial_pkt)
+        self.assertEqual(initial_pkt.change_flag, False)
+        fltr.send(unchanged_pkt)
+        self.assertEqual(unchanged_pkt.change_flag, False)
+        fltr.send(changed_pkt)
+        self.assertEqual(changed_pkt.change_flag, True)
+        fltr.send(revert_pkt)
+        self.assertEqual(revert_pkt.change_flag, False)
+        fltr.send(last_pkt)
+        self.assertEqual(last_pkt.change_flag, True)
+        
+    def test_multiple_attributes(self):
+        fltr = df.AttributeChangeDetection(attributes=("test_attr_1",
+                                                       "test_attr_2"), 
+                                           packet_change_flag="change_flag")
+        test_attr_1_initial = "a"
+        test_attr_1_changed = "b"
+        test_attr_2_initial = 2.5
+        test_attr_2_changed = 3.5
+        
+        initial_pkt = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                     test_attr_2=test_attr_2_initial)
+        unchanged_pkt = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                       test_attr_2=test_attr_2_initial)
+        changed_pkt_1 = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                       test_attr_2=test_attr_2_changed)
+        revert_pkt_1 = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                      test_attr_2=test_attr_2_initial)
+        changed_pkt_2 = dfb.DataPacket(test_attr_1=test_attr_1_changed,
+                                       test_attr_2=test_attr_2_initial)
+        revert_pkt_2 = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                      test_attr_2=test_attr_2_initial)
+        changed_pkt_3 = dfb.DataPacket(test_attr_1=test_attr_1_changed,
+                                       test_attr_2=test_attr_2_changed)
+        fltr.send(initial_pkt)
+        self.assertEqual(initial_pkt.change_flag, False)
+        fltr.send(unchanged_pkt)
+        self.assertEqual(unchanged_pkt.change_flag, False)
+        fltr.send(changed_pkt_1)
+        self.assertEqual(changed_pkt_1.change_flag, True)
+        fltr.send(revert_pkt_1)
+        self.assertEqual(revert_pkt_1.change_flag, False)
+        fltr.send(changed_pkt_2)
+        self.assertEqual(changed_pkt_2.change_flag, True)
+        fltr.send(revert_pkt_2)
+        self.assertEqual(revert_pkt_2.change_flag, False)
+        fltr.send(changed_pkt_3)
+        self.assertEqual(changed_pkt_3.change_flag, True)
+
+
 class TestAttributeExtractor(unittest.TestCase):
     """ Test the extraction of attributes from text strings based on a
     delmiter
@@ -419,7 +499,31 @@ class TestBranchIf(unittest.TestCase):
         # Martin's route needed a (waste) filter to work
         pass
 
-        
+    
+class TestBranchOnceTriggered(unittest.TestCase):
+    
+    def setUp(self):
+        self.fltr = df.BranchOnceTriggered(watch_attribute="data",
+                                           watch_value="b")
+        self.hidden_branch_route = dfb.HiddenBranchRoute()
+        self.sink_main = df.Sink()
+        self.sink_branch = df.Sink()
+        self.fltr.next_filter = self.hidden_branch_route
+        self.hidden_branch_route.next_filter = self.sink_main
+        self.hidden_branch_route.branch_filter = self.sink_branch   
+    
+    def tearDown(self):
+        pass
+    
+    def test_branch_once_triggered(self):
+        # Expecting 2 down the main and all other packets down the branch.
+        for packet_data in ["a", "a", "b", "c", "d", "a"]:
+            curr_packet = dfb.DataPacket(data=packet_data)
+            self.fltr.send(curr_packet)
+        self.assertEqual(len(self.sink_branch.results), 4)
+        self.assertEqual(len(self.sink_main.results), 2)
+
+
 class TestBranchRef(unittest.TestCase):
 
     def setUp(self):

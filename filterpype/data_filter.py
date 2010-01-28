@@ -45,6 +45,37 @@ import filterpype.embed as embed
 re_python_key_sub = re.compile(r'\${\b([a-z][a-z0-9_]*)\b}')
 
 
+class AttributeChangeDetection(dfb.DataFilter):
+    """
+Examines a list of attributes for change in value. Sets the
+packet_change_flag attribute to True upon change of any of the attributes,
+otherwise flag stays False. AttributeError raised if packet has not got
+all attributes.
+    """
+    ftype = "attribute_change_detection"
+    keys = ["attributes", "packet_change_flag:attribute_changed"]
+    
+    def filter_data(self, packet):
+        for attribute in self.attributes:
+            packet_value = getattr(packet, attribute)
+            try:
+                filter_value = getattr(self, attribute)
+            except AttributeError:
+                # Filter attribute not set, storing initial value for
+                # change detection. Do not compare this value.
+                setattr(self, attribute, packet_value)
+                continue
+            
+            if filter_value != packet_value:
+                setattr(packet, self.packet_change_flag, True)
+                break
+        else:
+            # For loop completed without finding a changed attribute
+            # value.
+            setattr(packet, self.packet_change_flag, False)
+        self.send_on(packet)
+
+
 class AttributeExtractor(dfb.DataFilter):
     """ Extract attributes from text strings using a delimiter to determine the
     split between key (on the left) and value (on the right).
@@ -288,6 +319,29 @@ class BranchIf(dfb.DataFilter):
             self.send_on(packet, 'main')
 
 
+class BranchOnceTriggered(dfb.DataFilter):
+    """
+Sends packet down the branch forever after the first case where watch_attribute 
+does not equal watch_value.
+    """
+    ftype = "branch_once_triggered"
+    keys = ["watch_attribute", "watch_value:true"]
+    
+    def init_filter(self):
+        self._send_to_branch = False
+    
+    def filter_data(self, packet):
+        if self._send_to_branch:
+            self.send_on(packet, "branch")
+            return
+        
+        if getattr(packet, self.watch_attribute) == self.watch_value:
+            self._send_to_branch = True
+            self.send_on(packet, "branch")
+        else:
+            self.send_on(packet, "main")
+
+
 class BranchParam(dfb.DataFilter):
     """Send parameter results to the branch. Optionally send only some of
     the list items.
@@ -304,6 +358,7 @@ class BranchParam(dfb.DataFilter):
         results_packet = dfb.DataPacket(results, param_name=self.param_name)
         self.send_on(results_packet, 'branch')
         self.send_on(packet)
+    
 
 
 class BranchRef(dfb.DataFilter):
@@ -1359,12 +1414,16 @@ class ReadBatch(dfb.DataFilter):
           a brand new packet and does NOT pass on the packet that it was
           originally supplied with. In other words, use this at the start of
           a pipeline or in an external wrapper pipeline.
+          
+    :param max_reads: Number of batches to read.
+    :type  max_reads: int
     """  
     ftype = 'read_batch'
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
-            'file_size:none']
+            'file_size:none',
+            'print_progress:false']
 
     def _ensure_file_closed(self):
         """Check that the file has been closed, or close it.
@@ -1432,7 +1491,15 @@ class ReadBatch(dfb.DataFilter):
         progress = int(bytes_read * 100.0 / self.file_size)
         #except ZeroDivisionError, err:
             #print "**4322** Progress cannot be estimated as file_size is '%s'. %s" % (self.file_size, err)
-
+        # TO-DO: Take this out:
+        if self.print_progress:
+            try:
+                if progress != self.prev_progress:
+                    self.prev_progress = progress
+                    print "%02d" % progress
+            except AttributeError:
+                self.prev_progress = 0
+        
         return progress
 
 
@@ -2731,9 +2798,14 @@ class WriteFile(dfb.DataFilter):
 
     def open_message_bottle(self, packet):
         if packet.message == 'change_write_suffix':
+            print 20 * "\n" + "Changing write suffix to %s" % packet.file_name_suffix + 20 * "\n"
             self._ensure_file_closed()
             self.out_file = None
             self.write_suffix = packet.file_name_suffix
+        elif packet.message == 'change_dest_file_name':
+            self._ensure_file_closed()
+            self.out_file = None
+            self.dest_file_name = packet.dest_file_name
         else:
             dfb.DataFilter.open_message_bottle(self, packet)
 

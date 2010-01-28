@@ -48,12 +48,14 @@ class FilterFactory(object):
         # in the class, but lower case with underscores, rather than CapsCase.
         # Maintain the list in alphabetical order, by name.
         class_map = dict(
+            attribute_change_detection = df.AttributeChangeDetection,
             attribute_extractor     = df.AttributeExtractor,
             batch                   = df.Batch,
             branch_param            = df.BranchParam, 
             branch_clone            = df.BranchClone,
             branch_first_part       = df.BranchFirstPart,
             branch_if               = df.BranchIf,
+            branch_once_triggered   = df.BranchOnceTriggered,
             branch_ref              = df.BranchRef,
             bzip_compress           = df.BZipCompress,
             bzip_decompress         = df.BZipDecompress,
@@ -86,7 +88,7 @@ class FilterFactory(object):
             read_bytes              = df.ReadBytes,
             rename_file             = df.RenameFile,
             reset                   = df.Reset,
-            r111eset_branch            = df.R111esetBranch,
+            r111eset_branch         = df.R111esetBranch,
             reverse_string          = df.ReverseString,
             swap_two_bytes          = df.SwapTwoBytes,
             send_message            = df.SendMessage,
