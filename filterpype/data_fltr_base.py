@@ -79,6 +79,12 @@ class FilterNameError(FilterError):
 class FilterRoutingError(FilterError):
     pass
 
+class FilterProcessingException(Exception):
+    """ An exception was caught and raised from while processing data in a
+    Filter.
+    """
+    pass
+
 class MessageError(Exception):
     pass
 
@@ -1159,7 +1165,13 @@ class DataFilter(DataFilterBase):
                 ##if packet.__class__.__name__== 'MessageBottle':
                     ##pass
                 if not packet.message:  # This must be a data packet
-                    self._process_data_packet(packet)
+                    try:
+                        self._process_data_packet(packet)
+                    except FilterProcessingException:
+                        raise
+                    except Exception, err:
+                        msg = "Exception trying to process data in '%s' (%s): %s\nNext filter '%s'" % (self.name, self.ftype, err, self.next_filter.name)
+                        raise FilterProcessingException, msg
                 else:
                     self._process_message_bottle(packet)
 

@@ -36,6 +36,7 @@ import os
 import shutil
 import mock
 import bz2
+import random
 
 import filterpype.data_fltr_base as dfb
 import filterpype.data_filter as df
@@ -1889,7 +1890,59 @@ class TestHashSHA256(unittest.TestCase):
         hash_obj2.update(input1 + input2)
         self.assertEquals('|'.join(self.sink.all_data), input1 + '|' + input2)
         self.assertEquals(hash_sha256.hasher.hexdigest(), hash_obj2.hexdigest())
-      
+
+class TestHeaderAsAttribute(unittest.TestCase):
+    
+    def setUp(self):
+        self.test_header_size = 32
+        self.test_header_attr = "hdr"
+        self.fltr = df.HeaderAsAttribute(header_size=self.test_header_size,
+                                         header_attribute=self.test_header_attr)
+        self.sink = df.Sink()
+        self.fltr.next_filter = self.sink
+        self.header_byte = "\x00"
+        self.data_byte = "\xFF"
+    
+    def tearDown(self):
+        pass
+    
+    def test_header_as_attribute_1(self):
+        for send_on in (True, False):
+            
+            for x in range(100):
+                header_size = random.randint(0,256)
+                data_size = random.randint(0,1536)
+                header_bytes = header_size * self.header_byte
+                data_bytes = data_size * self.data_byte
+                fltr = df.HeaderAsAttribute(header_size=header_size,
+                                            header_attribute=self.test_header_attr,
+                                            send_on_if_only_header=send_on)
+                sink = df.Sink()
+                fltr.next_filter = sink
+                
+                packet = dfb.DataPacket(data=header_bytes + data_bytes)
+                
+                fltr.send(packet)
+                self.assertEqual(getattr(sink.results[0], \
+                                         self.test_header_attr),
+                                 header_bytes)
+                self.assertEqual(sink.results[0].data,
+                                 data_bytes)
+    
+    def test_header_as_attribute_send_on_packet(self):
+        for x in range(10):
+            # Data too small for header.
+            header_size = random.randint(0,255)
+            header_bytes = header_size * self.header_byte
+            fltr = df.HeaderAsAttribute(header_size=header_size+1,
+                                        header_attribute=self.test_header_attr,
+                                        send_on_if_only_header=False)
+            sink = df.Sink()
+            fltr.next_filter = sink
+            packet = dfb.DataPacket(data=header_bytes)
+            fltr.send_on(packet)
+            self.assertEqual(len(sink.results), 0)
+
 # nice idea, but not the solution to the current problem
 ##class TestIndex(unittest.TestCase):
     ##def setUp(self):

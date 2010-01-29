@@ -1247,6 +1247,35 @@ class HashSHA256(dfb.DataFilter):
 
     def zero_inputs(self):   # TO-DO versus dynamic init
         self.hasher = hashlib.sha256()
+        
+class HeaderAsAttribute(dfb.DataFilter):
+    """In cases where the header is required for further processing later in
+    pipeline, this filter assigns the header_attribute to the packet, while the
+    packet's data will no longer contain the header.
+    
+    The send_on_if_only_header key defines whether this filter should send_on
+    packets if there is not enough data to split into both header and remaining
+    data.
+    """
+    ftype = "header_as_attribute"
+    keys = ["header_size",
+            "header_attribute:header_data",
+            "send_on_if_only_header:false"]
+    
+    def filter_data(self, packet):
+        # If we are not sending on packets if there is not enough data for both
+        # the header_attribute and new data.
+        if not self.send_on_if_only_header and packet.data_length <= self.header_size:
+            # Do not send_on.
+            return
+        # Set the self.header_attribute of the packet with self.header_size
+        # amount of data.
+        setattr(packet,
+                self.header_attribute,
+                packet.data[:self.header_size])
+        # Set the packet's data to be the remaining data after the header.
+        packet.data = packet.data[self.header_size:]
+        self.send_on(packet)
 
 
 class Join(dfb.DataFilter):
