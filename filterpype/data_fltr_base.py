@@ -1170,7 +1170,8 @@ class DataFilter(DataFilterBase):
                     except FilterProcessingException:
                         raise
                     except Exception, err:
-                        msg = "Exception trying to process data in '%s' (%s): %s\nNext filter '%s'" % (self.name, self.ftype, err, self.next_filter.name)
+                        msg = "Exception trying to process data in '%s' (%s): %s: %s" \
+                            % (self.name, self.ftype, type(err), err)
                         raise FilterProcessingException, msg
                 else:
                     self._process_message_bottle(packet)

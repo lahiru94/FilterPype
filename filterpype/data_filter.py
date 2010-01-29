@@ -2059,6 +2059,18 @@ class Sink(dfb.DataFilter):
         self.results = []
 
 
+class Sleep(dfb.DataFilter):
+    """ Simply sleeps for the specified time and sends on incoming packets.
+    Intended for debugging purposes, watching printed output to understand
+    the flow of a pipeline."""
+    ftype = 'sleep'
+    keys = ['time:1']
+    
+    def filter_data(self, packet):
+        time.sleep(self.time)
+        self.send_on(packet)
+
+
 class SplitWords(dfb.DataFilter):
     """Split the data into chunks, looking for some character string to split
     on. Uses white space as the default.       
@@ -2363,6 +2375,8 @@ class TankBranch(TankQueue):
     ftype = 'tank_branch'
 
     def before_filter_data(self, packet):
+        #TO-DO REMOVE THIS.
+        print self.tank_size
         pass
 
     def after_filter_data(self, packet):
