@@ -321,6 +321,19 @@ class BranchRef(dfb.DataFilter):
         self.send_on(packet, 'main')
 
 
+class BreakPoint(dfb.DataFilter):
+    """ Debugging in a pipeline that has no convienently placed filters can
+        be difficult so this is a filter purely for being able to insert a
+        break point in
+    """
+    
+    ftype = 'break_point'
+    dynamic=True
+    
+    def filter_data(self, packet):
+        place_break_point_here = None
+        self.send_on(packet)
+        
 class BZipCompress(dfb.DataFilter):
     """Take the input stream and compress it using bzip2 compression object.
        Use level 9 for large files (this is the default).
@@ -500,6 +513,7 @@ class CallbackOnAttribute(dfb.DataFilter):
         for attr_name in self.include_in_environ:            
             try:
                 self.environ[attr_name] = getattr(packet, attr_name)
+                self.environ['pipeline'] = self.pipeline.name
             except AttributeError:
                 # don't add it if it doesn't exist in the packet
                 pass
