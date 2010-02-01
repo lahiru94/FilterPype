@@ -1,12 +1,11 @@
-
 # -*- coding: utf-8 -*-
 # filter_utils.py
 
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009 Folding Software Ltd and contributors
-# www.foldingsoftware.com/filterpype, www.filterpype.org
+# Copyright (c) 2009 Flight Data Services
+# http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +17,7 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRAN	TY OF ANY KIND, EXPRESS OR
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -641,18 +640,77 @@ def bcd2(x,y,space=''):
         raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
             str(e), hex(ord(e.args[0])))
     
-def bcd(values,space=''):
+def bcd1(x):
     """
-    Convert input values (as a list) into a BCD string.
-    Note: If number of values is 2 or 3 use bcd3 or bcd2 they work 2x faster.
+Single character bcd conversion.
     """
     try:
-        ret = ''
-        for value in values:
-            ret += BCD_lookUp[value]+space
-        return ret[:-1]
+        return BCD_lookUp[x]
     except KeyError, e:
         raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
             str(e), hex(ord(e.args[0])))
     
+    
+def bcd(values,space=''):
+    """
+    Convert input values (as a list) into a BCD string.
+    Note: If number of values is 2 or 3 use bcd3 or bcd2 they work 2x faster.
+
+Glen - 07/01/10 - Changed logic incase space is an empty string.
+    """
+    try:
+        ret = ''
+        for value in values[:-1]:
+            ret += BCD_lookUp[value]+space
+        return ret + BCD_lookUp[values[-1]]
+    except KeyError, e:
+        raise ValueError, bcd_msg + " Could not lookup '%s' ('%s')" % (
+            str(e), hex(ord(e.args[0])))
+
+# Glen - 05/01/10 - Requiring equivalents of standard library functions 
+# converting network order endianness to host order, and vice versa,
+# htons, htonl, ntohs, ntohl were copied from:
+# http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+
+def htons(num):
+    """
+Converts a short from network order (big-endian) to a string of length 2 in host order.
+
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.pack('!H', num)
+
+def htonl(num):
+    """
+Converts a long from network order (big-endian) to a string of length 4 in host order.    
+    
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.pack('!I', num)
+
+def ntohs(data):
+    """
+Converts a string of length two from network order (big-endian) to a short in host order.
+    
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.unpack('!H', data)[0]
+
+def ntohl(data):
+    """
+Converts a string of length four from network order (big-endian) to a long in host order.
+    
+Equivalent of C OS library function of the same name.
+
+Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
+    """
+    return struct.unpack('!I', data)[0]
+
+a = 5
     

@@ -4,8 +4,8 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009 Folding Software Ltd and contributors
-# www.foldingsoftware.com/filterpype, www.filterpype.org
+# Copyright (c) 2009 Flight Data Services
+# http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,12 +48,14 @@ class FilterFactory(object):
         # in the class, but lower case with underscores, rather than CapsCase.
         # Maintain the list in alphabetical order, by name.
         class_map = dict(
+            attribute_change_detection = df.AttributeChangeDetection,
             attribute_extractor     = df.AttributeExtractor,
             batch                   = df.Batch,
             branch_param            = df.BranchParam, 
             branch_clone            = df.BranchClone,
             branch_first_part       = df.BranchFirstPart,
             branch_if               = df.BranchIf,
+            branch_once_triggered   = df.BranchOnceTriggered,
             branch_ref              = df.BranchRef,
             break_point             = df.BreakPoint, # For dubugging in a debugger. Don't use as a pass_through
             bzip_compress           = df.BZipCompress,
@@ -75,6 +77,7 @@ class FilterFactory(object):
             format_param            = df.FormatParam, 
             get_bytes               = df.GetBytes,
             hash_sha256             = df.HashSHA256,
+            header_as_attribute     = df.HeaderAsAttribute,
             hidden_branch_route     = dfb.HiddenBranchRoute,            
             join                    = df.Join,
             null                    = df.Waste,
@@ -87,13 +90,14 @@ class FilterFactory(object):
             read_bytes              = df.ReadBytes,
             rename_file             = df.RenameFile,
             reset                   = df.Reset,
-            r111eset_branch            = df.R111esetBranch,
+            r111eset_branch         = df.R111esetBranch,
             reverse_string          = df.ReverseString,
             swap_two_bytes          = df.SwapTwoBytes,
             send_message            = df.SendMessage,
             seq_packet              = df.SeqPacket,
             set_attributes_to_data  = df.SetAttributesToData,
             sink                    = df.Sink,
+            sleep                   = df.Sleep,
             split_words             = df.SplitWords,
             split_lines             = df.SplitLines,
             tag_packet              = df.TagPacket,

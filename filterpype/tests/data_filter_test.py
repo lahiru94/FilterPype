@@ -4,8 +4,8 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009 Folding Software Ltd and contributors
-# www.foldingsoftware.com/filterpype, www.filterpype.org
+# Copyright (c) 2009 Flight Data Services
+# http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@ import os
 import shutil
 import mock
 import bz2
+import random
 
 import filterpype.data_fltr_base as dfb
 import filterpype.data_filter as df
@@ -75,6 +76,86 @@ $43_567_9AB_DEF_\
 ABC_EFG_IJK_MNP_\
 XXX_XXX_XXX_XXX_\
 '''
+
+class TestAttributeChangeDetection(unittest.TestCase):
+    """ Test that the AttributeChangeDetection filter properly
+assigns an attribute to a packet.
+    """
+    def setUp(self):
+        pass
+    
+    def tearDown(self):
+        pass
+    
+    def test_raises_attribute_error(self):
+        """
+Change if filter starts handling exceptions on missing packet attributes.
+        """
+        fltr = df.AttributeChangeDetection(attributes=("test_attr",), 
+                                           packet_change_flag="change_flag")
+        pkt = dfb.DataPacket()
+        self.assertRaises(AttributeError, fltr.send, pkt)
+    
+    def test_single_attribute(self):
+        fltr = df.AttributeChangeDetection(attributes=("test_attr",), 
+                                           packet_change_flag="change_flag")
+        initial = 1
+        changed_1 = 2
+        changed_2 = 3
+        initial_pkt = dfb.DataPacket(test_attr=initial)
+        unchanged_pkt = dfb.DataPacket(test_attr=initial)
+        changed_pkt = dfb.DataPacket(test_attr=changed_1)
+        revert_pkt = dfb.DataPacket(test_attr=initial)
+        last_pkt = dfb.DataPacket(test_attr=changed_2)
+        fltr.send(initial_pkt)
+        self.assertEqual(initial_pkt.change_flag, False)
+        fltr.send(unchanged_pkt)
+        self.assertEqual(unchanged_pkt.change_flag, False)
+        fltr.send(changed_pkt)
+        self.assertEqual(changed_pkt.change_flag, True)
+        fltr.send(revert_pkt)
+        self.assertEqual(revert_pkt.change_flag, False)
+        fltr.send(last_pkt)
+        self.assertEqual(last_pkt.change_flag, True)
+        
+    def test_multiple_attributes(self):
+        fltr = df.AttributeChangeDetection(attributes=("test_attr_1",
+                                                       "test_attr_2"), 
+                                           packet_change_flag="change_flag")
+        test_attr_1_initial = "a"
+        test_attr_1_changed = "b"
+        test_attr_2_initial = 2.5
+        test_attr_2_changed = 3.5
+        
+        initial_pkt = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                     test_attr_2=test_attr_2_initial)
+        unchanged_pkt = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                       test_attr_2=test_attr_2_initial)
+        changed_pkt_1 = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                       test_attr_2=test_attr_2_changed)
+        revert_pkt_1 = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                      test_attr_2=test_attr_2_initial)
+        changed_pkt_2 = dfb.DataPacket(test_attr_1=test_attr_1_changed,
+                                       test_attr_2=test_attr_2_initial)
+        revert_pkt_2 = dfb.DataPacket(test_attr_1=test_attr_1_initial,
+                                      test_attr_2=test_attr_2_initial)
+        changed_pkt_3 = dfb.DataPacket(test_attr_1=test_attr_1_changed,
+                                       test_attr_2=test_attr_2_changed)
+        fltr.send(initial_pkt)
+        self.assertEqual(initial_pkt.change_flag, False)
+        fltr.send(unchanged_pkt)
+        self.assertEqual(unchanged_pkt.change_flag, False)
+        fltr.send(changed_pkt_1)
+        self.assertEqual(changed_pkt_1.change_flag, True)
+        fltr.send(revert_pkt_1)
+        self.assertEqual(revert_pkt_1.change_flag, False)
+        fltr.send(changed_pkt_2)
+        self.assertEqual(changed_pkt_2.change_flag, True)
+        fltr.send(revert_pkt_2)
+        self.assertEqual(revert_pkt_2.change_flag, False)
+        fltr.send(changed_pkt_3)
+        self.assertEqual(changed_pkt_3.change_flag, True)
+
 
 class TestAttributeExtractor(unittest.TestCase):
     """ Test the extraction of attributes from text strings based on a
@@ -419,7 +500,31 @@ class TestBranchIf(unittest.TestCase):
         # Martin's route needed a (waste) filter to work
         pass
 
-        
+    
+class TestBranchOnceTriggered(unittest.TestCase):
+    
+    def setUp(self):
+        self.fltr = df.BranchOnceTriggered(watch_attribute="data",
+                                           watch_value="b")
+        self.hidden_branch_route = dfb.HiddenBranchRoute()
+        self.sink_main = df.Sink()
+        self.sink_branch = df.Sink()
+        self.fltr.next_filter = self.hidden_branch_route
+        self.hidden_branch_route.next_filter = self.sink_main
+        self.hidden_branch_route.branch_filter = self.sink_branch   
+    
+    def tearDown(self):
+        pass
+    
+    def test_branch_once_triggered(self):
+        # Expecting 2 down the main and all other packets down the branch.
+        for packet_data in ["a", "a", "b", "c", "d", "a"]:
+            curr_packet = dfb.DataPacket(data=packet_data)
+            self.fltr.send(curr_packet)
+        self.assertEqual(len(self.sink_branch.results), 4)
+        self.assertEqual(len(self.sink_main.results), 2)
+
+
 class TestBranchRef(unittest.TestCase):
 
     def setUp(self):
@@ -1785,7 +1890,59 @@ class TestHashSHA256(unittest.TestCase):
         hash_obj2.update(input1 + input2)
         self.assertEquals('|'.join(self.sink.all_data), input1 + '|' + input2)
         self.assertEquals(hash_sha256.hasher.hexdigest(), hash_obj2.hexdigest())
-      
+
+class TestHeaderAsAttribute(unittest.TestCase):
+    
+    def setUp(self):
+        self.test_header_size = 32
+        self.test_header_attr = "hdr"
+        self.fltr = df.HeaderAsAttribute(header_size=self.test_header_size,
+                                         header_attribute=self.test_header_attr)
+        self.sink = df.Sink()
+        self.fltr.next_filter = self.sink
+        self.header_byte = "\x00"
+        self.data_byte = "\xFF"
+    
+    def tearDown(self):
+        pass
+    
+    def test_header_as_attribute_1(self):
+        for send_on in (True, False):
+            
+            for x in range(100):
+                header_size = random.randint(0,256)
+                data_size = random.randint(0,1536)
+                header_bytes = header_size * self.header_byte
+                data_bytes = data_size * self.data_byte
+                fltr = df.HeaderAsAttribute(header_size=header_size,
+                                            header_attribute=self.test_header_attr,
+                                            send_on_if_only_header=send_on)
+                sink = df.Sink()
+                fltr.next_filter = sink
+                
+                packet = dfb.DataPacket(data=header_bytes + data_bytes)
+                
+                fltr.send(packet)
+                self.assertEqual(getattr(sink.results[0], \
+                                         self.test_header_attr),
+                                 header_bytes)
+                self.assertEqual(sink.results[0].data,
+                                 data_bytes)
+    
+    def test_header_as_attribute_send_on_packet(self):
+        for x in range(10):
+            # Data too small for header.
+            header_size = random.randint(0,255)
+            header_bytes = header_size * self.header_byte
+            fltr = df.HeaderAsAttribute(header_size=header_size+1,
+                                        header_attribute=self.test_header_attr,
+                                        send_on_if_only_header=False)
+            sink = df.Sink()
+            fltr.next_filter = sink
+            packet = dfb.DataPacket(data=header_bytes)
+            fltr.send_on(packet)
+            self.assertEqual(len(sink.results), 0)
+
 # nice idea, but not the solution to the current problem
 ##class TestIndex(unittest.TestCase):
     ##def setUp(self):

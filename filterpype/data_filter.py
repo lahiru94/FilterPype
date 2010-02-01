@@ -4,8 +4,8 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009 Folding Software Ltd and contributors
-# www.foldingsoftware.com/filterpype, www.filterpype.org
+# Copyright (c) 2009 Flight Data Services
+# http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,37 @@ import filterpype.data_fltr_base as dfb
 import filterpype.embed as embed
 
 re_python_key_sub = re.compile(r'\${\b([a-z][a-z0-9_]*)\b}')
+
+
+class AttributeChangeDetection(dfb.DataFilter):
+    """
+Examines a list of attributes for change in value. Sets the
+packet_change_flag attribute to True upon change of any of the attributes,
+otherwise flag stays False. AttributeError raised if packet has not got
+all attributes.
+    """
+    ftype = "attribute_change_detection"
+    keys = ["attributes", "packet_change_flag:attribute_changed"]
+    
+    def filter_data(self, packet):
+        for attribute in self.attributes:
+            packet_value = getattr(packet, attribute)
+            try:
+                filter_value = getattr(self, attribute)
+            except AttributeError:
+                # Filter attribute not set, storing initial value for
+                # change detection. Do not compare this value.
+                setattr(self, attribute, packet_value)
+                continue
+            
+            if filter_value != packet_value:
+                setattr(packet, self.packet_change_flag, True)
+                break
+        else:
+            # For loop completed without finding a changed attribute
+            # value.
+            setattr(packet, self.packet_change_flag, False)
+        self.send_on(packet)
 
 
 class AttributeExtractor(dfb.DataFilter):
@@ -288,6 +319,29 @@ class BranchIf(dfb.DataFilter):
             self.send_on(packet, 'main')
 
 
+class BranchOnceTriggered(dfb.DataFilter):
+    """
+Sends packet down the branch forever after the first case where watch_attribute 
+does not equal watch_value.
+    """
+    ftype = "branch_once_triggered"
+    keys = ["watch_attribute", "watch_value:true"]
+    
+    def init_filter(self):
+        self._send_to_branch = False
+    
+    def filter_data(self, packet):
+        if self._send_to_branch:
+            self.send_on(packet, "branch")
+            return
+        
+        if getattr(packet, self.watch_attribute) == self.watch_value:
+            self._send_to_branch = True
+            self.send_on(packet, "branch")
+        else:
+            self.send_on(packet, "main")
+
+
 class BranchParam(dfb.DataFilter):
     """Send parameter results to the branch. Optionally send only some of
     the list items.
@@ -304,6 +358,7 @@ class BranchParam(dfb.DataFilter):
         results_packet = dfb.DataPacket(results, param_name=self.param_name)
         self.send_on(results_packet, 'branch')
         self.send_on(packet)
+    
 
 
 class BranchRef(dfb.DataFilter):
@@ -1206,6 +1261,35 @@ class HashSHA256(dfb.DataFilter):
 
     def zero_inputs(self):   # TO-DO versus dynamic init
         self.hasher = hashlib.sha256()
+        
+class HeaderAsAttribute(dfb.DataFilter):
+    """In cases where the header is required for further processing later in
+    pipeline, this filter assigns the header_attribute to the packet, while the
+    packet's data will no longer contain the header.
+    
+    The send_on_if_only_header key defines whether this filter should send_on
+    packets if there is not enough data to split into both header and remaining
+    data.
+    """
+    ftype = "header_as_attribute"
+    keys = ["header_size",
+            "header_attribute:header_data",
+            "send_on_if_only_header:false"]
+    
+    def filter_data(self, packet):
+        # If we are not sending on packets if there is not enough data for both
+        # the header_attribute and new data.
+        if not self.send_on_if_only_header and packet.data_length <= self.header_size:
+            # Do not send_on.
+            return
+        # Set the self.header_attribute of the packet with self.header_size
+        # amount of data.
+        setattr(packet,
+                self.header_attribute,
+                packet.data[:self.header_size])
+        # Set the packet's data to be the remaining data after the header.
+        packet.data = packet.data[self.header_size:]
+        self.send_on(packet)
 
 
 class Join(dfb.DataFilter):
@@ -1373,12 +1457,16 @@ class ReadBatch(dfb.DataFilter):
           a brand new packet and does NOT pass on the packet that it was
           originally supplied with. In other words, use this at the start of
           a pipeline or in an external wrapper pipeline.
+          
+    :param max_reads: Number of batches to read.
+    :type  max_reads: int
     """  
     ftype = 'read_batch'
     keys = ['batch_size:0x2000', 'max_reads:0', 
             'initial_skip:0', 'read_every:1', 'binary_mode:true', 
             'source_file_name:none', 
-            'file_size:none']
+            'file_size:none',
+            'print_progress:false']
 
     def _ensure_file_closed(self):
         """Check that the file has been closed, or close it.
@@ -1446,7 +1534,15 @@ class ReadBatch(dfb.DataFilter):
         progress = int(bytes_read * 100.0 / self.file_size)
         #except ZeroDivisionError, err:
             #print "**4322** Progress cannot be estimated as file_size is '%s'. %s" % (self.file_size, err)
-
+        # TO-DO: Take this out:
+        if self.print_progress:
+            try:
+                if progress != self.prev_progress:
+                    self.prev_progress = progress
+                    print "%02d" % progress
+            except AttributeError:
+                self.prev_progress = 0
+        
         return progress
 
 
@@ -1977,6 +2073,18 @@ class Sink(dfb.DataFilter):
         self.results = []
 
 
+class Sleep(dfb.DataFilter):
+    """ Simply sleeps for the specified time and sends on incoming packets.
+    Intended for debugging purposes, watching printed output to understand
+    the flow of a pipeline."""
+    ftype = 'sleep'
+    keys = ['time:1']
+    
+    def filter_data(self, packet):
+        time.sleep(self.time)
+        self.send_on(packet)
+
+
 class SplitWords(dfb.DataFilter):
     """Split the data into chunks, looking for some character string to split
     on. Uses white space as the default.       
@@ -2281,6 +2389,8 @@ class TankBranch(TankQueue):
     ftype = 'tank_branch'
 
     def before_filter_data(self, packet):
+        #TO-DO REMOVE THIS.
+        print self.tank_size
         pass
 
     def after_filter_data(self, packet):
@@ -2748,6 +2858,10 @@ class WriteFile(dfb.DataFilter):
             self._ensure_file_closed()
             self.out_file = None
             self.write_suffix = packet.file_name_suffix
+        elif packet.message == 'change_dest_file_name':
+            self._ensure_file_closed()
+            self.out_file = None
+            self.dest_file_name = packet.dest_file_name
         else:
             dfb.DataFilter.open_message_bottle(self, packet)
 

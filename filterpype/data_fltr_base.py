@@ -4,8 +4,8 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009 Folding Software Ltd and contributors
-# www.foldingsoftware.com/filterpype, www.filterpype.org
+# Copyright (c) 2009 Flight Data Services
+# http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -77,6 +77,12 @@ class FilterNameError(FilterError):
     pass
 
 class FilterRoutingError(FilterError):
+    pass
+
+class FilterProcessingException(Exception):
+    """ An exception was caught and raised from while processing data in a
+    Filter.
+    """
     pass
 
 class MessageError(Exception):
@@ -1001,7 +1007,19 @@ class DataFilterBase(object):
         # If there is no next_filter (main) then nothing happens. With a next
         # filter, then packet may be sent to main or branch. It will be sent
         # to branch, if there is a branch filter, else thrown away.
+        
         self.before_send_on(packet, fork_dest)
+        #! TO~DO: Read the comments in the following commented-out-lines to
+        #! understand what is trying to be achieved. This has been left
+        #! commented out due to lack of testing/understanding of the
+        #! repercussions.
+        if packet.message and not self.next_filter:
+            # we are a message bottle with nowhere to go
+            # set the next filter to be the destination of the message bottle
+            # so that it does not have to be explicitely defined in the pipeline
+            # using msg_creating_fltr >>> destination_fltr_name
+            self.next_filter = self.refinery.getf(packet.destination)
+            
         if packet and self.next_filter:
             packet.sent_from = self
             packet.fork_dest = fork_dest
@@ -1147,7 +1165,14 @@ class DataFilter(DataFilterBase):
                 ##if packet.__class__.__name__== 'MessageBottle':
                     ##pass
                 if not packet.message:  # This must be a data packet
-                    self._process_data_packet(packet)
+                    try:
+                        self._process_data_packet(packet)
+                    except FilterProcessingException:
+                        raise
+                    except Exception, err:
+                        msg = "Exception trying to process data in '%s' (%s): %s: %s" \
+                            % (self.name, self.ftype, type(err), err)
+                        raise FilterProcessingException, msg
                 else:
                     self._process_message_bottle(packet)
 
@@ -1164,6 +1189,8 @@ class DataFilter(DataFilterBase):
         self.after_filter_data(packet)             # Hook 2
 
     def _process_message_bottle(self, packet):
+        
+        
         # The message bottle never gets sent to filter_data(), just
         # straight on the next filter
         if self.name == packet.destination:
