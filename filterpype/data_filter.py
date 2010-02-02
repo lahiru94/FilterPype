@@ -1687,6 +1687,7 @@ class ReadBytes(dfb.DataFilter):
         packet.FINAL = False
         file_desc = open(self.source_file_name, 'r')
         total_file_size = os.path.getsize(self.source_file_name)
+        self.file_size = total_file_size
         counter = 0
 
         # Seek to start position in the file
@@ -1722,6 +1723,8 @@ class ReadBytes(dfb.DataFilter):
             # Clone the packet so we don't just send on a reference to the
             # one passed in
             pkt_snd = packet.clone()
+            progress = self._calculate_progress()
+            pkt_snd.read_progress = progress
             # Check to see if the amount left to read is smaller than the next
             # block_size, otherwise it may read too much!
             #if self.block_size > size - counter:
@@ -1744,6 +1747,39 @@ class ReadBytes(dfb.DataFilter):
             pkt_fin.data = ''
             pkt_fin.FINAL = True
             self.send_on(pkt_fin)
+            
+            
+    def _calculate_progress(self, bytes_read='unknown'):
+        """ Stores the current progress (percent of data read) within the
+            packet attribute 'packet.read_percent'.
+            
+        If no bytes_read provided or file_size has been set to -1 then -1 is
+        returned.
+        """
+        # TO-DO  I think this extends the ReadBatch filter too much. We could
+        # handle file_size in a separate filter, or at least a descendant.
+        if bytes_read == 'unknown' or self.file_size == -1:
+            return -1
+        
+        if self.file_size is None:
+            try:
+                self.file_size = os.path.getsize(self.file1.name)
+                if self.file_size == 0L:
+                    # getsize on raw usb can return 0L on Unix
+                    raise OSError
+            except OSError:
+                # some special file objects can have a file_size attribute
+                try:
+                    self.file_size = self.file1.file_size
+                except AttributeError:
+                    # cannot get file size for raw usb devices
+                    raise dfb.FilterAttributeError(\
+                        "file_size could not be obtained. Required as a filter "+
+                        "attribute. If not, os.path.getsize('%s') is queried." \
+                        % self.file1.name)
+        progress = int(bytes_read * 100.0 / self.file_size)
+        
+        return progress
 
     def init_filter(self):
         self.final = True
