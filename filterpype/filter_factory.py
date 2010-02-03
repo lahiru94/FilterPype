@@ -57,6 +57,7 @@ class FilterFactory(object):
             branch_if               = df.BranchIf,
             branch_once_triggered   = df.BranchOnceTriggered,
             branch_ref              = df.BranchRef,
+            break_point             = df.BreakPoint, # For dubugging in a debugger. Don't use as a pass_through
             bzip_compress           = df.BZipCompress,
             bzip_decompress         = df.BZipDecompress,
             calc_slope              = df.CalcSlope,
