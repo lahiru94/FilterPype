@@ -552,7 +552,7 @@ class CallbackOnAttribute(dfb.DataFilter):
     if the parameter is not found by the time the pipeline closes down, the 
     response is made "not_found:<watch_attr>"
     
-    if the watch_attr = None, it is ignored
+    if the value of watch_attr is None, it is ignored (passed through).
     
     changes the refinery send() method's return value to 'found', 'not_found'
     or 'inconsistant'
