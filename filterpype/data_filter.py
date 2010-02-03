@@ -1687,7 +1687,6 @@ class ReadBytes(dfb.DataFilter):
         packet.FINAL = False
         file_desc = open(self.source_file_name, 'r')
         total_file_size = os.path.getsize(self.source_file_name)
-        self.file_size = total_file_size
         counter = 0
 
         # Seek to start position in the file
@@ -1712,19 +1711,25 @@ class ReadBytes(dfb.DataFilter):
         else:
             # Read the size asked for
             size = self.size
+        
+        # This is used in the calculation of the read progress.
+        self.file_size = size
 
         if self.block_size > size:
             self.block_size = size
 
         # Read the file in chunks
         to_read = size
+        self.previous_progress = -1
         while to_read > 0:
         #while counter < size:
             # Clone the packet so we don't just send on a reference to the
             # one passed in
             pkt_snd = packet.clone()
-            progress = self._calculate_progress()
-            pkt_snd.read_progress = progress
+            progress = self._calculate_progress(bytes_read=counter)
+            if progress > self.previous_progress:
+                pkt_snd.read_percent = progress
+            self.previous_progress = progress
             # Check to see if the amount left to read is smaller than the next
             # block_size, otherwise it may read too much!
             #if self.block_size > size - counter:
@@ -1777,7 +1782,7 @@ class ReadBytes(dfb.DataFilter):
                         "file_size could not be obtained. Required as a filter "+
                         "attribute. If not, os.path.getsize('%s') is queried." \
                         % self.file1.name)
-        progress = int(bytes_read * 100.0 / self.file_size)
+        progress = int(float(bytes_read) / float(self.file_size) * 100.0)
         
         return progress
 
