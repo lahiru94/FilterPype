@@ -266,6 +266,26 @@ class BranchClone(dfb.DataFilter):
         self.send_on(packet, 'main')
 
 
+class BranchDynamic(dfb.DataFilter):
+    """Sends along the main and/or branch depending on two variables within the
+    embedded environment. If the variables have not been set, this filter will
+    die loudly raising an AttributeError.
+    """
+    ftype = 'branch_dynamic'
+    
+    keys = ['main_variable:MAIN', 'batch_variable:BRANCH']
+    
+    def filter_data(self, packet):
+        
+        emb = embed.pype
+        # Comparing directly against True because uninstantiated variables 
+        # within the embedded environment evaluate as "<<$unset$>>.
+        if getattr(emb, self.main_variable) is True:
+            self.send_on(packet)
+        if getattr(emb, self.batch_variable) is True:
+            self.send_on(packet, 'branch')
+
+
 class BranchFirstPart(dfb.DataFilter):
     """Send the first part of the packet.data to the branch, and the rest to
     main. This differs from DistillHeader because the amount to send is read

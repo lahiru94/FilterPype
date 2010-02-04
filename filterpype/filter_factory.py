@@ -51,6 +51,7 @@ class FilterFactory(object):
             attribute_change_detection = df.AttributeChangeDetection,
             attribute_extractor     = df.AttributeExtractor,
             batch                   = df.Batch,
+            branch_dynamic          = df.BranchDynamic,
             branch_param            = df.BranchParam, 
             branch_clone            = df.BranchClone,
             branch_first_part       = df.BranchFirstPart,
