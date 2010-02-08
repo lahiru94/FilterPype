@@ -107,6 +107,7 @@ class FilterFactory(object):
             tank_queue              = df.TankQueue,
             waste                   = df.Waste,     # Also 'null'
             wrap                    = df.Wrap,
+            write_configobj_file   = df.WriteConfigObjFile,
             write_file              = df.WriteFile,
             
             check_essential_keys    = ppln.CheckEssentialKeys,

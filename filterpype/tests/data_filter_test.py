@@ -28,7 +28,7 @@
 
 import unittest
 import hashlib
-##from configobj import ConfigObj
+from configobj import ConfigObj
 import sys
 import math
 import timeit
@@ -2755,6 +2755,58 @@ class TestWrap(unittest.TestCase):
         packet = dfb.DataPacket(data=u'abcdef\xfa')
         wrap.send(packet)
         self.assertEquals(self.sink.results[-1].data, u'===abcdef\xfa+++')
+        
+class TestWriteConfigObjFile(unittest.TestCase):
+    def setUp(self):
+        self.dest_file_name = "write_configobj_file_test"
+        self.dest_file_suffix = "cfg"
+        self.dest_file_path = self.dest_file_name + '.' + self.dest_file_suffix
+        
+        self.fltr = df.WriteConfigObjFile(dest_file_name=self.dest_file_name,
+                                          dest_file_suffix=self.dest_file_suffix)
+        self.sink = df.Sink()
+        self.fltr.next_filter = self.sink
+    
+    def tearDown(self):
+        if path.exists(self.dest_file_path):
+            os.remove(self.dest_file_path)
+    
+    def test_write_config_obj_file_single_section(self):
+        test_section = {"test_section": {"value1":'1',
+                                         "value2":'2'}}
+        section_packet = dfb.DataPacket(data=test_section)
+        self.fltr.send(section_packet)
+        # Assert that the filter sends on the incoming packet unchanged.
+        self.assertEqual(section_packet,
+                         self.sink.results[0])
+        
+        # Shut down the filter to cause the writing of the file.
+        self.fltr.shut_down()
+        
+        # Assert that the section has been written with configobj.
+        with open(self.dest_file_path, 'r') as out_file_obj:
+            config_obj = ConfigObj(out_file_obj)
+            self.assertEqual(config_obj.dict(),
+                             test_section)
+            
+    def test_write_config_obj_file_multiple_sections(self):
+        all_test_sections = {}
+        for x in range(10):
+            test_section_key = "test_section_%d" % x
+            test_section_value = {"key_%d" % x: "%d" % x,
+                                  "key_%d": "%d" % x}
+            test_section = {"test_section_%d" % x: test_section_value}
+            all_test_sections[test_section_key] = test_section_value
+            section_packet = dfb.DataPacket(data=test_section)
+            self.fltr.send(section_packet)
+            # Assert that the latest packet has arrived in the sink.
+            self.assertEqual(section_packet,
+                             self.sink.results[-1])
+        self.fltr.shut_down()
+        with open(self.dest_file_path, 'r') as out_file_obj:
+            config_obj = ConfigObj(out_file_obj)
+            self.assertEqual(config_obj.dict(),
+                             all_test_sections)
 
 
 class TestWriteFile(unittest.TestCase):

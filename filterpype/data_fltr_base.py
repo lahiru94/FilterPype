@@ -1014,10 +1014,16 @@ class DataFilterBase(object):
         #! commented out due to lack of testing/understanding of the
         #! repercussions.
         if packet.message and not self.next_filter:
-            # we are a message bottle with nowhere to go
-            # set the next filter to be the destination of the message bottle
-            # so that it does not have to be explicitely defined in the pipeline
-            # using msg_creating_fltr >>> destination_fltr_name
+            # CJ 8/2/2010 - This may be bad for messagebottle flow as any
+            # branch which ends without a '>>>' will send the message bottle
+            # to its destination straight away, even if it's not the end of
+            # the branch where the message bottle originated... Will this end
+            # up with two bottles being received by the destination?
+            
+            # we are a message bottle with nowhere to go set the next filter
+            # to be the destination of the message bottle so that it does not
+            # have to be explicitely defined in the pipeline using
+            # msg_creating_fltr >>> destination_fltr_name
             self.next_filter = self.refinery.getf(packet.destination)
             
         if packet and self.next_filter:
@@ -1167,7 +1173,7 @@ class DataFilter(DataFilterBase):
                 if not packet.message:  # This must be a data packet
                     try:
                         self._process_data_packet(packet)
-                    except FilterProcessingException:
+                    except FilterProcessingException, err:
                         raise
                     except Exception, err:
                         msg = "Exception trying to process data in '%s' (%s): %s: %s" \

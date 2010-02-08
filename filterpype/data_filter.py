@@ -37,6 +37,8 @@ import os
 import time
 import re
 import new
+# configobj used by WriteConfigObjFile
+import configobj
 
 import filterpype.filter_utils as fut
 import filterpype.data_fltr_base as dfb
@@ -1649,12 +1651,14 @@ class ReadBatch(dfb.DataFilter):
                 ##block = unicode(block, 'ISO-8859-1')  # TO-DO
 
             if len(block) > 0:
+                self.char_count += len(block)
                 percent = self._calculate_progress(self.char_count)
                 packet = dfb.DataPacket(
                     block, source_file_name=self.full_file_name,
-                    read_percent=percent)
+                    read_percent=percent,
+                    read_bytes=self.char_count
+                )
                 self.send_on(packet)
-                self.char_count += len(block)
                 ##self._report_progress(self.char_count)
             else:
                 # File has run out, so we loop, closing first, to avoid
@@ -1707,7 +1711,6 @@ class ReadBytes(dfb.DataFilter):
         packet.FINAL = False
         file_desc = open(self.source_file_name, 'r')
         total_file_size = os.path.getsize(self.source_file_name)
-        self.file_size = total_file_size
         counter = 0
 
         # Seek to start position in the file
@@ -1732,19 +1735,25 @@ class ReadBytes(dfb.DataFilter):
         else:
             # Read the size asked for
             size = self.size
+        
+        # This is used in the calculation of the read progress.
+        self.file_size = size
 
         if self.block_size > size:
             self.block_size = size
 
         # Read the file in chunks
         to_read = size
+        self.previous_progress = -1
         while to_read > 0:
         #while counter < size:
             # Clone the packet so we don't just send on a reference to the
             # one passed in
             pkt_snd = packet.clone()
-            progress = self._calculate_progress()
-            pkt_snd.read_progress = progress
+            progress = self._calculate_progress(bytes_read=counter)
+            if progress > self.previous_progress:
+                pkt_snd.read_percent = progress
+            self.previous_progress = progress
             # Check to see if the amount left to read is smaller than the next
             # block_size, otherwise it may read too much!
             #if self.block_size > size - counter:
@@ -1797,7 +1806,7 @@ class ReadBytes(dfb.DataFilter):
                         "file_size could not be obtained. Required as a filter "+
                         "attribute. If not, os.path.getsize('%s') is queried." \
                         % self.file1.name)
-        progress = int(bytes_read * 100.0 / self.file_size)
+        progress = int(float(bytes_read) / float(self.file_size) * 100.0)
         
         return progress
 
@@ -2768,6 +2777,51 @@ def transposed2(lists, defval=0):
         else:
             raise dfb.FilterAttributeError(
                 'unrecognised output format "%s"' % self.output_format)
+
+
+class WriteConfigObjFile(dfb.DataFilter):
+    """Creates a ConfigObj object and adds new sections to it from incoming
+packet's data. Only accepts packet.data as a dictionary in the following format:
+
+{ config_obj_section_name (str) : config_obj_section (dict)* }
+    """
+    ftype = "write_config_obj_file"
+    keys = ["dest_file_name",
+            "dest_file_suffix",
+            "write_config:True"]
+    
+    def init_filter(self):
+        self._config_obj = configobj.ConfigObj()
+        
+    def before_filter_data(self, packet):
+        # Raise an exception if packet.data is not in the correct format.
+        try:
+            packet.data.items()
+        except AttributeError:
+            raise AttributeError, "Incoming packet.data needs to be a \
+dictionary for %s. packet.data evaluated as: %s." %  (self.__class__.__name__,
+                                                      packet.data)
+        # Ensure each value in the dict is also a dict for configobj.
+        try:
+            for value in packet.data.values():
+                value.items()
+        except AttributeError:
+            raise AttributeError, "All values of incoming packet.data need \
+#to be dictionaries for %s" % self.__class__.__name__
+    
+    def filter_data(self, packet):
+        # Add every key value pair as a new section in config obj.
+        for key, value in packet.data.items():
+            self._config_obj[key] = value
+        self.send_on(packet)
+    
+    def flush_buffer(self):
+        """When the pipeline is shutting down, write out self._config_obj if
+        write_config is True."""
+        if self.write_config:
+            out_filename = self.dest_file_name + '.' + self.dest_file_suffix
+            with open(out_filename, 'w') as out_file_obj:
+                self._config_obj.write(out_file_obj)
 
 
 class WriteFile(dfb.DataFilter):

@@ -662,7 +662,7 @@ class Pipeline(dfb.DataFilter):
         the value of the first key.
         """
         if not filter_name:
-            raise df.FilterNameError
+            raise dfb.FilterNameError
         # Throw away any _key_values after ':' 
         return self._filter_dict[filter_name.split(':')[0]]
     getf = get_filter
