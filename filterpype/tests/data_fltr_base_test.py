@@ -126,12 +126,17 @@ class TestDataFilter(unittest.TestCase):
         self.assertRaises(dfb.FilterAttributeError, df.Batch, factory=factory)
                     
     def test_missing_filter_data_not_overridden(self):
+        
         class Pointless(dfb.DataFilter):
             ftype = 'pointless'
         pointless = Pointless()
         packet1 = dfb.DataPacket(data='abcdef')
         # filter_data() is not overridden
-        self.assertRaises(dfb.FilterError, pointless.send, packet1)
+        # FilterProcessingException now raised instead of FilterError due to
+        # alleviating the StopIteration issue as described within
+        # ProblemsWeHaveEncountered (trac).
+        ##self.assertRaises(dfb.FilterError, pointless.send, packet1)
+        self.assertRaises(dfb.FilterProcessingException, pointless.send, packet1)
 
     def test_reprime_filter(self):
         pass_through = df.PassThrough()

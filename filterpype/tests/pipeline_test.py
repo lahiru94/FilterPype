@@ -942,20 +942,31 @@ class TestPipeline(unittest.TestCase):
     def test_raise_filter_error(self):
         just_sink1 = JustSink(factory=self.factory)
         packet1 = dfb.DataPacket('hhh12345')
-        self.assertRaises(dfb.PipelineError, just_sink1.send, packet1)
+        # FilterProcessingException now raised instead of FilterError due to
+        # alleviating the StopIteration issue as described within
+        # ProblemsWeHaveEncountered (trac).
+        ##self.assertRaises(dfb.PipelineError, just_sink1.send, packet1)
+        self.assertRaises(dfb.FilterProcessingException,
+                          just_sink1.send,
+                          packet1)
         ### No error in sending because pipeline is not set
         ##just_sink1.send(packet1)
 
         just_sink2 = JustSink(factory=self.factory)
         packet2 = dfb.DataPacket('abc12345')
         just_sink2.pipeline = just_sink1
-        self.assertRaises(dfb.PipelineError, just_sink2.send, packet2)
+        # dfb.FilterProcessingException.
+        ##self.assertRaises(dfb.PipelineError, just_sink2.send, packet2)
+        self.assertRaises(dfb.FilterProcessingException,
+                          just_sink2.send,
+                          packet2)
 
         just_sink3 = JustSink(factory=self.factory)
         just_sink3.pipeline = just_sink2
         just_sink3.pipeline.shut_down()
         packet3 = dfb.DataPacket('545454')
         self.assertRaises(StopIteration, just_sink2.send, packet2)
+        
                 
     def test_raising_filter_error(self):
         just_sink = JustSink(factory=self.factory)
