@@ -275,7 +275,7 @@ class BranchDynamic(dfb.DataFilter):
     """
     ftype = 'branch_dynamic'
     
-    keys = ['main_variable:MAIN', 'batch_variable:BRANCH']
+    keys = ['main_variable:MAIN', 'branch_variable:BRANCH']
     
     def filter_data(self, packet):
         
@@ -283,8 +283,10 @@ class BranchDynamic(dfb.DataFilter):
         # Comparing directly against True because uninstantiated variables 
         # within the embedded environment evaluate as "<<$unset$>>.
         if getattr(emb, self.main_variable) is True:
+            print self.main_variable
             self.send_on(packet)
-        if getattr(emb, self.batch_variable) is True:
+        if getattr(emb, self.branch_variable) is True:
+            print self.branch_variable
             self.send_on(packet, 'branch')
 
 
@@ -907,6 +909,7 @@ class CountBytes(dfb.DataFilter):
     """
     ftype = 'count_bytes'
     keys = ['count_bytes_field_name:counted_bytes']
+    
 
     def filter_data(self, packet):  
         cbfn = self.count_bytes_field_name
@@ -2328,13 +2331,22 @@ class TankQueue(dfb.DataFilter):
             return 0
     spare_capacity = property(_get_spare_capacity,
                               doc='Count of packets needed to match tank_size')   
-
+    
+    
+    @property
+    def tank_size(self):
+        return self._get_tank_size()
+    
+    @tank_size.setter
+    def tank_size(self, value):
+        self._set_tank_size(value)
+    
     def _get_tank_size(self):
         try:
             return self._tank_size
         except AttributeError:
             return -2  # No packets leave, like -1
-
+        
     def _set_tank_size(self, new_size):
         self._tank_size = new_size
         while self.spare_capacity < 0:
@@ -2454,8 +2466,6 @@ class TankBranch(TankQueue):
     ftype = 'tank_branch'
 
     def before_filter_data(self, packet):
-        #TO-DO REMOVE THIS.
-        print self.tank_size
         pass
 
     def after_filter_data(self, packet):
