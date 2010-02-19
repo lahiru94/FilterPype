@@ -229,6 +229,8 @@ class FilterFactory(object):
                         msg = 'Filter type "%s" not found in the filter ' + \
                               'factory class map dictionary'
                         raise dfb.FilterNameError, msg % ftype
+        # !! If create_filter receives a string, the except clause isn't
+        # executed so filter_attrs isn't defined.
         filter_attrs['factory'] = self
         filter_attrs['pipeline'] = pipeline
                         

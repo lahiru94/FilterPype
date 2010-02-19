@@ -1179,12 +1179,13 @@ class DataFilter(DataFilterBase):
                 if not packet.message:  # This must be a data packet
                     try:
                         self._process_data_packet(packet)
-                    except FilterProcessingException, err:
-                        raise
+                    #except FilterProcessingException, err:
+                        #raise
                     except Exception, err:
                         msg = "Exception trying to process data in '%s' (%s): %s: %s" \
                             % (self.name, self.ftype, type(err), err)
-                        raise FilterProcessingException, msg
+                        #err.
+                        raise type(err), msg
                 else:
                     self._process_message_bottle(packet)
 

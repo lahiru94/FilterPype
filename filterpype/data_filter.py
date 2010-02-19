@@ -52,10 +52,12 @@ class AttributeChangeDetection(dfb.DataFilter):
 Examines a list of attributes for change in value. Sets the
 packet_change_flag attribute to True upon change of any of the attributes,
 otherwise flag stays False. AttributeError raised if packet has not got
-all attributes.
+all attributes. Change of initial value.
     """
     ftype = "attribute_change_detection"
-    keys = ["attributes", "packet_change_flag:attribute_changed"]
+    keys = ["attributes",
+            "packet_change_flag:attribute_changed",
+            "compare_initial_value:True"]
     
     def filter_data(self, packet):
         for attribute in self.attributes:
@@ -70,13 +72,14 @@ all attributes.
             
             if filter_value != packet_value:
                 setattr(packet, self.packet_change_flag, True)
+                if not self.compare_initial_value:
+                    setattr(self, attribute, packet_value)
                 break
         else:
             # For loop completed without finding a changed attribute
             # value.
             setattr(packet, self.packet_change_flag, False)
         self.send_on(packet)
-
 
 class AttributeExtractor(dfb.DataFilter):
     """ Extract attributes from text strings using a delimiter to determine the
@@ -283,10 +286,8 @@ class BranchDynamic(dfb.DataFilter):
         # Comparing directly against True because uninstantiated variables 
         # within the embedded environment evaluate as "<<$unset$>>.
         if getattr(emb, self.main_variable) is True:
-            print self.main_variable
             self.send_on(packet)
         if getattr(emb, self.branch_variable) is True:
-            print self.branch_variable
             self.send_on(packet, 'branch')
 
 
