@@ -668,7 +668,7 @@ Glen - 07/01/10 - Changed logic incase space is an empty string.
             str(e), hex(ord(e.args[0])))
 
 # Glen - 05/01/10 - Requiring equivalents of standard library functions 
-# converting network order endianness to host order, and vice versa,
+# converting network byte order to host byte order, and vice versa,
 # htons, htonl, ntohs, ntohl were copied from:
 # http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOrder.htm
 

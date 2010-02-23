@@ -51,6 +51,7 @@ class FilterFactory(object):
             attribute_change_detection = df.AttributeChangeDetection,
             attribute_extractor     = df.AttributeExtractor,
             batch                   = df.Batch,
+            branch_dynamic          = df.BranchDynamic,
             branch_param            = df.BranchParam, 
             branch_clone            = df.BranchClone,
             branch_first_part       = df.BranchFirstPart,
@@ -106,6 +107,7 @@ class FilterFactory(object):
             tank_queue              = df.TankQueue,
             waste                   = df.Waste,     # Also 'null'
             wrap                    = df.Wrap,
+            write_configobj_file    = df.WriteConfigObjFile,
             write_file              = df.WriteFile,
             
             check_essential_keys    = ppln.CheckEssentialKeys,
@@ -227,6 +229,8 @@ class FilterFactory(object):
                         msg = 'Filter type "%s" not found in the filter ' + \
                               'factory class map dictionary'
                         raise dfb.FilterNameError, msg % ftype
+        # !! If create_filter receives a string, the except clause isn't
+        # executed so filter_attrs isn't defined.
         filter_attrs['factory'] = self
         filter_attrs['pipeline'] = pipeline
                         

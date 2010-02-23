@@ -28,7 +28,7 @@
 
 import unittest
 import hashlib
-##from configobj import ConfigObj
+from configobj import ConfigObj
 import sys
 import math
 import timeit
@@ -94,7 +94,10 @@ Change if filter starts handling exceptions on missing packet attributes.
         fltr = df.AttributeChangeDetection(attributes=("test_attr",), 
                                            packet_change_flag="change_flag")
         pkt = dfb.DataPacket()
-        self.assertRaises(AttributeError, fltr.send, pkt)
+        # Originally AttributeError, due to the nature of exception handling
+        # within FilterPypeFDS, this will now raise a FilterProcessingException.
+        ##self.assertRaises(AttributeError, fltr.send, pkt)
+        self.assertRaises(dfb.FilterProcessingException, fltr.send, pkt)
     
     def test_single_attribute(self):
         fltr = df.AttributeChangeDetection(attributes=("test_attr",), 
@@ -1062,7 +1065,10 @@ class TestConvertToInt(unittest.TestCase):
         packet = dfb.DataPacket()
         converter = df.ConvertBytesToInt(param_names='NON_EXISTANT')
         converter.next_filter = self.sink
-        self.assertRaises(dfb.FilterAttributeError, converter.send, packet)
+        # FilterProcessingException is now raised for all filter exceptions
+        # due to the StopIteration issue explained within
+        # ProblemsWeHaveEncountered (trac).
+        self.assertRaises(dfb.FilterProcessingException, converter.send, packet)
         converter.shut_down()
     
     def test_convert_muliple_values(self):
@@ -1940,7 +1946,7 @@ class TestHeaderAsAttribute(unittest.TestCase):
             sink = df.Sink()
             fltr.next_filter = sink
             packet = dfb.DataPacket(data=header_bytes)
-            fltr.send_on(packet)
+            fltr.send(packet)
             self.assertEqual(len(sink.results), 0)
 
 # nice idea, but not the solution to the current problem
@@ -2124,7 +2130,13 @@ class TestRenameFile(unittest.TestCase):
         from_name = self.file_name_copy
         to_name = self.file_name_copy
         packet1 = dfb.DataPacket(from_filename=from_name, to_filename=to_name)
-        self.assertRaises(dfb.DataError, self.rename_file_filter.send, packet1)
+        # FilterProcessingException now raised instead of FilterError due to
+        # alleviating the StopIteration issue as described within
+        # ProblemsWeHaveEncountered (trac).
+        ##self.assertRaises(dfb.DataError, self.rename_file_filter.send, packet1)
+        self.assertRaises(dfb.FilterProcessingException,
+                          self.rename_file_filter.send,
+                          packet1)
         
     def test_rename_to_already_exists(self):
         # Do the rename
@@ -2240,8 +2252,11 @@ class TestSwapTwoBytes(unittest.TestCase):
         packet = dfb.DataPacket(data=test_string)
         reverse = df.SwapTwoBytes()
         reverse.next_filter = self.sink        
-        
-        self.assertRaises(TypeError, reverse.send, packet)
+        # FilterProcessingException now raised instead of FilterError due to
+        # alleviating the StopIteration issue as described within
+        # ProblemsWeHaveEncountered (trac).
+        ##self.assertRaises(TypeError, reverse.send, packet)
+        self.assertRaises(dfb.FilterProcessingException, reverse.send, packet)
 
 
 class TestReverseString(unittest.TestCase):
@@ -2755,6 +2770,58 @@ class TestWrap(unittest.TestCase):
         packet = dfb.DataPacket(data=u'abcdef\xfa')
         wrap.send(packet)
         self.assertEquals(self.sink.results[-1].data, u'===abcdef\xfa+++')
+        
+class TestWriteConfigObjFile(unittest.TestCase):
+    def setUp(self):
+        self.dest_file_name = "write_configobj_file_test"
+        self.dest_file_suffix = "cfg"
+        self.dest_file_path = self.dest_file_name + '.' + self.dest_file_suffix
+        
+        self.fltr = df.WriteConfigObjFile(dest_file_name=self.dest_file_name,
+                                          dest_file_suffix=self.dest_file_suffix)
+        self.sink = df.Sink()
+        self.fltr.next_filter = self.sink
+    
+    def tearDown(self):
+        if os.path.exists(self.dest_file_path):
+            os.remove(self.dest_file_path)
+    
+    def test_write_config_obj_file_single_section(self):
+        test_section = {"test_section": {"value1":'1',
+                                         "value2":'2'}}
+        section_packet = dfb.DataPacket(data=test_section)
+        self.fltr.send(section_packet)
+        # Assert that the filter sends on the incoming packet unchanged.
+        self.assertEqual(section_packet,
+                         self.sink.results[0])
+        
+        # Shut down the filter to cause the writing of the file.
+        self.fltr.shut_down()
+        
+        # Assert that the section has been written with configobj.
+        with open(self.dest_file_path, 'r') as out_file_obj:
+            config_obj = ConfigObj(out_file_obj)
+            self.assertEqual(config_obj.dict(),
+                             test_section)
+            
+    def test_write_config_obj_file_multiple_sections(self):
+        all_test_sections = {}
+        for x in range(10):
+            test_section_key = "test_section_%d" % x
+            test_section_value = {"key_%d" % x: "%d" % x,
+                                  "key_%d": "%d" % x}
+            test_section = {"test_section_%d" % x: test_section_value}
+            all_test_sections[test_section_key] = test_section_value
+            section_packet = dfb.DataPacket(data=test_section)
+            self.fltr.send(section_packet)
+            # Assert that the latest packet has arrived in the sink.
+            self.assertEqual(section_packet,
+                             self.sink.results[-1])
+        self.fltr.shut_down()
+        with open(self.dest_file_path, 'r') as out_file_obj:
+            config_obj = ConfigObj(out_file_obj)
+            self.assertEqual(config_obj.dict(),
+                             all_test_sections)
 
 
 class TestWriteFile(unittest.TestCase):

@@ -37,6 +37,8 @@ import os
 import time
 import re
 import new
+# configobj used by WriteConfigObjFile
+import configobj
 
 import filterpype.filter_utils as fut
 import filterpype.data_fltr_base as dfb
@@ -50,10 +52,12 @@ class AttributeChangeDetection(dfb.DataFilter):
 Examines a list of attributes for change in value. Sets the
 packet_change_flag attribute to True upon change of any of the attributes,
 otherwise flag stays False. AttributeError raised if packet has not got
-all attributes.
+all attributes. Change of initial value.
     """
     ftype = "attribute_change_detection"
-    keys = ["attributes", "packet_change_flag:attribute_changed"]
+    keys = ["attributes",
+            "packet_change_flag:attribute_changed",
+            "compare_initial_value:True"]
     
     def filter_data(self, packet):
         for attribute in self.attributes:
@@ -68,13 +72,14 @@ all attributes.
             
             if filter_value != packet_value:
                 setattr(packet, self.packet_change_flag, True)
+                if not self.compare_initial_value:
+                    setattr(self, attribute, packet_value)
                 break
         else:
             # For loop completed without finding a changed attribute
             # value.
             setattr(packet, self.packet_change_flag, False)
         self.send_on(packet)
-
 
 class AttributeExtractor(dfb.DataFilter):
     """ Extract attributes from text strings using a delimiter to determine the
@@ -264,6 +269,26 @@ class BranchClone(dfb.DataFilter):
         # N.B. Branch always goes first!
         self.send_on(packet.clone(), 'branch') 
         self.send_on(packet, 'main')
+
+
+class BranchDynamic(dfb.DataFilter):
+    """Sends along the main and/or branch depending on two variables within the
+    embedded environment. If the variables have not been set, this filter will
+    die loudly raising an AttributeError.
+    """
+    ftype = 'branch_dynamic'
+    
+    keys = ['main_variable:MAIN', 'branch_variable:BRANCH']
+    
+    def filter_data(self, packet):
+        
+        emb = embed.pype
+        # Comparing directly against True because uninstantiated variables 
+        # within the embedded environment evaluate as "<<$unset$>>.
+        if getattr(emb, self.main_variable) is True:
+            self.send_on(packet)
+        if getattr(emb, self.branch_variable) is True:
+            self.send_on(packet, 'branch')
 
 
 class BranchFirstPart(dfb.DataFilter):
@@ -885,6 +910,7 @@ class CountBytes(dfb.DataFilter):
     """
     ftype = 'count_bytes'
     keys = ['count_bytes_field_name:counted_bytes']
+    
 
     def filter_data(self, packet):  
         cbfn = self.count_bytes_field_name
@@ -1331,14 +1357,14 @@ class PassNonZero(dfb.DataFilter):
     """
 
     ftype = 'pass_non_zero'
-    keys = ['check_byte_count:32']
+    keys = ['check_byte_count:32', "attribute:data"]
 
     def filter_data(self, packet):
         self.check00 = self.check_byte_count * chr(0x00)
         self.checkFF = self.check_byte_count * chr(0xFF)
-
-        if not packet.data.startswith(self.check00) and \
-           not packet.data.startswith(self.checkFF):
+        data = getattr(packet, self.attribute)
+        if not data.startswith(self.check00) and \
+           not data.startswith(self.checkFF):
             self.send_on(packet)
 
     #def init_filter(self):
@@ -1629,12 +1655,14 @@ class ReadBatch(dfb.DataFilter):
                 ##block = unicode(block, 'ISO-8859-1')  # TO-DO
 
             if len(block) > 0:
+                self.char_count += len(block)
                 percent = self._calculate_progress(self.char_count)
                 packet = dfb.DataPacket(
                     block, source_file_name=self.full_file_name,
-                    read_percent=percent)
+                    read_percent=percent,
+                    read_bytes=self.char_count
+                )
                 self.send_on(packet)
-                self.char_count += len(block)
                 ##self._report_progress(self.char_count)
             else:
                 # File has run out, so we loop, closing first, to avoid
@@ -2304,13 +2332,22 @@ class TankQueue(dfb.DataFilter):
             return 0
     spare_capacity = property(_get_spare_capacity,
                               doc='Count of packets needed to match tank_size')   
-
+    
+    
+    @property
+    def tank_size(self):
+        return self._get_tank_size()
+    
+    @tank_size.setter
+    def tank_size(self, value):
+        self._set_tank_size(value)
+    
     def _get_tank_size(self):
         try:
             return self._tank_size
         except AttributeError:
             return -2  # No packets leave, like -1
-
+        
     def _set_tank_size(self, new_size):
         self._tank_size = new_size
         while self.spare_capacity < 0:
@@ -2430,8 +2467,6 @@ class TankBranch(TankQueue):
     ftype = 'tank_branch'
 
     def before_filter_data(self, packet):
-        #TO-DO REMOVE THIS.
-        print self.tank_size
         pass
 
     def after_filter_data(self, packet):
@@ -2753,6 +2788,51 @@ def transposed2(lists, defval=0):
         else:
             raise dfb.FilterAttributeError(
                 'unrecognised output format "%s"' % self.output_format)
+
+
+class WriteConfigObjFile(dfb.DataFilter):
+    """Creates a ConfigObj object and adds new sections to it from incoming
+packet's data. Only accepts packet.data as a dictionary in the following format:
+
+{ config_obj_section_name (str) : config_obj_section (dict)* }
+    """
+    ftype = "write_config_obj_file"
+    keys = ["dest_file_name",
+            "dest_file_suffix",
+            "write_config:True"]
+    
+    def init_filter(self):
+        self._config_obj = configobj.ConfigObj()
+        
+    def before_filter_data(self, packet):
+        # Raise an exception if packet.data is not in the correct format.
+        try:
+            packet.data.items()
+        except AttributeError:
+            raise AttributeError, "Incoming packet.data needs to be a \
+dictionary for %s. packet.data evaluated as: %s." %  (self.__class__.__name__,
+                                                      packet.data)
+        # Ensure each value in the dict is also a dict for configobj.
+        try:
+            for value in packet.data.values():
+                value.items()
+        except AttributeError:
+            raise AttributeError, "All values of incoming packet.data need \
+#to be dictionaries for %s" % self.__class__.__name__
+    
+    def filter_data(self, packet):
+        # Add every key value pair as a new section in config obj.
+        for key, value in packet.data.items():
+            self._config_obj[key] = value
+        self.send_on(packet)
+    
+    def flush_buffer(self):
+        """When the pipeline is shutting down, write out self._config_obj if
+        write_config is True."""
+        if self.write_config:
+            out_filename = self.dest_file_name + '.' + self.dest_file_suffix
+            with open(out_filename, 'w') as out_file_obj:
+                self._config_obj.write(out_file_obj)
 
 
 class WriteFile(dfb.DataFilter):

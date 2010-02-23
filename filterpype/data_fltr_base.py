@@ -1014,11 +1014,23 @@ class DataFilterBase(object):
         #! commented out due to lack of testing/understanding of the
         #! repercussions.
         if packet.message and not self.next_filter:
-            # we are a message bottle with nowhere to go
-            # set the next filter to be the destination of the message bottle
-            # so that it does not have to be explicitely defined in the pipeline
-            # using msg_creating_fltr >>> destination_fltr_name
-            self.next_filter = self.refinery.getf(packet.destination)
+            # we are a message bottle with nowhere to go set the next filter
+            # to be the destination of the message bottle so that it does not
+            # have to be explicitely defined in the pipeline using
+            # msg_creating_fltr >>> destination_fltr_name
+            
+            # 8/2/2010 - This may be bad for messagebottle flow as any
+            # branch which ends without a '>>>' will send the message bottle
+            # to its destination straight away, even if it's not the end of
+            # the branch where the message bottle originated... This will end
+            # up with two bottles being received by the destination.
+            # Test results for both FilterPype and FilterPypeFDS were compared
+            # and commenting out this line did not alter the results. Since
+            # we do not have 100% test coverage, if you are having problems
+            # with message bottles not arriving at their destination, this
+            # may be the cause.
+            ##self.next_filter = self.refinery.getf(packet.destination)
+            pass
             
         if packet and self.next_filter:
             packet.sent_from = self
@@ -1167,12 +1179,17 @@ class DataFilter(DataFilterBase):
                 if not packet.message:  # This must be a data packet
                     try:
                         self._process_data_packet(packet)
-                    except FilterProcessingException:
-                        raise
+                    #except FilterProcessingException, err:
+                        #raise
                     except Exception, err:
-                        msg = "Exception trying to process data in '%s' (%s): %s: %s" \
-                            % (self.name, self.ftype, type(err), err)
-                        raise FilterProcessingException, msg
+                        # Uses the refinery to check _already_raised.
+                        if not hasattr(self.refinery, "_already_raised"):
+                            msg = "Exception in '%s' (%s): %s" \
+                                % (self.name, self.ftype, str(err))
+                            self.refinery._already_raised = True
+                            raise type(err), msg
+                        else:
+                            raise err
                 else:
                     self._process_message_bottle(packet)
 
