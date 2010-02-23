@@ -1357,14 +1357,14 @@ class PassNonZero(dfb.DataFilter):
     """
 
     ftype = 'pass_non_zero'
-    keys = ['check_byte_count:32']
+    keys = ['check_byte_count:32', "attribute:data"]
 
     def filter_data(self, packet):
         self.check00 = self.check_byte_count * chr(0x00)
         self.checkFF = self.check_byte_count * chr(0xFF)
-
-        if not packet.data.startswith(self.check00) and \
-           not packet.data.startswith(self.checkFF):
+        data = getattr(packet, self.attribute)
+        if not data.startswith(self.check00) and \
+           not data.startswith(self.checkFF):
             self.send_on(packet)
 
     #def init_filter(self):

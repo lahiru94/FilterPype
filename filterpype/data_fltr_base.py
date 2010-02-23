@@ -1182,10 +1182,14 @@ class DataFilter(DataFilterBase):
                     #except FilterProcessingException, err:
                         #raise
                     except Exception, err:
-                        msg = "Exception trying to process data in '%s' (%s): %s: %s" \
-                            % (self.name, self.ftype, type(err), err)
-                        #err.
-                        raise type(err), msg
+                        # Uses the refinery to check _already_raised.
+                        if not hasattr(self.refinery, "_already_raised"):
+                            msg = "Exception in '%s' (%s): %s" \
+                                % (self.name, self.ftype, str(err))
+                            self.refinery._already_raised = True
+                            raise type(err), msg
+                        else:
+                            raise err
                 else:
                     self._process_message_bottle(packet)
 
