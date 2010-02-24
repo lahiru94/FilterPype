@@ -559,12 +559,12 @@ class CallbackOnAttribute(dfb.DataFilter):
 
     allowed_inconsistencies:
     self.callback('inconsistency_value_exceeded:holy')
+    
+    If num_watch_pkts is None (default) it will watch forever and only return a
+    not_found callback when closing the filter.
 
     count_to_confirm is the number of identical values of the watched attribute
     required to pass through the filter before it will return a callback.
-
-    If num_watch_pkts is None (default) it will watch forever and never return
-    a not_found callback.
 
     watch_for_change will make a callback only when the attribute changes it's
     value from the previous (including the first assignment of the value in
