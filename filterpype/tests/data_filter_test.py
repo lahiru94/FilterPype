@@ -914,6 +914,8 @@ class TestCallbackOnAttribute(unittest.TestCase):
                          ( ("found:watch",), dict(watch='out') ) 
                          )
     
+    #def test_
+    
     def test_callback_count_to_confirm_satisfied(self):
         ##packet1 = dfb.DataPacket()
         ##packet1.watch = 'out'
