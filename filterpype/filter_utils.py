@@ -712,5 +712,5 @@ Source: http://www.java2s.com/Tutorial/Python/0280__Buildin-Module/NetworkByteOr
     """
     return struct.unpack('!I', data)[0]
 
-a = 5
+
     
