@@ -1667,6 +1667,7 @@ class SomePythonFunctions(ppln.Pipeline):
     batch:%BATCH_SIZE
     '''
 
+class Dummy(object): pass
     
 class TestEmbedPython(unittest.TestCase):
     
@@ -1675,7 +1676,15 @@ class TestEmbedPython(unittest.TestCase):
         
     def tearDown(self):
         pass
-        
+    
+    def test_subst_keys(self):
+        """"""
+        embed_python = df.EmbedPython()
+        embed_python.pipeline = Dummy()
+        embed_python.pipeline.path = "C:\\temp"
+        self.assertEqual(embed_python.subst_keys('${path}'),
+                         "'%s'" % embed_python.pipeline.path)
+    
     def test_embed_python(self):
         filter_with_python = SomePythonFunctions(factory=self.factory)
         module1 = filter_with_python.emb_module
