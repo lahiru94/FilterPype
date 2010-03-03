@@ -66,6 +66,7 @@ class FilterFactory(object):
             callback_on_attribute   = df.CallbackOnAttribute,
             collect_data            = df.CollectData,
             combine                 = df.Combine,
+            concat_path             = df.ConcatPath,
             convert_bytes_to_int    = df.ConvertBytesToInt,
             convert_filename_to_path= df.ConvertFilenameToPath, # TO-DO remove
             copy_file               = ppln.CopyFile,
