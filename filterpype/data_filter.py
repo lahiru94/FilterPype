@@ -821,6 +821,21 @@ class Combine(dfb.DataFilter):
         self.send_on(packet)
 
 
+class ConcatPath(dfb.DataFilter):
+    """
+    Concatinate path
+    """
+    ftype = 'concat_path'
+    keys = ['input_path', 'end_part', 'variable_name']
+
+    def filter_data(self, packet):
+        emb = embed.pype
+        
+        new_path = self.input_path + self.end_part
+        setattr(emb, self.variable_name, new_path)
+        self.send_on(packet)
+
+
 class ConvertBytesToInt(dfb.DataFilter):
     """ Convert a string of hex values (e.g. 'x01x02x03') into a integer
         representation of the given string.

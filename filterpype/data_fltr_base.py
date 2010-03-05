@@ -1615,6 +1615,11 @@ class PriorityQueue(object):
         self.push(None, priority=-1000)
 
     def pop(self):
+        """
+        TODO: Establish why time_posted isn't used to sort priority of
+        responses when multiple priority values are the same. Note: This only
+        appeared on WinVista.
+        """
         priority, time_posted, item = heapq.heappop(self.queue)
         ##self._debug_print('popping', priority, time_posted, item)
         return item
