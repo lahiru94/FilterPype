@@ -2981,7 +2981,6 @@ class WriteFile(dfb.DataFilter):
             self._ensure_file_closed()
             self.out_file = None
 
-
     def filter_data(self, packet):
         self._write_data(packet.data)
         self.send_on(packet)

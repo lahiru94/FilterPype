@@ -1402,7 +1402,7 @@ class DynamicMixIn(object):
             if re_caps_params_with_percent.match(value):  # e.g. %SOME_VAR
                 msg = '**14505** %s: Attempting dynamic update of ' + \
                     'key "%s" with current value "%s"'
-                print msg % (self.name, attr_name, value)
+                #print msg % (self.name, attr_name, value)
                 return getattr(embed.pype, value[1:])
             else:
                 return value
