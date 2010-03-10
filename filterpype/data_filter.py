@@ -285,6 +285,8 @@ class BranchDynamic(dfb.DataFilter):
         emb = embed.pype
         # Comparing directly against True because uninstantiated variables 
         # within the embedded environment evaluate as "<<$unset$>>.
+        ##print "BranchDynamic: %s = %s, %s = %s" % (self.main_variable, getattr(emb, self.main_variable),
+                                                   ##self.branch_variable, getattr(emb, self.branch_variable))
         if getattr(emb, self.main_variable) is True:
             self.send_on(packet)
         if getattr(emb, self.branch_variable) is True:
@@ -581,12 +583,15 @@ class CallbackOnAttribute(dfb.DataFilter):
     
     changes the refinery send() method's return value to 'found', 'not_found'
     or 'inconsistant'
+    
+    print_when_callback allows you to aid your debugging by printing to stdout
+    when a callback is made
     """
     ftype = 'callback_on_attribute'
     keys = ['watch_attr', 'callback', 'environ:none', 'count_to_confirm:1', 
             'num_watch_pkts:none', 'allowed_inconsistencies:0',
             'watch_for_change:false', 'include_in_environ:[]',
-            'close_when_found:false']
+            'close_when_found:false', 'print_when_callback:false']
 
     def _populate_environ(self, packet):
         # add required keys to the environment where they are available
@@ -642,6 +647,8 @@ class CallbackOnAttribute(dfb.DataFilter):
                     self.callback('found:' + self.watch_attr, **self.environ)
                     self.attribute_found = True
                     self.prev_value = value
+                    if self.print_when_callback:
+                        print "found '%s': %s" % (self.watch_attr, value)
                     if not packet.message: self.send_on(packet)
                     self.prev_value = value
                     # If the pipeline does not need to do anything else, let it
