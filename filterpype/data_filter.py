@@ -644,13 +644,12 @@ class CallbackOnAttribute(dfb.DataFilter):
                     # we've found a new value
                     self._populate_environ(packet)
                     #self.environ[self.watch_attr] = value
-                    self.callback('found:' + self.watch_attr, **self.environ)
                     self.attribute_found = True
                     self.prev_value = value
+                    self.callback('found:' + self.watch_attr, **self.environ)
                     if self.print_when_callback:
                         print "found '%s': %s" % (self.watch_attr, value)
                     if not packet.message: self.send_on(packet)
-                    self.prev_value = value
                     # If the pipeline does not need to do anything else, let it
                     # shutdown after the attribute is found
                     if self.close_when_found and self.pipeline:
