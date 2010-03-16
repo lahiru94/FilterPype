@@ -1734,7 +1734,7 @@ class ReadBytes(dfb.DataFilter):
 
     def filter_data(self, packet):
         packet.FINAL = False
-        file_desc = open(self.source_file_name, 'r')
+        file_desc = open(self.source_file_name, 'rb')
         total_file_size = os.path.getsize(self.source_file_name)
         counter = 0
 
@@ -1855,7 +1855,7 @@ class ReadLines(dfb.DataFilter):
     def filter_data(self, packet):
         self.source_file_name = (yield)
         self.char_count = 0
-        self.file1 = open(self.source_file_name, 'r')
+        self.file1 = open(self.source_file_name, 'rb')
         self.file_counter += 1
         # Skip initial unread data
         for line_no in xrange(self.initial_skip):
@@ -2852,7 +2852,7 @@ dictionary for %s. packet.data evaluated as: %s." %  (self.__class__.__name__,
         write_config is True."""
         if self.write_config:
             out_filename = self.dest_file_name + '.' + self.dest_file_suffix
-            with open(out_filename, 'w') as out_file_obj:
+            with open(out_filename, 'wb') as out_file_obj:
                 self._config_obj.write(out_file_obj)
 
 
