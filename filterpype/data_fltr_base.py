@@ -43,6 +43,7 @@ import time
 import new
 from contextlib import contextmanager 
 import re
+from string import Template
 
 import filterpype.filter_utils as fut
 import filterpype.embed as embed
@@ -847,6 +848,9 @@ class DataFilterBase(object):
         """The filter may have essential or optional keys. Check these for
            substition syntax: ${foo}, and if found, read value from the 
            parent pipeline.
+        
+        Extent of the current implementation:
+        If the value of the key is 
         """
         if not self.pipeline:
             # No point looking for substitutions because there is no parent
@@ -859,9 +863,14 @@ class DataFilterBase(object):
             # need to be set before the defaults are applied.
 
             if key in self.__dict__:
+                
                 value1 = self.__dict__.get(key)
+                
                 try:
-                    if value1.startswith('${') and value1.endswith('}'):
+                    # If the key's value is a single substitution.
+                    if value1.startswith('${') and \
+                       value1.endswith('}') and \
+                       value1.find('${', 2) == -1:
                         # Get substitute value from parent pipeline.
                         # If key is not found in the parent pipeline, this
                         # may be an error --> KeyError.
@@ -881,7 +890,13 @@ class DataFilterBase(object):
                             ##msg = '**10150** Substitution: "%s.%s.%s" --> "%s"'
                             ##print msg % (self.pipeline.name, self.name, 
                                             ##value1, self.__dict__[key])
-                except AttributeError:  # It isn't a string
+                    #
+                    else:
+                        # Will raise TypeError if value is not a string.
+                        value1 + ''
+                        template = Template(value1)
+                        setattr(self, key, template.safe_substitute(self.pipeline.__dict__))
+                except AttributeError, TypeError:  # It isn't a string
                     pass
 
     def _update_route(self):
