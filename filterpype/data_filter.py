@@ -1492,7 +1492,7 @@ class PrintParam(dfb.DataFilter):
             self.pipeline_name = self.pipeline.name
         except AttributeError:
             self.pipeline_name = 'no_pipeline'
-
+            
 
 class ReadBatch(dfb.DataFilter):
     """Chop file up into string blocks to pass inside packets into pipeline.
