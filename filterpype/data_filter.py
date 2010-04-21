@@ -182,10 +182,17 @@ class Batch(dfb.DataFilter):
     def _init_input(self, data=''):
         """Reset the inputs list to nothing, or whatever was left over from
         the previous batching operation.
+        Create an empty dfb.DataPacket object initially for self._last_packet.
         """
         self.inputs = [data]
         self.input_char_count = len(data)
         self.block_index = 0
+        
+        
+    def before_filter_data(self, packet):
+        """Clone the incoming packet and store within self._last_packet for
+        flush_buffer()."""
+        self._last_packet = packet.clone()
 
     def filter_data(self, packet):
         """Split the data, allowing size and fork_dest to be changed each loop.
@@ -235,11 +242,15 @@ class Batch(dfb.DataFilter):
         if remainder:  # Avoid sending a final empty data packet
             ##print '**13428** %s is sending remainder "%s" to %s' % (
                 ##self.name, remainder, self.fork_dest)
-            self.send_on(dfb.DataPacket(remainder), self.fork_dest)
+            self.send_on(self._last_packet.clone(remainder), self.fork_dest)
 
     def init_filter(self):
         self._init_input()
         self.remember_packets = []  # <<<<< Remove TO-DO
+        # self._last_packet is a copy of the last packet to enter the filter.
+        # This is required to persist attributes when flush_buffer() sends on
+        # the remaining batched data in a new packet.
+        self._last_packet = dfb.DataPacket()
 
     def validate_params(self):
         """Zero batch size gives ValueError: 
@@ -1481,7 +1492,7 @@ class PrintParam(dfb.DataFilter):
             self.pipeline_name = self.pipeline.name
         except AttributeError:
             self.pipeline_name = 'no_pipeline'
-
+            
 
 class ReadBatch(dfb.DataFilter):
     """Chop file up into string blocks to pass inside packets into pipeline.

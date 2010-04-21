@@ -129,6 +129,10 @@ class FactorialCalc(dfb.DataFilter):
             ##                    self.send_on(packet, fork_dest='branch')
         self.send_on(packet)
 
+class KeySubstitutions(dfb.DataFilter):
+    """Only exists to test pipeline key substitution."""
+    ftype = "key_substitution"
+    keys = ['first_key', 'second_key:value']
 
 class MultiplyIfInteger(dfb.DataFilter):
     """If an input is an integer, or a string integer, return a multiple of 
@@ -145,6 +149,7 @@ class MultiplyIfInteger(dfb.DataFilter):
         except ValueError:
             pass
         self.send_on(packet)
+
 
                 
 class PrintData(dfb.DataFilter):

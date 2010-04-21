@@ -84,6 +84,22 @@ def setUp():
 def tearDown():
     pass
 
+class CheckKeySubstitutions(ppln.Pipeline):
+    """Check that key substitutions ${pipeline_key} are successful."""
+    
+    config = '''
+    [--main--]
+    ftype = check_key_substitutions
+    keys = integer:213, string_sub:process
+    
+    [test_key_substitutions]
+    ftype = key_substitutions
+    first_key = ${integer}
+    second_key = do_not_${string_sub}_this
+    
+    [--route--]
+    test_key_substitutions'''
+
     
 class JustSink(ppln.Pipeline):
     """Simple class for testing closing context manager.
@@ -918,6 +934,20 @@ class TestPipeline(unittest.TestCase):
     
     def tearDown(self):
         pass
+    
+    def test_substitute_keys_1(self):
+        ppln = CheckKeySubstitutions(factory=self.factory)
+        test_filter = ppln.getf('test_key_substitutions')
+        self.assertEqual(test_filter.first_key, 213)
+        self.assertEqual(test_filter.second_key, 'do_not_process_this')
+    
+    def test_substitute_keys_2(self):
+        ppln = CheckKeySubstitutions(factory=self.factory,
+                                     integer='string_instead',
+                                     string_sub=3131)
+        test_filter = ppln.getf('test_key_substitutions')
+        self.assertEqual(test_filter.first_key, 'string_instead')
+        self.assertEqual(test_filter.second_key, 'do_not_3131_this')
     
     def test_closing_context_manager(self):
         just_sink = JustSink(factory=self.factory)

@@ -217,6 +217,42 @@ class TestBatch(unittest.TestCase):
 
     def tearDown(self):
         pass
+    
+    def test_flush_buffer_no_packets(self):
+        """Should not raise exception."""
+        batch_filter = df.Batch(size=8192)
+        batch_filter.flush_buffer()
+    
+    def test_flush_buffer_after_sending_empty_packet(self):
+        """Should not raise exception."""
+        empty_packet = dfb.DataPacket()
+        batch_filter = df.Batch(size=8192)
+        batch_filter.next_filter = self.sink
+        batch_filter.send(empty_packet)
+        batch_filter.flush_buffer()
+        
+    def test_flush_buffer_after_sending_packet_1(self):
+        """Should not raise exception."""
+        packet = dfb.DataPacket(240 * '\x00')
+        batch_filter = df.Batch(size=8192)
+        batch_filter.next_filter = self.sink
+        batch_filter.send(packet)
+        batch_filter.flush_buffer()
+        self.assertEqual(len(self.sink.all_data), 1)
+        
+    def test_flush_buffer_after_sending_packet_2(self):
+        """Should not raise exception."""
+        packet = dfb.DataPacket(20240 * '\x00')
+        batch_filter = df.Batch(size=8192)
+        batch_filter.next_filter = self.sink
+        batch_filter.send(packet)
+        batch_filter.flush_buffer()
+        self.assertEqual(len(self.sink.all_data), 3)
+        
+    def test_flush_buffer_after_sending_packets(self):
+        pass
+        
+        
 
     def test_batch_continuous1(self):
         self.assertRaises(dfb.FilterAttributeError, df.Batch)
