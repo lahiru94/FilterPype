@@ -2152,6 +2152,10 @@ class Sink(dfb.DataFilter):
 
     def open_message_bottle(self, packet):
         # do nothing with the message
+        #pass
+        # Doing nothing here results in no message bottles being captured
+        if self.capture_msgs:
+            self._save_data(packet)
         pass
 
     def send_on(self, packet, fork_dest='main'): # TO-DO discuss
