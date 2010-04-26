@@ -86,7 +86,7 @@ setup(
 
     test_suite = 'nose.collector',
         
-    install_requires = ['setuptools>=0.6b1', 'configobj==4.6.0', 'ply==3.3'],
+    install_requires = ['setuptools>=0.6b1', 'configobj', 'ply==3.3'],
          
     #extras_require = {
     #    'reST': ["docutils>=0.3"],
