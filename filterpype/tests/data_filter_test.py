@@ -158,7 +158,35 @@ Change if filter starts handling exceptions on missing packet attributes.
         self.assertEqual(revert_pkt_2.change_flag, False)
         fltr.send(changed_pkt_3)
         self.assertEqual(changed_pkt_3.change_flag, True)
-
+        
+class TestInitialValueChangeDetection(unittest.TestCase):
+    """.."""
+    def setUp(self):
+        pass
+    def tearDown(self):
+        pass
+    
+    def test_single_attr(self):
+        fltr = df.InitialValueChangeDetection(attribute_map={"test_attr_1":5}, 
+                                              packet_change_flag="change_flag")
+        pkt_1 = dfb.DataPacket(test_attr_1=5)
+        fltr.send(pkt_1)
+        self.assertFalse(pkt_1.change_flag)
+        pkt_2 = dfb.DataPacket(test_attr_1=1)
+        fltr.send(pkt_2)
+        self.assertTrue(pkt_2.change_flag)
+        pkt_3 = dfb.DataPacket(test_attr_1=5)
+        fltr.send(pkt_3)
+        self.assertTrue(pkt_3.change_flag)
+        pkt_4 = dfb.DataPacket(test_attr_1=1)
+        fltr.send(pkt_4)
+        self.assertTrue(pkt_4.change_flag)
+        pkt_5 = dfb.DataPacket(test_attr_1=1)
+        fltr.send(pkt_5)
+        self.assertTrue(pkt_5.change_flag)
+        
+        
+        
 
 class TestAttributeExtractor(unittest.TestCase):
     """ Test the extraction of attributes from text strings based on a

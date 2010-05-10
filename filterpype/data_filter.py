@@ -80,6 +80,26 @@ all attributes. Change of initial value.
             # value.
             setattr(packet, self.packet_change_flag, False)
         self.send_on(packet)
+    
+class InitialValueChangeDetection(dfb.DataFilter):
+    """Takes in a dict of attribute_name:value and """
+    ftype = "initial_value_change_detection"
+    keys = ["attribute_map",
+            "packet_change_flag:attribute_changed"]
+    
+    def filter_data(self, packet):
+        for attribute_name, attribute_value in self.attribute_map.items():
+            try:
+                packet_value = getattr(packet, attribute_name)
+            except AttributeError, err:
+                setattr(packet, self.packet_change_flag, True)
+                break
+            if packet_value != attribute_value:
+                setattr(packet, self.packet_change_flag, True)
+                break
+        else:
+            setattr(packet, self.packet_change_flag, False)
+        self.send_on(packet)
 
 class AttributeExtractor(dfb.DataFilter):
     """ Extract attributes from text strings using a delimiter to determine the
