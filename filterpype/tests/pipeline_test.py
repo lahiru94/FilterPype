@@ -223,6 +223,24 @@ class CheckEssentialKeys3Missing(ppln.Pipeline):
     sink:20
     '''
     
+class TestExtractManyAttributesSplitWords(unittest.TestCase):
+    def setUp(self):
+        self.factory = ff.DemoFilterFactory()
+        
+    def test_extract_many_attributes_split_words(self):
+        data_in = """
+        TIME CHIP SERIAL IS: 5ABF3. OTHER VALUE IS: 312. SOME TRAILING TEXT
+        """
+        extractor = ppln.ExtractManyAttributesSplitWords(\
+            factory=self.factory, split_on_str=". ", attr_delim='col')
+        extractor_filter = extractor.getf('attribute_extractor')
+        sink = df.Sink()
+        extractor_filter.next_filter = sink
+        extractor.send(dfb.DataPacket(data_in))
+        #TEST PACKET NOT FILTER
+        self.assertEqual(sink.results[0].time_chip_serial_is, '5ABF3')
+        self.assertEqual(sink.results[1].other_value_is, '312')
+    
 class TestExtractManyAttributes(unittest.TestCase):
     """
     """

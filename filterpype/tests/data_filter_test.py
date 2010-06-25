@@ -2593,6 +2593,25 @@ class TestSplitWords(unittest.TestCase):
         self.assertEquals(self.sink.results[-1].data, 'five')
         self.assertEquals('|'.join(self.sink.all_data),
                           'one|two|three|four|five')
+        
+class TestSplitWords(unittest.TestCase):
+    
+    def setUp(self):
+        self.splitter = df.SplitWords()
+        self.sink = df.Sink()
+        self.splitter.next_filter = self.sink
+
+    def tearDown(self):
+        pass
+
+    def test_split_words(self):
+        custom_splitter = df.SplitWords(split_on_str=". ")
+        custom_splitter.next_filter = self.sink
+        packet1 = dfb.DataPacket('THE TIME CHIP SERIAL IS: 23. SOME_OTHER: 5. A')
+        custom_splitter.send(packet1)
+        self.assertEquals(self.sink.results[0].data, 'THE TIME CHIP SERIAL IS: 23')
+        self.assertEquals(self.sink.results[1].data, 'SOME_OTHER: 5')
+        self.assertEquals(self.sink.results[2].data, 'A')
 
 class TestSplitLines(unittest.TestCase):
     

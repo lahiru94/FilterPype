@@ -769,6 +769,19 @@ class ExtractManyAttributes(Pipeline):
     split_lines >>>
     attribute_extractor:${attr_delim}
     """
+
+class ExtractManyAttributesSplitWords(Pipeline):
+    """ Splits data by split_on_str and extracts attributes based on a delimiter 
+    parameter, the attributes are stored in the packet."""
+    config = """
+    [--main--]
+    ftype = extract_many_attrs_split_words
+    keys = split_on_str, attr_delim
+    
+    [--route--]
+    split_words:${split_on_str} >>>
+    attribute_extractor:${attr_delim}
+    """
         
 class CopyFile(Pipeline):
     """Take in a file object via data stream, and write it to a named file.
