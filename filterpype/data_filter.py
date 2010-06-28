@@ -2220,7 +2220,11 @@ class SplitWords(dfb.DataFilter):
     def filter_data(self, packet):
         words = packet.data.split(self.split_on_str)
         for word in words:
-            self.send_on(packet.clone(data=word))
+            # Creating a new DataPacket instead of calling
+            # packet.clone because it is possible that the data will be an
+            # empty string. If clone is called with data as an empty string,
+            # the previous packet's data will be cloned.
+            self.send_on(dfb.DataPacket(data=word))
 
 
 class SplitLines(dfb.DataFilter):
