@@ -786,6 +786,46 @@ class CallbackOnAttribute(dfb.DataFilter):
             self.callback('not_found:' + self.watch_attr, **self.environ)
             self.refinery.return_value = 'not_found'
 
+class CallbackOnMultipleAttributes(dfb.DataFilter):
+    """Simplified version of data_filter's CallbackOnAttribute which will make
+a callback based on multiple attributes. watch_attrs is comma separated, though
+is parsed as a list by FilterPype. Will only make the callback once when all
+attributes have been found."""
+    ftype = 'callback_on_multiple_attributes'
+    keys = ['watch_attrs', 'callback', 'environ']
+    
+    def init_filter(self):
+        self.found_attrs = {}
+        self.callback_made = False
+    
+    def _make_callback(self, found_attrs):
+        self.environ.update(found_attrs)
+        self.callback('found:%s' % '_and_'.join([attr for attr in self.watch_attrs if found_attrs.has_key(attr)]), **self.environ)
+        self.callback_made = True
+    
+    def filter_data(self, packet):
+        if self.callback_made:
+            self.send_on(packet)
+            return
+        
+        for attr_name in self.watch_attrs:
+            if hasattr(packet, attr_name):
+                self.found_attrs[attr_name] = getattr(packet, attr_name)
+        
+        if all([self.found_attrs.has_key(a) for a in self.watch_attrs]):
+            self._make_callback(self.found_attrs)
+        
+        self.send_on(packet)
+        
+    def close_filter(self):
+        if self.callback_made:
+            return
+        # May be partial match.
+        if self.found_attrs:
+            self._make_callback(self.found_attrs)
+        else:
+            self.callback('not_found:%s' % '_and_'.join(self.watch_attrs))
+
 
 class CentrifugeOne(dfb.DataFilter):  # TO-DO
     """Extract the data from each packet into an extract dictionary. 
