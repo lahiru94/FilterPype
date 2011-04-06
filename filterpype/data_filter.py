@@ -372,7 +372,7 @@ class BranchIf(dfb.DataFilter):
             raise FilterLogicError, 'Unknown comparison "%s"' % (
                 comparison)
         if result:
-            self.send_on(packet, 'branch') 
+            self.send_on(packet, 'branch')
         else:
             self.send_on(packet, 'main')
 
