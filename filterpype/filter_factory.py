@@ -64,6 +64,7 @@ class FilterFactory(object):
             calc_slope              = df.CalcSlope,
             calculate               = df.Calculate,
             callback_on_attribute   = df.CallbackOnAttribute,
+            callback_on_multiple_attributes = df.CallbackOnMultipleAttributes,
             collect_data            = df.CollectData,
             combine                 = df.Combine,
             concat_path             = df.ConcatPath,
