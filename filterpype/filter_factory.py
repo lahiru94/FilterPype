@@ -55,6 +55,7 @@ class FilterFactory(object):
             branch_param            = df.BranchParam, 
             branch_clone            = df.BranchClone,
             branch_first_part       = df.BranchFirstPart,
+            branch_until_value      = df.BranchUntilValue,
             branch_if               = df.BranchIf,
             branch_once_triggered   = df.BranchOnceTriggered,
             branch_ref              = df.BranchRef,

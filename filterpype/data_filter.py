@@ -170,6 +170,31 @@ class AttributeExtractor(dfb.DataFilter):
         ### append dict to self
         ##self.__dict__.update(params)
 
+class BranchUntilValue(dfb.DataFilter):
+    ftype = 'branch_until_value'
+    keys = ['value']
+    
+    def init_filter(self):
+        self.__value_seen = False
+        self.__stored_data = ''
+    
+    def filter_data(self, packet):
+        if self.__value_seen:
+            self.send_on(packet)
+            return
+        self.__stored_data += packet.data
+        try:
+            index_of_value = self.__stored_data.index(self.value)
+        except ValueError:
+            return
+        self.__value_seen = True
+        branch_data = self.__stored_data[:index_of_value]
+        if branch_data:
+            self.send_on(packet.clone(data=branch_data), 'branch')
+        main_data = self.__stored_data[index_of_value:]
+        if main_data:
+            self.send_on(packet.clone(data=main_data), 'main')
+        
 
 class Batch(dfb.DataFilter):
     """Input is a series of strings of any length, with header removed.
