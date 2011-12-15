@@ -135,8 +135,8 @@ class TestDataFilter(unittest.TestCase):
         # FilterProcessingException now raised instead of FilterError due to
         # alleviating the StopIteration issue as described within
         # ProblemsWeHaveEncountered (trac).
-        ##self.assertRaises(dfb.FilterError, pointless.send, packet1)
-        self.assertRaises(dfb.FilterProcessingException, pointless.send, packet1)
+        self.assertRaises(dfb.FilterError, pointless.send, packet1)
+        ##self.assertRaises(dfb.FilterProcessingException, pointless.send, packet1)
 
     def test_reprime_filter(self):
         pass_through = df.PassThrough()
