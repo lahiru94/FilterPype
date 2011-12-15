@@ -431,7 +431,8 @@ class TestPriorityQueue(unittest.TestCase):
         self.assertEquals([x[2] for x in self.priority_queue.sorted_items()],
                           ['t', 's', 'r'])
     
-if __name__ == '__main__':  #pragma: nocover
+if __name__ == '__main__':
+    unittest.main()
 ##        TestBatch('test_batch_no_headers').run()
         #TestPipelines('test_filter11').run()
 ##    runner = unittest.TextTestRunner()
@@ -442,9 +443,9 @@ if __name__ == '__main__':  #pragma: nocover
 ##    TestBranchRoute('test_branch_route').run()
 ##    TestDataFilter('test_missing_attribute').run()
 ##    TestRenameFile('test_rename_to_already_exists').run()
-    TestDataFilterDynamic('test_dynamic_access_with_decorator').run()
+##    TestDataFilterDynamic('test_dynamic_access_with_decorator').run()
 ##    TestDataFilter('test_missing_attribute').run()
-    print '\n**1910** Finished'
+##    print '\n**1910** Finished'
 
 
 
