@@ -86,15 +86,15 @@ setup(
 
     test_suite = 'nose.collector',
         
-    install_requires = ['setuptools>=0.6b1', 'configobj', 'ply==3.3'],
+    install_requires = ['setuptools>=0.6b1', 'configobj', 'ply>=3.3'],
          
     #extras_require = {
     #    'reST': ["docutils>=0.3"],
     #},
     
-    setup_requires = [''],
+    setup_requires = ['nose>=1.0'],
  
-    tests_require = ['nose>=0.11', 'figleaf', 'coverage>=2.85', 'mock==0.6.0'],
+    tests_require = ['mock'],
    
     #entry_points = """
     #    [console_scripts]

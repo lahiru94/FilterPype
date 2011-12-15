@@ -1,5 +1,5 @@
 # Make enclosing directory into a package
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 # TO-DO [00-00-2009]  
 # TO-DO [] class DataLength(dfb.DataFilter) cf. CountBytes
