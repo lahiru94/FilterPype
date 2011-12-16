@@ -28,7 +28,7 @@
 try:
     from setuptools import setup, find_packages
 except ImportError:
-    from ez_setup import use_setuptools
+    from distribute_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, find_packages
  
@@ -80,7 +80,7 @@ setup(
     test_suite = 'nose.collector',        
     tests_require = test_requirements, 
     setup_requires = ['nose>=1.0'],
-    install_requires = ['setuptools>=0.6b1', 
+    install_requires = ['distribute', 
                         'configobj', 
                         'ply>=3.3'] + test_requirements,
     zip_safe = False,        
