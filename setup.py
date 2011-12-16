@@ -25,23 +25,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
-import os
-import sys
- 
 try:
     from setuptools import setup, find_packages
 except ImportError:
-    try:
-        from ez_setup import use_setuptools
-    except ImportError:
-        print("can't find ez_setup")
-        print("try: wget http://peak.telecommunity.com/dist/ez_setup.py")
-        sys.exit(1)
+    from ez_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, find_packages
-
+ 
 from filterpype import __version__ as VERSION
+
+test_requirements = ['mock']
 
 setup(
     # === Meta data ===
@@ -84,23 +77,11 @@ setup(
         '': ['pypes/*.pype'],
     },
 
-    test_suite = 'nose.collector',
-        
-    install_requires = ['setuptools>=0.6b1', 'configobj', 'ply>=3.3'],
-         
-    #extras_require = {
-    #    'reST': ["docutils>=0.3"],
-    #},
-    
+    test_suite = 'nose.collector',        
+    tests_require = test_requirements, 
     setup_requires = ['nose>=1.0'],
- 
-    tests_require = ['mock'],
-   
-    #entry_points = """
-    #    [console_scripts]
-    #    tsr = filterpype.tsratio:calcTSRs                       
-    #    """,        
-           
-    zip_safe = False,
-        
+    install_requires = ['setuptools>=0.6b1', 
+                        'configobj', 
+                        'ply>=3.3'] + test_requirements,
+    zip_safe = False,        
     )
