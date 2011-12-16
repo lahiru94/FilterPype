@@ -1,2 +1,0 @@
-configobj
-ply>=0.3.3
