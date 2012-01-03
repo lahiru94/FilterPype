@@ -1,0 +1,10 @@
+include docs/*.*
+include filterpype/pypes/*.pype
+include syntax_highlight/jEdit/*.*
+include *.py
+include requirements.txt
+exclude lextab.py
+exclude parsetab.py
+exclude .bzr
+exclude build
+exclude dist

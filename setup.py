@@ -4,7 +4,7 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009-2011 Flight Data Services
+# Copyright (c) 2009-2011 Flight Data Services Ltd
 # http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,16 +25,47 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import re
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
     from distribute_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, find_packages
+
+def parse_requirements(file_name):
+    """
+    Extract all dependency names from requirements.txt.
+    """
+    requirements = []
+    for line in open(file_name, 'r').read().split('\n'):
+        if re.match(r'(\s*#)|(\s*$)', line):
+            continue
+        if re.match(r'\s*-e\s+', line):
+            # TODO support version numbers
+            requirements.append(re.sub(r'\s*-e\s+.*#egg=(.*)$', r'\1', line))
+        elif re.match(r'\s*-f\s+', line):
+            pass
+        else:
+            requirements.append(line)
+
+    requirements.reverse()
+    return requirements
+
+def parse_dependency_links(file_name):
+    """
+    Extract all URLs for packages not found on PyPI.
+    """
+    dependency_links = []
+    for line in open(file_name, 'r').read().split('\n'):
+        if re.match(r'\s*-[ef]\s+', line):
+            dependency_links.append(re.sub(r'\s*-[ef]\s+', '', line))
+
+    dependency_links.reverse()
+    return dependency_links
  
 from filterpype import __version__ as VERSION
-
-test_requirements = ['mock']
 
 setup(
     # === Meta data ===
@@ -45,12 +76,12 @@ setup(
     url='http://www.filterpype.org/',
     
     # Optional meta data   
-    author='Flight Data Services',
+    author='Flight Data Services Ltd',
     author_email='developers@flightdataservices.com',            
     description='FilterPype is a process-flow pipes-and-filters Python framework.',    
     long_description='''\
-    FilterPype is being used for multi-level data analysis, but could be applied to
-    many other areas where it is difficult to split up a system into small
+    FilterPype is being used for multi-level data analysis, but could be applied 
+    to many other areas where it is difficult to split up a system into small
     independent parts
 
     Some of its features:
@@ -64,24 +95,28 @@ setup(
      - Using it is like writing a synchronous multi-threaded program
     ''',    
     download_url='http://www.filterpype.org/',
-    classifiers='',
     platforms='',
     license='MIT',
 
-    packages = find_packages(exclude=['lextab.*', 'parsetab.*']),      
-                
-    #include_package_data = True, 
+    packages = find_packages(exclude=['lextab.*', 'parsetab.*']),                      
+    include_package_data = True, 
 
-    package_data = {
-        # Include the required files
-        '': ['pypes/*.pype'],
-    },
-
-    test_suite = 'nose.collector',        
-    tests_require = test_requirements, 
+    # Parse the 'requirements.txt' file to determine the dependencies.
+    install_requires = parse_requirements('requirements.txt'), 
+    dependency_links = parse_dependency_links('requirements.txt'),
     setup_requires = ['nose>=1.0'],
-    install_requires = ['distribute', 
-                        'configobj', 
-                        'ply>=3.3'] + test_requirements,
-    zip_safe = False,        
+    test_suite = 'nose.collector',
+    
+    zip_safe = False,  
+    classifiers = [
+        "Development Status :: 5 - Production/Stable",  	
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: Other/Proprietary License",
+        "Programming Language :: Python :: 2.7",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    	],                  
     )
