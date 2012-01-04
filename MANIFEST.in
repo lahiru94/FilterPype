@@ -10,7 +10,7 @@ include *.py
 include requirements.txt
 include CHANGES
 include LICENSE
-include README.rst
+include README
 include TODO
 exclude lextab.py
 exclude parsetab.py

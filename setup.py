@@ -74,7 +74,7 @@ setup(
     author='Flight Data Services Ltd',
     author_email='developers@flightdataservices.com',            
     description='FilterPype is a process-flow pipes-and-filters Python framework.',
-    long_description = open('README.rst').read() + open('CHANGES').read(),
+    long_description = open('README').read() + open('CHANGES').read(),
     download_url='http://www.filterpype.org/',
     license='MIT',
 
