@@ -26,15 +26,6 @@
 # THE SOFTWARE.
 
 
-import sys
-import re
-##from configobj import ConfigObj
-import os
-import pprint as pp
-
-import filterpype.data_filter as df
-import filterpype.filter_utils as fut
-import filterpype.data_fltr_base as dfb
 import filterpype.pipeline as ppln
 
 

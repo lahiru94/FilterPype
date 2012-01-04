@@ -25,14 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
-
 # TO-DO: ReadLine filter -- forwards and backwards
 # TO-DO: Check that ftype class attribute matches the obj made
 
 import sys
 import hashlib
-import bz2 
+import bz2
 import os
 import time
 import re
@@ -58,7 +56,7 @@ all attributes. Change of initial value.
     keys = ["attributes",
             "packet_change_flag:attribute_changed",
             "compare_initial_value:True"]
-    
+
     def filter_data(self, packet):
         for attribute in self.attributes:
             packet_value = getattr(packet, attribute)
@@ -80,6 +78,7 @@ all attributes. Change of initial value.
             # value.
             setattr(packet, self.packet_change_flag, False)
         self.send_on(packet)
+
     
 class InitialValueChangeDetection(dfb.DataFilter):
     """Takes in a dict of attribute_name:value and """
@@ -466,7 +465,7 @@ class BreakPoint(dfb.DataFilter):
     """
     
     ftype = 'break_point'
-    dynamic=True
+    dynamic = True
     
     def filter_data(self, packet):
         place_break_point_here = None
@@ -2843,7 +2842,7 @@ def transposed2(lists, defval=0):
             rows = self._transposed(cols)
             rows.insert(0, header_row)
 
-            lots_of_lists_way = '''   
+            lots_of_lists_way = '''
             ##for line_num in xrange(attr_length):
             ##for line_num in xrange(self.max_attr_length):
             for line_num in xrange(max(self.attribute_lengths)):
@@ -3111,5 +3110,3 @@ class WriteFile(dfb.DataFilter):
             dfb.DataFilter.open_message_bottle(self, packet)
 
 ##+++++TO-DO:+++++  yield 'pass data back??'  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-

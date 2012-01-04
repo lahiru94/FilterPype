@@ -35,7 +35,6 @@ import sys
 import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import TOKEN
-import pprint
 
 import filterpype.filter_utils as fut
 

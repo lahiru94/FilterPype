@@ -65,7 +65,6 @@ import hotshot.stats
 import pstats
 import marshal
 import time
-import copy
 
 __all__ = ['profiled']
 

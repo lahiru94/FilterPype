@@ -1378,7 +1378,7 @@ class DynamicMetaClass(type):
 
 # Mix-in functions (not used, after all)
 
-def mix_in (base, addition):
+def mix_in(base, addition):
     """Mixes in place, i.e. the base class is modified.
     Tags the class with a list of names of mixed members.
     """
@@ -1390,7 +1390,7 @@ def mix_in (base, addition):
             mixed.append (item)
     base._mixed_ = mixed
 
-def mix_in_copy (base, addition):
+def mix_in_copy(base, addition):
     """Same as mix_in, but returns a new class instead of modifying
     the base.
     """

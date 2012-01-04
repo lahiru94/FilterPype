@@ -35,10 +35,8 @@
 
 # with statement is enabled by default in Python 2.6; needs next line in 2.5
 from __future__ import with_statement
-import sys
 import re
 from configobj import ConfigObj
-import os
 
 ##import filterpype.lex_yacc5
 import filterpype.lex_yacc4
