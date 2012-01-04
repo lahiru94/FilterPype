@@ -67,7 +67,7 @@ all attributes. Change of initial value.
                 # change detection. Do not compare this value.
                 setattr(self, attribute, packet_value)
                 continue
-            
+
             if filter_value != packet_value:
                 setattr(packet, self.packet_change_flag, True)
                 if not self.compare_initial_value:
@@ -99,6 +99,7 @@ class InitialValueChangeDetection(dfb.DataFilter):
         else:
             setattr(packet, self.packet_change_flag, False)
         self.send_on(packet)
+
 
 class AttributeExtractor(dfb.DataFilter):
     """ Extract attributes from text strings using a delimiter to determine the
@@ -134,7 +135,6 @@ class AttributeExtractor(dfb.DataFilter):
         print "**7890** AttributeExtractor delmiter:", self.delim
 
 
-
     def filter_data(self, packet):
         data = packet.data
         key_value = [item.strip() for item in data.split(self.delim)]
@@ -154,7 +154,7 @@ class AttributeExtractor(dfb.DataFilter):
                 # only one value provided (no delimiter found)
                 return
             else:
-                raise 
+                raise
         ### update the filter's dictionary with the extracted attribute
         ##self.__dict__.update(attributes_dict)
         # update the packet's dictionary with the extracted attribute
@@ -1802,6 +1802,7 @@ class ReadBatch(dfb.DataFilter):
 ##        self.shutting_down = False  # TO-DO  self.refinery.shutting_down = False
         ##self.percent_read = None
         ##self.file_size = None
+
     def init_filter(self):
         pass
 

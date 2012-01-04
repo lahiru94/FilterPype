@@ -1644,6 +1644,3 @@ class PriorityQueue(object):
 
     def sorted_items(self):
         return heapq.nsmallest(len(self.queue), self.queue)
-
-
-
