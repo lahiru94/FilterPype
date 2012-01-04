@@ -2,6 +2,11 @@
 History
 =======
 
+0.3.3
+-----
+* Completed test suite
+* Minor documentation tweaks
+
 0.3.2
 -----
 
@@ -11,8 +16,7 @@ History
 0.3.1
 -----
 
-* Refactred package structure and setup.py
-* Completed test suite
+* Refactored package structure and setup.py
 * Source distribution auto published to PyPI
 
 0.3.0
