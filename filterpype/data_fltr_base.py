@@ -4,7 +4,7 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009-2011 Flight Data Services
+# Copyright (c) 2009-2012 Flight Data Services Ltd
 # http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -292,7 +292,7 @@ class DataFilterBase(object):
             ##self.name = self.__class__.__name__.lower()
 
             ##jjjjjjjjjjjjjjj
-        # returned from send() method  -- TODO: set only on refinery
+        # returned from send() method  -- TO-DO: set only on refinery
         self.return_value = None
         self._primed = False
         self._corout = None
@@ -1631,7 +1631,7 @@ class PriorityQueue(object):
 
     def pop(self):
         """
-        TODO: Establish why time_posted isn't used to sort priority of
+        TO-DO: Establish why time_posted isn't used to sort priority of
         responses when multiple priority values are the same. Note: This only
         appeared on WinVista.
         """

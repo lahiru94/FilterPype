@@ -1,0 +1,9 @@
+TO-DO
+=====
+
+* class DataLength(dfb.DataFilter) cf. CountBytes
+* Use tank_queue for calculating vertical height change rate
+* Make ">>>" redundant, since it adds nothing to the logic of
+  and just complicates things because of when it is required.
+  
+See the **TO-DO** markers in filterpype/*.py for a complete list.

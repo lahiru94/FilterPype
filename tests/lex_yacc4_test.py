@@ -4,7 +4,7 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009-2011 Flight Data Services Ltd
+# Copyright (c) 2009-2012 Flight Data Services Ltd
 # http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

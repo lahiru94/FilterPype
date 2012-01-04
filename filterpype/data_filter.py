@@ -4,7 +4,7 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009-2011 Flight Data Services
+# Copyright (c) 2009-2012 Flight Data Services Ltd
 # http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -665,7 +665,7 @@ class CallbackOnAttribute(dfb.DataFilter):
         the packet. (TO-DO discuss) <-- there should be a tidier way of doing
         this!
         
-        TODO: Split the getattr and functionality within try except into
+        TO-DO: Split the getattr and functionality within try except into
         seperate private function, then send_on can be handled outside of that
         function.
         """
@@ -1105,7 +1105,7 @@ class DataLength(dfb.DataFilter):
 
     def filter_data(self, packet):
         # strip off the stuff that isn't classed as data
-        # TODO: if this is slow, try to improve with a comparison of a packet 
+        # TO-DO: if this is slow, try to improve with a comparison of a packet 
         # lengths worth of no_data:
         ##assert len(not_data) == 1
         ##if not_data * packet.data_length == packet.data:
@@ -1621,7 +1621,7 @@ class ReadBatch(dfb.DataFilter):
             self.file1 = None
 
     def _get_file_obj(self, full_file_name_or_obj):
-        # TODO: Create exception if full_file_name_or_obj is not a string or
+        # TO-DO: Create exception if full_file_name_or_obj is not a string or
         # is not a file object
         if not full_file_name_or_obj:
             # Sent file name overrides fixed file name, but if not present, 
@@ -2696,7 +2696,7 @@ class SetAttributesToData(dfb.DataFilter):
 
 
 
-    * TODO: Replace str with a safe_string conversion so that ascii chars such
+    * TO-DO: Replace str with a safe_string conversion so that ascii chars such
     as "delete" etc are not written to file!
     """
 
@@ -3023,7 +3023,7 @@ class WriteFile(dfb.DataFilter):
             ##data = data.encode('utf-8')
 
         if self.do_write_file:
-            # TODO: Glen to write a nice little test to ensure this works 
+            # TO-DO: Write a nice little test to ensure this works (GK)
             
             # this feature will allow us to have lots of different write_file
             # filters in a pipeline (very useful for testing etc) but also

@@ -21,3 +21,14 @@ parsetab.*
 .DS_Store
 coverage.xml
 nosetests.xml
+tests/test_data/tst_data5/some_file-tmp.dat
+tests/test_data/tst_data5/hello.txt
+tests/test_data/tst_data5/short.tmp.new
+tests/test_data/tst_data5/short.tmp.bz2
+tests/test_data/tst_data5/short.dat
+tests/test_data/tst_data3/file_data2.dat
+tests/test_data/tst_data3/file_data1.dat
+tests/test_data/tst_data5/short2.out
+tests/test_data/tst_data5/short2.dat
+tests/test_data/tst_data5/short_tst3.dat
+tests/test_data/tst_data5/short_tst3.dat.bz2

@@ -4,7 +4,7 @@
 # Licence
 #
 # FilterPype is a process-flow pipes-and-filters Python framework.
-# Copyright (c) 2009-2011 Flight Data Services Ltd
+# Copyright (c) 2009-2012 Flight Data Services Ltd
 # http://www.filterpype.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -67,39 +67,20 @@ def parse_dependency_links(file_name):
  
 from filterpype import __version__ as VERSION
 
-setup(
-    # === Meta data ===
-    
-    # Required meta data
+setup(   
     name='FilterPype',
     version = VERSION,
     url='http://www.filterpype.org/',
-    
-    # Optional meta data   
     author='Flight Data Services Ltd',
     author_email='developers@flightdataservices.com',            
     description='FilterPype is a process-flow pipes-and-filters Python framework.',    
-    long_description='''\
-    FilterPype is being used for multi-level data analysis, but could be applied 
-    to many other areas where it is difficult to split up a system into small
-    independent parts
-
-    Some of its features:
-
-     - Advanced algorithms broken down into simple data filter coroutines
-     - Pipelines constructed from filters in the new FilterPype mini-language
-     - Domain experts assemble pipelines with no Python knowledge required
-     - Sub-pipelines and filters linked by automatic pipeline construction
-     - All standard operations available: branching, joining and looping
-     - Recursive coroutine pipes allowing calculation of e.g. factorials
-     - Using it is like writing a synchronous multi-threaded program
-    ''',    
+    long_description=open('README.rst').read(),
     download_url='http://www.filterpype.org/',
     platforms='',
     license='MIT',
 
     packages = find_packages(exclude=['lextab.*', 'parsetab.*']),                      
-    include_package_data = True, 
+    include_package_data = True,
 
     # Parse the 'requirements.txt' file to determine the dependencies.
     install_requires = parse_requirements('requirements.txt'), 
@@ -113,9 +94,11 @@ setup(
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "License :: Other/Proprietary License",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 2.6",        
         "Programming Language :: Python :: 2.7",
         "Operating System :: OS Independent",
+        "Topic :: Scientific/Engineering :: Information Analysis",
         "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Topic :: Software Development :: Libraries :: Python Modules",
     	],                  
