@@ -19,3 +19,5 @@ profiling.txt
 lextab.*
 parsetab.*
 .DS_Store
+coverage.xml
+nosetests.xml
