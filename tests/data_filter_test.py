@@ -2004,8 +2004,8 @@ class TestHeaderAsAttribute(unittest.TestCase):
                 packet = dfb.DataPacket(data=header_bytes + data_bytes)
                 
                 fltr.send(packet)
-                self.assertEqual(getattr(sink.results[0], \
-                                         self.test_header_attr),
+                self.assertEqual(getattr(sink.results[0],
+                                 self.test_header_attr),
                                  header_bytes)
                 self.assertEqual(sink.results[0].data,
                                  data_bytes)
