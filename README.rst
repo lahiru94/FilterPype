@@ -17,6 +17,10 @@ Some of its features:
 * Using it is like writing a synchronous multi-threaded program
 * Package requires setuptools for installation.
 
+Package requires pip for installation.
+
+|  pip install filterpype
+
 For user documentation see: http://docs.filterpype.org/
 
 Project sponsored by Flight Data Services: http://www.flightdataservices.com/

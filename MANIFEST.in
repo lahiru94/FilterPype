@@ -18,7 +18,6 @@ include TODO
 exclude lextab.py
 exclude parsetab.py
 exclude .bzr
-exclude .pypirc
 exclude build
 exclude dist
 exclude nosetests.xml
