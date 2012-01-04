@@ -17,7 +17,6 @@ exclude parsetab.py
 exclude .bzr
 exclude build
 exclude dist
-include doc/build
 exclude nosetests.xml
 exclude coverage.xml
 exclude tests/test_data/tst_data3/file_data1.dat

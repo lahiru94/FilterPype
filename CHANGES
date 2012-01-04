@@ -1,22 +1,25 @@
 History
 =======
 
-0.3.1 (2012-01-04)
-------------------
+0.3.2
+-----
 
-* Reorganised package structure and setup.py
+* Refactored documentation and Sphinx configuration
+* Documentation auto published to PyPI
+
+0.3.1
+-----
+
+* Refactred package structure and setup.py
 * Completed test suite
+* Source distribution auto published to PyPI
 
-0.3.0 (2011-09-16)
-------------------
+0.3.0
+-----
 
-* Minor code cleanup for hosting on Google Code and publishing Eggs on PyPI
+* Minor code cleanup for hosting source on Google Code
 
-0.2.9 (2010-01-04)
-------------------
+0.2.9
+-----
 
 * Initial release
-
-
-
-
