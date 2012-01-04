@@ -1,2 +1,3 @@
 configobj
 ply>=3.3
+mock
