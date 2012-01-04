@@ -1,11 +1,8 @@
-include docs/*.py
-include docs/*.jpg
-include docs/Makefile
-include docs/make.bat
-include docs/index.rst
-include docs/Principles.rst
-include docs/TechExpl.rst
-include docs/Tutorial.rst
+include doc/Makefile
+include doc/make.bat
+include doc/source/*.*
+include doc/source/_static/*.*
+include doc/source/_template/*.*
 include tests/test_data/*/*
 include syntax_highlight/jEdit/*.*
 include filterpype/pypes/*.pype
@@ -20,6 +17,7 @@ exclude parsetab.py
 exclude .bzr
 exclude build
 exclude dist
+include doc/build
 exclude nosetests.xml
 exclude coverage.xml
 exclude tests/test_data/tst_data3/file_data1.dat

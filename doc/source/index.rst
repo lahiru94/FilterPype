@@ -1,9 +1,10 @@
-.. Pypes and Filters documentation master file, created by sphinx-quickstart on Thu Jul 30 09:19:20 2009.
+.. FilterPype documentation master file, created by
+   sphinx-quickstart on Wed Jan  4 14:53:19 2012.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Pypes and Filters's documentation!
-=============================================
+Welcome to FilterPype's documentation!
+======================================
 
 Contents:
 
@@ -13,7 +14,7 @@ Contents:
    Principles
    Tutorial
    TechExpl
-   api_autogen
+   API
 
 Indices and tables
 ==================

@@ -144,7 +144,7 @@ In order to use this Pipeline class it can be instantiated in Python as usual.
 
     pipeline2 = SplitData(factory=self.factory, data_chunk_size=1024)
 
-Factories have been explained briefly in the principles_ section. A typical factory might look like this:
+Factories have been explained briefly in the _principles section. A typical factory might look like this:
 
 .. code-block:: python
     :linenos:
