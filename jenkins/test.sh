@@ -33,7 +33,7 @@ fi
 
 # Install runtime requirements.
 if [ -f setup.py ]; then
-    python setup.py install
+    python setup.py develop
 fi
 
 # Remove existing output files
