@@ -27,6 +27,6 @@ if [ -z "${TAG_BUILD}" ]; then
         echo "password:yourpssword"
     fi
 else
-    echo "This is build is tagged : ${TAG_BUILD}"
+    echo "This build is tagged : ${TAG_BUILD}"
     echo "Therefore it will NOT be published on PyPI"
 fi

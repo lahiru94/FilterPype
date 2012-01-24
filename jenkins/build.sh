@@ -35,7 +35,7 @@ if [ -f setup.py ] && [ -f setup.cfg ]; then
 
     # Create a build record
     BUILD_RECORD="`ls -1tr ${WORKSPACE}/dist/*.zip | tail -n1`.html"
-    echo "<html><head><title>${BUILD_TAG}</title></head><body><h2>${BUILD_ID}</h2><ul><li><a href=\"${BUILD_URL}\">${BUILD_TAG}</a></li></ul><h3>Last Commit Log</h3><pre>${LAST_LOG}</pre></body></html>" > ${BUILD_RECORD}
+    echo "<html><head><title>${BUILD_TAG}</title></head><body><h2>${BUILD_ID}</h2><ul><li><a href=\"${BUILD_URL}\" target=\"_blank\">${BUILD_TAG}</a></li></ul><h3>Last Commit Log</h3><pre>${LAST_LOG}</pre></body></html>" > ${BUILD_RECORD}
 
     # Build sphinx documentation
     if [ -f ${WORKSPACE}/doc/Makefile ]; then
