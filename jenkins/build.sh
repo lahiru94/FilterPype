@@ -22,15 +22,20 @@ if [ -f setup.py ] && [ -f setup.cfg ]; then
         python setup.py sdist
     fi
 
-    # Create a build record
-    SDIST=`ls -1tr ${WORKSPACE}/dist/*.zip | tail -n1`
-
-    LAST_LOG="None"
+    # Grab the last commit log.
     if [ -d ${WORKSPACE}/.bzr ]; then
         LAST_LOG=`bzr log -l 1`
+    elif [ -d ${WORKSPACE}/.git ]; then
+        LAST_LOG=`git log -n 1`
+    elif [ -d ${WORKSPACE}/.hg ]; then
+        LAST_LOG=`hg log -l 1`
+    else
+        LAST_LOG="None"
     fi
 
-    echo "<html><head><title>${BUILD_TAG}</title></head><body><h2>${BUILD_ID}</h2><ul><li><a href=\"${BUILD_URL}\">${BUILD_TAG}</a></li></ul><h3>Log</h3><pre>${LAST_LOG}</pre></body></html>" > ${SDIST}.html
+    # Create a build record
+    BUILD_RECORD="`ls -1tr ${WORKSPACE}/dist/*.zip | tail -n1`.html"
+    echo "<html><head><title>${BUILD_TAG}</title></head><body><h2>${BUILD_ID}</h2><ul><li><a href=\"${BUILD_URL}\">${BUILD_TAG}</a></li></ul><h3>Last Commit Log</h3><pre>${LAST_LOG}</pre></body></html>" > ${BUILD_RECORD}
 
     # Build sphinx documentation
     if [ -f ${WORKSPACE}/doc/Makefile ]; then
