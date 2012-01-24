@@ -16,7 +16,6 @@ else
     echo "machine code.google.com login flexiondotorg@gmail.com password fZ5PQ5cw4sC6" > ~/.netrc
 fi
 
-
 mkdir -p /tmp/bzr2git/FilterPype || :
 cd /tmp/bzr2git/FilterPype
 

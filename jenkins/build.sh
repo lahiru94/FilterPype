@@ -9,7 +9,9 @@ cd ${WORKSPACE}
 rm -rfv ${WORKSPACE}/dist/* || :
 
 # Make a source distribution
-if [ -f setup.py ]; then
+if [ -f setup.py ] && [ -f setup.cfg ]; then
+
+    # Get the tag.
     TAG_BUILD=`grep tag_build ${WORKSPACE}/setup.cfg | cut -d'=' -f2 | sed 's/ //g'`
 
     # If the build is tagged, in any way, then append the Jenkins build number.
@@ -19,10 +21,14 @@ if [ -f setup.py ]; then
     else
         python setup.py sdist
     fi
-fi
 
-# Build sphinx documentation
-if [ -f doc/Makefile ]; then
-    cd ${WORKSPACE}
-    python setup.py build_sphinx
+    # Create a build record
+    SDIST=`ls -1tr ${WORKSPACE}/dist/*.zip | tail -n1`
+    echo "<html><head><title>${BUILD_TAG}</title></head><body><h2>${BUILD_ID}</h2><ul><li><a href=\"${BUILD_URL}\">${BUILD_TAG}</a></li></ul></body></html>" > ${WORKSPACE}/dist/${SDIST}.html
+
+    # Build sphinx documentation
+    if [ -f ${WORKSPACE}/doc/Makefile ]; then
+        cd ${WORKSPACE}
+        python setup.py build_sphinx
+    fi
 fi
