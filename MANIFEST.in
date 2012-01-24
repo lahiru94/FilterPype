@@ -12,13 +12,16 @@ include CHANGES
 include LICENSE
 include README
 include TODO
-exclude lextab.py
-exclude parsetab.py
+
 exclude .bzr
+exclude jenkins
 exclude build
 exclude dist
 exclude nosetests.xml
 exclude coverage.xml
+
+exclude lextab.py
+exclude parsetab.py
 exclude tests/test_data/tst_data3/file_data1.dat
 exclude tests/test_data/tst_data3/file_data2.dat
 exclude tests/test_data/tst_data5/hello.txt

@@ -11,7 +11,7 @@ else
     echo "machine code.google.com login flexiondotorg@gmail.com password fZ5PQ5cw4sC6" > ~/.netrc
 fi
 
-   
+
 mkdir -p /tmp/bzr2git/FilterPype || :
 cd /tmp/bzr2git/FilterPype
 
@@ -32,7 +32,7 @@ else
     git pull
     cd ..
 fi
-    
+
 cd /tmp/bzr2git/FilterPype/FilterPype.git
 bzr fast-export --export-marks /tmp/bzr2git/FilterPype/FilterPype.marks /tmp/bzr2git/FilterPype/FilterPype.bzr | git fast-import || :
 git push || :
