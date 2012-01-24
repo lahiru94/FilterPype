@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Enter the virtualenv
+. ${VIRTENV}/bin/activate
+cd ${WORKSPACE}
+
 TAG_BUILD=`grep tag_build ${WORKSPACE}/setup.cfg | cut -d'=' -f2 | sed 's/ //g'`
 
 # If the build is tagged, in any way, it will not be published on PyPI

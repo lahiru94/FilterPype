@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Enter the virtualenv
+. ${VIRTENV}/bin/activate
+cd ${WORKSPACE}
+
+# Remove previous builds
 rm -rfv ${WORKSPACE}/dist/* || :
 
 # Make a source distribution
@@ -17,5 +22,6 @@ fi
 
 # Build sphinx documentation
 if [ -f doc/Makefile ]; then
+    cd ${WORKSPACE}
     python setup.py build_sphinx
 fi

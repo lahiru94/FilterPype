@@ -19,8 +19,11 @@ fi
 # Create virtualenv
 virtualenv --python=python${VIRTVER} --no-site-packages --distribute ${VIRTENV}
 
-# Install testing and code metric tools
+# Enter the virtualenv
 . ${VIRTENV}/bin/activate
+cd ${WORKSPACE}
+
+# Install testing and code metric tools
 pip install clonedigger
 pip install nosexcover
 pip install pep8

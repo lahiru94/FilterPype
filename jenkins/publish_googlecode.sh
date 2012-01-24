@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Enter the virtualenv
+. ${VIRTENV}/bin/activate
+cd ${WORKSPACE}
+
 # Add Google authentication credentials
 if [ -e ~/.netrc ]; then
     grep "machine code.google.com login flexiondotorg@gmail.com password fZ5PQ5cw4sC6" ~/.netrc || :
