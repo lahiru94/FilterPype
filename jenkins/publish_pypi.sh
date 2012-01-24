@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Enter the virtualenv
+VIRTENV=${WORKSPACE}/.pyenv
 . ${VIRTENV}/bin/activate
 cd ${WORKSPACE}
 
