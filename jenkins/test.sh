@@ -34,6 +34,11 @@ if [ ${PYLINT} -eq 1 ]; then
   pip install pylint
 fi
 
+# Install requirements
+if [ -f requirements.txt ]; then
+    pip install --upgrade -r requirements.txt
+fi
+
 # Install runtime requirements.
 if [ -f setup.py ]; then
     python setup.py develop
