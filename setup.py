@@ -34,6 +34,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
+# http://cburgmer.posterous.com/pip-requirementstxt-and-setuppy
 def parse_requirements(file_name):
     """
     Extract all dependency names from requirements.txt.
