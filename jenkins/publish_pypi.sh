@@ -9,7 +9,10 @@ cd ${WORKSPACE}
 TAG_BUILD=`grep tag_build ${WORKSPACE}/setup.cfg | cut -d'=' -f2 | sed 's/ //g'`
 
 # If the build is tagged, in any way, it will not be published on PyPI
-if [ -z "${TAG_BUILD}" ]; then
+if [ -n "${TAG_BUILD}" ]; then
+    echo "This build is tagged : ${TAG_BUILD}"
+    echo "Therefore it will NOT be published on PyPI"
+else    
     if [ -e ~/.pypirc ]; then
         # Publish to PyPI
         python setup.py sdist upload
@@ -26,7 +29,4 @@ if [ -z "${TAG_BUILD}" ]; then
         echo "username:yourusername"
         echo "password:yourpssword"
     fi
-else
-    echo "This build is tagged : ${TAG_BUILD}"
-    echo "Therefore it will NOT be published on PyPI"
 fi
