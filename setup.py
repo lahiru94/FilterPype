@@ -53,10 +53,10 @@ setup(
     include_package_data=True,
 
     install_requires=requirements.install_requires,
+    setup_requires=requirements.setup_requires,
     tests_require=requirements.tests_require,
     extras_require=requirements.extras_require,
     dependency_links=requirements.dependency_links,
-    setup_requires=['nose>=1.0'],
     test_suite='nose.collector',
 
     zip_safe=False,
