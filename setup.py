@@ -40,32 +40,36 @@ requirements = RequirementsParser()
 
 setup(
     name='FilterPype',
-    version=VERSION,
-    url='http://www.filterpype.org/',
+    version=VERSION,   
     author='Flight Data Services Ltd',
     author_email='developers@flightdataservices.com',
     description='FilterPype is a process-flow pipes-and-filters Python framework.',
     long_description=open('README').read() + open('CHANGES').read(),
-    download_url='http://www.filterpype.org/',
-    license='MIT',
-
-    packages=find_packages(exclude=['lextab.*', 'parsetab.*']),
+    license='Open Software License (OSL-3.0)',
+    url='http://www.filterpype.org/',
+    download_url='http://www.filterpype.org/',    
+    packages=find_packages(exclude=['distribute_setup', 'tests', 'lextab.*', \
+    'parsetab.*']),
+    # The 'include_package_data' keyword tells setuptools to install any 
+    # data files it finds specified in the MANIFEST.in file.    
     include_package_data=True,
-
+    zip_safe=False,
     install_requires=requirements.install_requires,
     tests_require=requirements.tests_require,
     extras_require=requirements.extras_require,
     dependency_links=requirements.dependency_links,
     setup_requires=['nose>=1.0'],
-    test_suite='nose.collector',
-
-    zip_safe=False,
+    test_suite='nose.collector',    
+    platforms=[
+        "OS Independent",
+    ],        
+    keywords=["process", "flow", "pipes", "filters", "framework"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Open Software License (OSL-3.0)",
         "Programming Language :: Python :: 2.5",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
