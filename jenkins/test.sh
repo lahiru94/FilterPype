@@ -97,10 +97,9 @@ fi
 rm coverage.xml nosetests.xml pylint.log pep8.log cpd.xml sloccount.log 2>/dev/null
 
 # Run the tests and coverage
-#if [ -f setup.py ]; then
-#    python setup.py jenkins
-#fi
-nosetests --with-xunit --with-xcover --cover-package=${PACKAGE}
+if [ -f setup.py ]; then
+    python setup.py jenkins
+fi
 
 # Pyflakes code quality metric, in Pylint format
 pyflakes ${PACKAGE} | awk -F\: '{printf "%s:%s: [E]%s\n", $1, $2, $3}' > pylint.log
