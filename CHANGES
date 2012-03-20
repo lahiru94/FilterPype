@@ -1,6 +1,10 @@
-
-History
+Changes
 =======
+
+0.3.4
+-----
+* Packaging now uses SetupFixer
+* License changed from MIT to OSL-3.0
 
 0.3.3
 -----
@@ -28,3 +32,4 @@ History
 -----
 
 * Initial release
+
