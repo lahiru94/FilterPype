@@ -1,4 +1,3 @@
-# embed.py
 # See Python Cookbook, 2nd ed., p.591
 
 import sys
