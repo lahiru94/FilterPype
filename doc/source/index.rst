@@ -11,11 +11,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Introduction
    Principles
    Tutorial
    TechExpl
-   API
 
 Indices and tables
 ==================
