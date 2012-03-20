@@ -19,6 +19,6 @@ Some of its features:
 
 Package requires **pip** for installation.
 
-|  pip install filterpype
+    pip install filterpype
 
 Project sponsored by Flight Data Services Ltd: http://www.flightdataservices.com/
