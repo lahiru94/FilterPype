@@ -5,7 +5,7 @@
 # See the file "LICENSE" for the full license governing this code.
 
 __packagename__ = 'FilterPype'
-__version__ = '0.3.5'
+__version__ = '0.3.4'
 __author__ = 'Flight Data Services Ltd'
 __author_email__ = 'developers@flightdataservices.com'
 __maintainer__ = 'Flight Data Services Ltd'
