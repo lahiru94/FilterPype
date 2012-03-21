@@ -1,5 +1,3 @@
-.. contents:: **Table of Contents**
-
 Introduction
 ============
 
@@ -17,9 +15,15 @@ Some of its features:
 * Recursive coroutine pipes allowing calculation of e.g. factorials
 * Using it is like writing a synchronous multi-threaded program
 
-Package requires **pip** for installation.
-    
+Project sponsored by `Flight Data Services`_.
+
+Installation
+------------
+
+Package requires ``pip`` for installation.
+::
+
     pip install filterpype
-    
-Project sponsored by Flight Data Services Ltd: http://www.flightdataservices.com/
+
+.. _Flight Data Services: http://www.flightdataservices.com/
 
