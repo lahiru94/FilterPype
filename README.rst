@@ -15,7 +15,8 @@ Some of its features:
 * Recursive coroutine pipes allowing calculation of e.g. factorials
 * Using it is like writing a synchronous multi-threaded program
 
-Project sponsored by `Flight Data Services`_.
+Project sponsored by `Flight Data Services`_ and released under the Open 
+Software License (OSL-3.0).
 
 Installation
 ------------
