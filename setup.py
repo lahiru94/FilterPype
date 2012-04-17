@@ -41,3 +41,6 @@ setup(
     dependency_links=requirements.dependency_links,
     test_suite='nose.collector',
 )
+
+################################################################################
+# vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
