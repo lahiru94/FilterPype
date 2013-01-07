@@ -54,3 +54,6 @@ tests/test_data/tst_data5/short2.out
 tests/test_data/tst_data5/short2.dat
 tests/test_data/tst_data5/short_tst3.dat
 tests/test_data/tst_data5/short_tst3.dat.bz2
+
+# Keep empty directories
+!.git*
