@@ -29,9 +29,9 @@ Package requires ``pip`` for installation.
 Source Code
 -----------
 
-Source code is available from `Google Code`_:
+Source code is available from `GitHub`_:
 
-* http://code.google.com/p/filterpype/
+* https://github.com/FlightDataServices/FilterPype
 
 Documentation
 -------------
@@ -42,6 +42,5 @@ Documentation is available from the `Python Package Index`_:
 
 .. _Flight Data Services: http://www.flightdataservices.com/
 .. _OSL-3.0: http://www.opensource.org/licenses/osl-3.0.php
-.. _Google Code: http://code.google.com/
+.. _GitHub: https://github.com/
 .. _Python Package Index: http://pypi.python.org/
-
