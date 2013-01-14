@@ -1,36 +1,50 @@
-# dot directories
+# Hidden directories:
 .*/
 
-# Transient files
-*.log
-*.tmp
-
-# Operating System cruft
+# Operating system cruft:
 Desktop.ini
 Thumbs.db
 __MACOSX
+._*
+.AppleDouble
 .DS_Store
+.LSOverride
 
-# Sphinx transient files (old style)
-.build
-.static
-
-# Eclipse, WingIDE and Text Editors
-*.sw[nop]
+# Editors (Eclipse, WingIDE, Vim):
+.sw?
+.*.sw?
 *~
+*.bak
 .project
 .pydevproject
-*.wp[ur]
+.wp[ru]
 
-# Python builds and binaries
-dist
-build
-*.egg
-*.egg-info
+# Translation files:
+*.mo
+
+# Java binary files:
+*.class
+
+# Java package files:
+*.ear
+*.jar
+*.war
+
+# Python binary files:
 *.py[cdo]
 *.so
 
-# Jenkins
+# Python package files:
+*.egg
+*.egg-info
+build
+dist
+eggs
+sdist
+develop-eggs
+.installed.cfg
+
+# Jenkins build files:
 .coverage
 coverage.xml
 nosetests.xml
@@ -38,22 +52,30 @@ cpd.xml
 pep8.log
 pylint.log
 
-# FilterPype cruft
+# Sphinx build files:
+.build
+.static
+
+# Transient files:
+*.log
+*.tmp
+
+# Project specific ignores:
 lextab.*
 parsetab.*
 profiling.data
 profiling.txt
-tests/test_data/tst_data5/some_file-tmp.dat
-tests/test_data/tst_data5/hello.txt
-tests/test_data/tst_data5/short.tmp.new
-tests/test_data/tst_data5/short.tmp.bz2
-tests/test_data/tst_data5/short.dat
-tests/test_data/tst_data3/file_data2.dat
 tests/test_data/tst_data3/file_data1.dat
-tests/test_data/tst_data5/short2.out
+tests/test_data/tst_data3/file_data2.dat
+tests/test_data/tst_data5/hello.txt
+tests/test_data/tst_data5/short.dat
+tests/test_data/tst_data5/short.tmp.bz2
+tests/test_data/tst_data5/short.tmp.new
 tests/test_data/tst_data5/short2.dat
+tests/test_data/tst_data5/short2.out
 tests/test_data/tst_data5/short_tst3.dat
 tests/test_data/tst_data5/short_tst3.dat.bz2
+tests/test_data/tst_data5/some_file-tmp.dat
 
-# Keep empty directories
-!.git*
+# Keep empty directories:
+!*/.git*
