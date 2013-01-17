@@ -44,3 +44,7 @@ Documentation is available from the `Python Package Index`_:
 .. _OSL-3.0: http://www.opensource.org/licenses/osl-3.0.php
 .. _GitHub: https://github.com/
 .. _Python Package Index: http://pypi.python.org/
+
+.. image:: https://cruel-carlota.pagodabox.com/3ac79d67e6ef73f583c5856ee8942cef
+    :alt: githalytics.com
+    :target: http://githalytics.com/FlightDataServices/FilterPype
