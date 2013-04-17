@@ -1230,7 +1230,7 @@ class EmbedPython(dfb.DataFilter):
             embed.modules[module_name] = self.module_loc._emb_module
             if add_to_sys_modules:
                 sys.modules[module_name] = self.module_loc._emb_module
-
+ 
         self.python_module = self.module_loc._emb_module  # TO-DO
         exec code in self.module_loc._emb_module.__dict__   
 
@@ -3046,7 +3046,7 @@ class WriteFile(dfb.DataFilter):
                 if self.compress:
                     self.out_file.write(self.compressor.compress(data))
                 else:
-                    print "123123 Writing to new file: %s" % os.path.basename(self.out_file.name)
+                    print "Writing to new file: %s" % os.path.basename(self.out_file.name)
                     self.out_file.write(data)
                 
                 ##self.out_file.write(data)
