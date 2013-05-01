@@ -60,6 +60,9 @@ assigns an attribute to a packet.
     
     def tearDown(self):
         pass
+
+    def test_break_the_build(self):
+        self.assertEqual(True, False)
     
     def test_raises_attribute_error(self):
         """
