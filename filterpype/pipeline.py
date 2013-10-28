@@ -762,7 +762,7 @@ class CopyFile(Pipeline):
     config = '''
     [--main--]
     ftype = copy_file
-    keys = dest_file_name, source_file_name:none
+    keys = dest_file_name, source_file_name:none, append:False
     # Callback removed -- environ:none
             
     [read_batch]
@@ -773,7 +773,7 @@ class CopyFile(Pipeline):
     
     [--route--]
     read_batch >>>
-    write_file:${dest_file_name}
+    write_file:${dest_file_name}:${append}
     '''
     # TO-DO: Check the template system -- ${dest_file_name}  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
@@ -799,7 +799,7 @@ class CopyFileCompression(Pipeline):
     [--main--]
     ftype = copy_file_compression
     keys1 = dest_file_name, source_file_name:none
-    keys2 = callback:none, environ:none, file_size:none
+    keys2 = callback:none, environ:none, file_size:none, append:False
     
     [read_batch]
     batch_size = 4194304  # 4 MB for fast reading
@@ -817,6 +817,7 @@ class CopyFileCompression(Pipeline):
     ftype = write_file
     compress = bzip
     dest_file_name = ${dest_file_name}
+    append = ${append}
     
     [--route--]
     read_batch >>>
