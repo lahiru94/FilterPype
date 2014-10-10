@@ -265,7 +265,6 @@ class Batch(dfb.DataFilter):
 
     def init_filter(self):
         self._init_input()
-        self.remember_packets = []  # <<<<< Remove TO-DO
         # self._last_packet is a copy of the last packet to enter the filter.
         # This is required to persist attributes when flush_buffer() sends on
         # the remaining batched data in a new packet.
