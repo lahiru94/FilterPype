@@ -14,7 +14,6 @@
 from __future__ import with_statement
 import heapq
 import time
-import new
 from contextlib import contextmanager 
 import re
 from string import Template

@@ -1,7 +1,6 @@
 # See Python Cookbook, 2nd ed., p.591
 
 import sys
-import filterpype
 
 class PretendModule(object):
     modules = {}
