@@ -624,7 +624,7 @@ class CallbackOnAttribute(dfb.DataFilter):
 
     def _populate_environ(self, packet):
         # add required keys to the environment where they are available
-        for attr_name in self.include_in_environ:            
+        for attr_name in self.include_in_environ:
             try:
                 self.environ[attr_name] = getattr(packet, attr_name)
                 self.environ['pipeline'] = self.pipeline.name
@@ -660,7 +660,7 @@ class CallbackOnAttribute(dfb.DataFilter):
                 return
         try:
             value = getattr(packet, self.watch_attr)
-            "count values found until confirm number is met"
+            # count values found until confirm number is met
             # number of times we have seen the current value 
             if value is None:
                 # we're not monitoring for None values
@@ -692,11 +692,14 @@ class CallbackOnAttribute(dfb.DataFilter):
 
 
             if len(self.value_dict) - 1 > self.allowed_inconsistencies:
+                if self.inconsistent_callback_made:
+                    return
                 # We have had too many inconsistent values
                 self._populate_environ(packet)
                 self.environ['values_found'] = self.value_dict.keys()
                 self.callback('inconsistency_value_exceeded:' + self.watch_attr,
                               **self.environ)
+                self.inconsistent_callback_made = True
                 self.value_dict = {value:1}
                 if self.close_when_found and self.pipeline:
                     self.refinery.return_value = 'inconsistant'
@@ -741,6 +744,9 @@ class CallbackOnAttribute(dfb.DataFilter):
     def init_filter(self):
         # include the watch attribute in the environment
         self.include_in_environ.append(self.watch_attr)
+        # pipeline is not shutting down quickly enough after making
+        # the inconsistent callback.
+        self.inconsistent_callback_made = False
         self.attribute_found = False
         self.pkt_count = 0
         self.value_dict = {}
@@ -783,6 +789,7 @@ class CallbackOnAttribute(dfb.DataFilter):
            and self.refinery.return_value != 'inconsistant':
             self.callback('not_found:' + self.watch_attr, **self.environ)
             self.refinery.return_value = 'not_found'
+
 
 class CallbackOnMultipleAttributes(dfb.DataFilter):
     """Simplified version of data_filter's CallbackOnAttribute which will make
