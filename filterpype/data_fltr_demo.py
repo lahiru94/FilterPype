@@ -29,25 +29,6 @@ class AddNumbers(dfb.DataFilter):
         packet.psum = sum(number_list)
         self.send_on(packet)
 
-        
-class ByteValueCounter(dfb.DataFilter):
-    """Count how many of each byte value have passed through the filter.
-    """
-    ftype = 'byte_value_counter'
-    
-    def filter_data(self, packet):
-        bvd = self.byte_value_dict
-        for char in packet.data:
-            try:
-                bvd[ord(char)] += 1
-            except KeyError:
-                # First time we've found this char
-                bvd[ord(char)] = 1
-        self.send_on(packet)
-
-    def zero_inputs(self):
-        self.byte_value_dict = {}
-
 
 class Capitalise(dfb.DataFilter):
     """Capitalise the first character of the packet's data.
@@ -58,7 +39,7 @@ class Capitalise(dfb.DataFilter):
         packet.data = packet.data.capitalize()
         self.send_on(packet)
 
-        
+
 class FactorialCalc(dfb.DataFilter):
     """Experiment to see if we can loop recursively with filters.
        We can't: ValueError: generator already executing.
@@ -124,67 +105,6 @@ class MultiplyIfInteger(dfb.DataFilter):
             pass
         self.send_on(packet)
 
-
-                
-class PrintData(dfb.DataFilter):
-    """Print first part of data block in hex.
-    """
-
-    ftype = 'print_data'
-    keys = ['print_limit:100']
-
-    def filter_data(self, packet):
-        self.counter += 1
-        print 'Data %3d:  %s' % (
-            self.counter, 
-            fut.data_to_hex_string(packet.data[:self.print_limit]))
-        self.send_on(packet)
-
-    def zero_inputs(self):
-        self.counter = 0
-
-                
-class ReverseString(dfb.DataFilter):
-    """Filter to return a reversed string for each yielded packet"""
-    ftype = 'reverse_string'
-    
-    def filter_data(self, packet):
-        packet.data = packet.data[::-1]
-        self.send_on(packet)
-
-                
-class ShowProgress(dfb.DataFilter):
-    """Print char to screen to show progress
-    """
-    ftype = 'show_progress'
-    # A dot every how many packets
-    keys = ['packet_progress_freq', 'progress_char:.', 
-            'progress_line_length:50']
-
-    def _print_packet_count(self):
-        sys.stdout.write(' %d\n' % self.packet_counter)
-        
-    def close_filter(self):
-        """At the end of the pipeline, print an extra new line before any
-        final output from the calling program.
-        """
-        self._print_packet_count()
-                
-    def filter_data(self, packet):
-        self.packet_counter += 1
-        if self.packet_counter % self.packet_progress_freq == 0:
-            sys.stdout.write(self.progress_char)
-            self.print_counter += 1
-            # Move to the next output line
-            if self.progress_line_length and \
-               self.print_counter % self.progress_line_length == 0:
-                self._print_packet_count()
-        self.send_on(packet)
-
-    def zero_inputs(self): 
-        self.packet_counter = 0
-        self.print_counter = 0
-        
 
 class SquareIfNumber(dfb.DataFilter):
     """If a string input is an number, return the square of the number, as a
