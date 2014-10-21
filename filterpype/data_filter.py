@@ -219,20 +219,12 @@ class Batch(dfb.DataFilter):
         to a silly value, e.g. 0, which will just carry on sending the same 
         data ad infinitum.
         """
-        # ONLY enable during debugging, otherwise this is REALLY slow
-        #fut.dbg_print('**14740** pkt.data = "%s"' % (
-            #fut.data_to_hex_string(packet.data[:100])), 8)
         self.inputs.append(packet.data)
-        ##print '**13540** %s received packet %d = "%s"' % (
-            ##self.name, packet.seq_num, packet.data)
         self.input_char_count += packet.data_length
         if self.input_char_count < int(self.size):
             return  # Not enough input data to make up even one batch block
 
         all_inputs = ''.join(self.inputs)
-        # ONLY enable during debugging, otherwise this is REALLY slow
-        #fut.dbg_print('**14750** all_inps = "%s"' % (
-            #fut.data_to_hex_string(all_inputs[:100])), 8)
         while True:
             if int(self.size) <= 0:
                 msg = 'Bad batch size, = %d, should be >= 1'
@@ -251,16 +243,12 @@ class Batch(dfb.DataFilter):
                                      #self.fork_dest), 8)
                 self.send_on(packet.clone(data=block), self.fork_dest)
             else:  # Ran out of data -- remember remainder for next input
-                ##print '**13425** %s has remainder = "%s"' % (
-                    ##self.name, block)
                 self._init_input(block)
                 break 
 
     def flush_buffer(self):
         remainder = ''.join(self.inputs)
         if remainder:  # Avoid sending a final empty data packet
-            ##print '**13428** %s is sending remainder "%s" to %s' % (
-                ##self.name, remainder, self.fork_dest)
             self.send_on(self._last_packet.clone(remainder), self.fork_dest)
 
     def init_filter(self):
@@ -348,14 +336,11 @@ class BranchIf(dfb.DataFilter):
     ftype = 'branch_if'
     keys = ['branch_key', 'comparison:equals', 'compare_value:true',
             'branch_on_packet:true']
-##            'branch_optional:false', 'branch_on_packet:true']
 
     def filter_data(self, packet):
         if self.branch_on_packet:
-##            lhs_value = packet.__dict__[self.branch_key]
             lhs_value = getattr(packet, self.branch_key)
         else:
-##            lhs_value = self.__dict__[self.branch_key]
             lhs_value = getattr(self, self.branch_key)
 
         if self.comparison == 'equals':
@@ -470,7 +455,6 @@ class BZipDecompress(dfb.DataFilter):
 
     def filter_data(self, packet):
         decompr_data = self.decompressor.decompress(packet.data)
-        # Why change packet? # TO-DO
         self.send_on(packet.clone(data=decompr_data))
 
     def zero_inputs(self):
@@ -947,7 +931,7 @@ class ConvertBytesToInt(dfb.DataFilter):
 
 
     def _process_data(self, param_name):
-        if not hasattr(self.packet, param_name):#self.param_name in packet.__dict__:
+        if not hasattr(self.packet, param_name):
             msg = 'Packet attribute "%s" is not defined'
             raise dfb.FilterAttributeError, msg % param_name
         value_to_convert = getattr(self.packet, param_name)
@@ -970,9 +954,6 @@ class ConvertFilenameToPath(dfb.DataFilter):
         if not hasattr(packet, self.in_attr):
             msg = 'Packet attribute "%s" is not defined'
             raise dfb.FilterAttributeError, msg % self.in_attr
-        #if not hasattr(packet, self.out_attr):
-            #msg = 'Packet attribute "%s" is not defined'
-            #raise dfb.FilterAttributeError, msg % self.out_attr
 
         filename = getattr(packet, self.in_attr)
         full_path = os.path.join(
@@ -1179,8 +1160,6 @@ class DistillHeader(dfb.DataFilter):
             self.header_size, type(self.header_size)))
         header = all_inputs[:self.header_size]
         self.remainder = all_inputs[self.header_size:]
-##        print '**10410** Sending %d data bytes from %s to branch' % (
-##            len(header), self.name)
         self.send_on(packet.clone(data=header), 'branch')
         if self.distill_mode == 'once':
             # Only one header to be sent
@@ -1189,7 +1168,6 @@ class DistillHeader(dfb.DataFilter):
             packet_out = packet.clone(data=self.remainder)
             if 'keep_header_key' in self.filter_attrs:
                 setattr(packet_out, self.keep_header_key, header)
-##                packet_out.__dict__[self.keep_header_key] = header
             self.send_on(packet_out, 'main')
             self.remainder = None
 
@@ -1297,7 +1275,6 @@ class EmbedPython(dfb.DataFilter):
 
     def init_filter(self):
         self._remake_python_code()
-##        self._import_code(self.python_code, self.module_loc.name)
         # Don't pass the module_loc.name, so that all modules use the 
         # default name: "pype" or "singleton_pype"    ##"one_pype_module"
         self._import_code(self.python_code)
@@ -1313,8 +1290,6 @@ class FormatParam(dfb.DataFilter):
 
     def filter_data(self, packet):
         results = packet.data
-        ##print '%s.%s = %s' % (self.pipeline_name, packet.param_name,
-                                ##''.join(self.results_gen(results)))
         packet.data = self.join_char.join(self.results_gen(results))
         self.send_on(packet)
 
@@ -1328,10 +1303,6 @@ class FormatParam(dfb.DataFilter):
         return ((chr(res or ord('?'))) for res in results)
 
     def init_filter(self):
-        ##try:
-            ##self.pipeline_name = self.pipeline.name
-        ##except AttributeError:
-            ##self.pipeline_name = 'no_pipeline'
         if self.format == 'hex':
             self.join_char = ' '
             self.results_gen = self._hex_gen
@@ -1361,7 +1332,7 @@ class GetBytes(dfb.DataFilter):
 
     def filter_data(self, packet):
 
-        if hasattr(packet, self.param_name):#self.param_name in packet.__dict__:
+        if hasattr(packet, self.param_name):
             msg = 'Packet attribute "%s" already has values and can\'t be reset'
             raise dfb.FilterAttributeError, msg % self.param_name
         setattr(packet, self.param_name, self._get_data_value(packet.data))
@@ -1384,7 +1355,8 @@ class HashSHA256(dfb.DataFilter):
 
     def zero_inputs(self):   # TO-DO versus dynamic init
         self.hasher = hashlib.sha256()
-        
+
+
 class HeaderAsAttribute(dfb.DataFilter):
     """In cases where the header is required for further processing later in
     pipeline, this filter assigns the header_attribute to the packet, while the
@@ -1418,8 +1390,8 @@ class HeaderAsAttribute(dfb.DataFilter):
 class Join(dfb.DataFilter):
     """Store the data items that are strings, until receiving something where
     the data is not a string, typically None. Then join the strings together, 
-    using space as the default join string.       
-    """   
+    using space as the default join string.
+    """
     ftype = 'join'
     keys = ['join_str:space']  
 
@@ -1481,32 +1453,6 @@ class PassThrough(dfb.DataFilter):
 
     def filter_data(self, packet):
         self.send_on(packet)
-
-# Experimenting here with embedded parameters
-        ##print '**12980** embed.baz =', embed.baz
-        ##print '**12990** embed.dummy1.FOO =', embed.dummy1.FOO
-        ##embed.dummy1.BAR = 17
-        ##print '**13000** embed.dummy1.BAR =', embed.dummy1.BAR
-        ##embed.dummy1.BAR = embed.dummy1.double_bar()
-        ##print '**13010** embed.dummy1.BAR =', embed.dummy1.BAR
-        ##print '**13020** embed.dummy2.FOO =', embed.dummy2.FOO
-
-        ### Temp code +++++++++++++++++++++++++++++++++++++++++++
-        ##mod_name = self.pipeline.module_loc.module.__name__
-###        imp_mod = __import__(mod_name)
-####        self.__module__[mod_name] = imp_mod
-        ####setattr(self.__module__, self.pipeline.module_loc.module.__name__, 
-                ####imp_mod)
-        ##exec 'import %s' % self.pipeline.module_loc.module.__name__
-####        exec 'import %s as embedded' % self.pipeline.module_loc.module.__name__
-        ##print '**12970** embed_python2.FOO =', embed_python2.FOO
-####        import self.pipeline.module_loc.module
-####        embedded = __import__(self.pipeline.module_loc.module.__name__)
-        ##print '**12940** FOO in  =', self.pipeline.module_loc.module.FOO
-        ##self.pipeline.module_loc.module.FOO += 1
-        ##print '**12940** FOO out =', self.pipeline.module_loc.module.FOO
-        ### Temp code +++++++++++++++++++++++++++++++++++++++++++
-
 
 
 class Peek(dfb.DataFilter):
@@ -1616,7 +1562,7 @@ class ReadBatch(dfb.DataFilter):
                 self.full_file_name = full_file_name_or_obj
             except TypeError:
                 # Not a string -- must already be a file object
-                self.full_file_name = full_file_name_or_obj.name ##'unknown'
+                self.full_file_name = full_file_name_or_obj.name
                 return full_file_name_or_obj     
         if self.binary_mode:
             mode = 'rb'
@@ -1730,7 +1676,6 @@ class ReadBatch(dfb.DataFilter):
         full_file_name_or_obj = packet.data
         self._ensure_file_closed()
         self.file1 = self._get_file_obj(full_file_name_or_obj)
-##        print '**12000** reading data file %s' % self.file1.name
         self.char_count = 0
 
         self.file_counter += 1
@@ -1741,15 +1686,11 @@ class ReadBatch(dfb.DataFilter):
                 break
         read_count = 0
         while not self.shutting_down:  # TO-DO
-##            if self.refinery and self.refinery.shutting_down:
             if self.refinery.shutting_down:
                 self.shutting_down = True
                 # Use "continue" rather than "break", to get to "else"
                 continue  
             block = self.file1.read(self.batch_size)
-
-            ##if True: #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                ##block = unicode(block, 'ISO-8859-1')  # TO-DO
 
             if len(block) > 0:
                 self.char_count += len(block)
@@ -1904,9 +1845,9 @@ class ReadBytes(dfb.DataFilter):
                     self.file_size = self.file1.file_size
                 except AttributeError:
                     # cannot get file size for raw usb devices
-                    raise dfb.FilterAttributeError(\
-                        "file_size could not be obtained. Required as a filter "+
-                        "attribute. If not, os.path.getsize('%s') is queried." \
+                    raise dfb.FilterAttributeError(
+                        "file_size could not be obtained. Required as a filter "
+                        "attribute. If not, os.path.getsize('%s') is queried."
                         % self.file1.name)
         progress = int(float(bytes_read) / float(self.file_size) * 100.0)
         
@@ -2028,6 +1969,7 @@ class SwapTwoBytes(dfb.DataFilter):
             packet.data += hanging_char
         self.send_on(packet)
 
+
 class ReverseString(dfb.DataFilter):
     """ Reverse a string (in packet.data) that is of at least 2 characters long.
         The result will be stored back into packet.data.
@@ -2147,9 +2089,6 @@ class SeqPacket(dfb.DataFilter):
     ftype = 'seq_packet'
     keys = ['seq_packet_field_name:seq_num', 'field_width:6']
 
-    ##def __init__(self, factory=None, **kwargs):
-        ##dfb.DataFilter.__init__(self, factory, **kwargs)
-
     def filter_data(self, packet):  
         ##print '**10360** packet in to SeqPacket', packet
         ##if packet.message: 
@@ -2183,12 +2122,6 @@ class SeqPacket(dfb.DataFilter):
 
     def zero_inputs(self):
         self.reset_counter()
-
-                        ### HACK----RenameFile----TO-DO-------
-                        ##format_str = '%%%d.%dd' % (self.field_width, 
-                                                    ##self.field_width)
-                        ##packet.__dict__[spfn + '_str'] = format_str % (
-                                                            ##self.__dict__[spfn])
 
 
 class Sink(dfb.DataFilter):
@@ -2233,7 +2166,6 @@ class Sink(dfb.DataFilter):
         # Doing nothing here results in no message bottles being captured
         if self.capture_msgs:
             self._save_data(packet)
-        pass
 
     def send_on(self, packet, fork_dest='main'): # TO-DO discuss
         if packet.message and self.capture_msgs and fork_dest is 'main':
@@ -2401,7 +2333,6 @@ class TankQueue(dfb.DataFilter):
         """Return the concatenated data from the packets in the tank's
         priority queue. The packet is the third item in the queue tuple.
         """
-##        return ''.join(pkt.data for pkt in self.sorted_packets)
         return [pkt.data for pkt in self.sorted_packets]
     all_data = property(_get_all_data, 
                         doc='Tank packet data, sorted and concatenated')
@@ -2471,15 +2402,9 @@ class TankQueue(dfb.DataFilter):
                          'of packets held.')    
 
     def _search_tank(self):
-        """ Place holder for implementation specific searching
         """
-        ##if self.search_list is None:
-            ### nothing to search for
-            ##return
-        ### add all the packets together
-        ##tank_content = ''.join(self._priority_queue.queue)
-        ##find_results = [tank_content.find(item) for item in search_list]
-        ### add find_results to the relevant packets
+        Abstract method for implementation specific searching
+        """
         pass
 
     def filter_data(self, packet):
@@ -2525,9 +2450,7 @@ class TankQueue(dfb.DataFilter):
         if 'tank_size' in self.__dict__:
             del(self.__dict__['tank_size'])
         # Allow the tank_size property to pad tank with None, if tank_size > 0
-##        print '**9500**', self
         self.tank_size = hold_tank_size
-##        print '**9510**', self
 
     def pop(self):
         try:
@@ -2554,7 +2477,6 @@ class TankQueue(dfb.DataFilter):
         a special negative priority, to ensure it comes at the front.
         """
         if packet:
-##            priority = packet.__dict__.get(self.priority_field_name, 0)
             priority = packet.__dict__.get(self.priority_field_name, None)
             self._priority_queue.push(packet, priority)
             self.packets_held += 1
@@ -2584,9 +2506,6 @@ class TankBranch(TankQueue):
         catching the packet lists, which are normally sent down the branch.
         """
         if fork_dest == 'main' and self.refinery.shutting_down:
-            ##msg = '**13360** before_send_on, packet = "%s", dest = %s, ' + \
-                    ##'but send to branch for checking'
-            ##print msg % (packet.data, fork_dest)
             self.send_on(dfb.DataPacket(self.sorted_packets), 'branch')
 
 
@@ -2775,9 +2694,6 @@ class SetAttributesToData(dfb.DataFilter):
         ##return map(lambda row: [self._convert(elem) or defval for elem in row], lists)
         ##return map(self._lambda_replacement, *lists)
 
-    ###good idea to profile this!
-    ##import filterpype.profiler_fp as prof
-    ##@prof.complete(30)
     def filter_data(self, packet):
         """        
         Purpose is to transpose lists of attribute lists into CSV data.
@@ -2999,9 +2915,7 @@ class WriteFile(dfb.DataFilter):
             self.enabled = False
 
 
-    def _write_data(self, data):     # TO-DO
-        ##if True:  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            ##data = data.encode('utf-8')
+    def _write_data(self, data):
 
         if self.do_write_file:
             # TO-DO: Write a nice little test to ensure this works (GK)
@@ -3068,7 +2982,7 @@ class WriteFile(dfb.DataFilter):
             self.out_file.isatty
         except AttributeError:
             return
-        if self.out_file.name != self._get_dest_file_name(): ##self.dest_file_name:
+        if self.out_file.name != self._get_dest_file_name():
             self._ensure_file_closed()
             self.out_file = None
 
