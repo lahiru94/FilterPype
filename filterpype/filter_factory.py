@@ -266,7 +266,6 @@ class DemoFilterFactory(FilterFactory):
             factorial_calc     = dfd.FactorialCalc,
             inner_bar          = ppln_demo.InnerBar,
             mult_if_int        = dfd.MultiplyIfInteger,
-            reverse_string     = dfd.ReverseString,
             square_if_number   = dfd.SquareIfNumber,
             temp_multiple_ab   = ppln_demo.TempMultipleAB,
             temp_space         = dfd.TempSpace,
