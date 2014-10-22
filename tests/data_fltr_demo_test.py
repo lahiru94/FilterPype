@@ -55,22 +55,8 @@ class TestAddNumbers(unittest.TestCase):
         # Check last (and only) item in sink results
         packet = dfb.DataPacket(data=[2, 22, []])
         self.assertRaises(TypeError, self.add_numbers.send, packet)
-        
-class TestByteValueCounter(unittest.TestCase):
-    
-    def setUp(self):
-        self.bvc = dfd.ByteValueCounter()
-        
-    def tearDown(self):
-        pass
-        
-    def test_byte_values(self):
-        packet = dfb.DataPacket(data='abracadabra')
-        self.bvc.send(packet)
-        self.assertEquals(self.bvc.byte_value_dict,
-                          {97: 5, 98: 2, 99: 1, 100: 1, 114: 2})
-        
-        
+
+
 class TestCapitalise(unittest.TestCase):
     
     def setUp(self):
@@ -190,16 +176,6 @@ class TestDataFilterDemo(unittest.TestCase):
         ##append_string.send(packet)
         ##self.assertEquals(self.sink.results[-1].data, 'abcdef===')
 
-    def test_reverse_string(self):
-        reverse_string = dfd.ReverseString()
-        reverse_string.next_filter = self.sink
-        reverse_string.send(dfb.DataPacket('abcdef'))
-        self.assertEquals(self.sink.results[-1].data, 'fedcba')
-        reverse_string.send(dfb.DataPacket(''))
-        self.assertEquals(self.sink.results[-1].data, '')
-        reverse_string.send(dfb.DataPacket('aaaa\naa'))
-        self.assertEquals(self.sink.results[-1].data, 'aa\naaaa')
-
     def test_square_if_number(self):
         square_if_number = dfd.SquareIfNumber()
         square_if_number.next_filter = self.sink
@@ -275,56 +251,6 @@ class TestDataFilterDemo(unittest.TestCase):
                                     fut.hex_string_to_data('13 35 57'))
 
 
-class TestPrintData(unittest.TestCase):
-    
-    def setUp(self):
-        self.prt_data = dfd.PrintData()
-        
-    def tearDown(self):
-        pass
-    
-    def test_print_data(self):
-        packet1 = dfb.DataPacket(data=fut.hex_string_to_data('AB CD EF'))
-        # To test print we need to redirect stdout
-        result = fut.print_redirect(self.prt_data.send, packet1)
-        self.assertEquals(result[0].splitlines()[0], 'Data   1:  AB CD EF')
-        
-
-class TestShowProgress(unittest.TestCase):
-    
-    def setUp(self):
-        self.hold_debug = fut.debug
-        fut.debug = 900  # Temporarily turn off debugging
-        self.show_progress1 = dfd.ShowProgress(packet_progress_freq=1)
-        self.show_progress5 = dfd.ShowProgress(packet_progress_freq=5)
-        self.show_progress9 = dfd.ShowProgress(packet_progress_freq=1,
-                                               progress_line_length=3)
-        
-    def tearDown(self):
-        fut.debug = self.hold_debug
-    
-    def _print_dots(self, show_progress, *args):
-        for arg in args:
-            show_progress.send(dfb.DataPacket(data=arg))
-    
-    def test_print_data1(self):
-        result = fut.print_redirect(self._print_dots, self.show_progress1,
-                                    1, 2, 3, 'fgfg', 5)
-        self.assertEquals(result[0], '.' * 5)
-        
-    def test_print_data5(self):
-        result1 = fut.print_redirect(self._print_dots, self.show_progress5,
-                                    1, 2, 3, '4')
-        self.assertEquals(result1[0], '')
-        result2 = fut.print_redirect(self._print_dots, self.show_progress5,
-                                    'yui', 6, 7)
-        self.assertEquals(result2[0], '.')
-        
-    def test_print_multi_line(self):
-        result = fut.print_redirect(self._print_dots, self.show_progress9,
-                                    1, 2, 3, 4, 5, 6, 7, 8)
-        self.assertEquals(result[0], '... 3\n... 6\n..')
-        
 if __name__ == '__main__':  #pragma: nocover
     runner = unittest.TextTestRunner()
 ##    runner.run(TestAddNumbers('test_add_non_number_list'))
