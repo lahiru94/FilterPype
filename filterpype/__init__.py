@@ -11,7 +11,7 @@ __author_email__ = 'developers@flightdataservices.com'
 __maintainer__ = 'Flight Data Services Ltd'
 __maintainer_email__ = 'developers@flightdataservices.com'
 __url__= 'http://www.filterpype.org/'
-__description__ ='FilterPype is a process-flow pipes-and-filters Python framework.'
+__description__ ='FilterPype (Karmic branch) is a process-flow pipes-and-filters Python framework.'
 __download_url__= 'http://www.filterpype.org/'
 __classifiers__ = [
     'Development Status :: 5 - Production/Stable',
