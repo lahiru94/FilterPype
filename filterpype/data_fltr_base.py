@@ -29,9 +29,6 @@ re_caps_params_with_percent = re.compile(r'^%[A-Z][A-Z0-9_]+$')
 k_unset = '$$<unset>$$'
 
 
-class ControllerError(Exception):
-    pass
-
 class DataError(Exception):
     pass
 
@@ -69,15 +66,6 @@ class PipelineError(FilterError):
     pass
 
 class PipelineRecursionError(FilterError):
-    pass
-
-class ResponseError(FilterError):
-    pass
-
-class SerialNumberInvalidError(DataError):
-    pass
-
-class SerialNumbersInconsistentError(DataError):
     pass
 
 class TankOverflowException(FilterError):
@@ -220,7 +208,7 @@ class DataFilterBase(object):
         except AttributeError:
             # Copy the keys from class attribute hierarchy
             self._config_keys = self.__class__._all_keys()
-##wwwwwww            self._config_keys = self.__class__.keys
+##            self._config_keys = self.__class__.keys
             ##print '**12130** <%s>._config_keys = %s' % (
                 ##self.name, self._config_keys)
             ##try:  
@@ -640,14 +628,6 @@ class DataFilterBase(object):
         if not preorder:
             self._do_recursive_call(func_names)
 
-    def _print_filters_preorder(self):
-        print '**10440** preorder  -- %s%d %s' % (
-            ' ' * self.level * 4, self.level, self.name)
-
-    def _print_filters_postorder(self):
-        print '**10450** postorder -- %s%d %s' % (
-            ' ' * self.level * 4, self.level, self.name)
-
     def _recursive_set_values_and_connect(self):
         ##print '**10100** Doing _recursive_set_vals&conn() for class %s' % (
             ##self.__class__.__name__)
@@ -657,12 +637,6 @@ class DataFilterBase(object):
 
         # Recursively create the pipelines/filters in a hierarchy
         self._recurse(['_make_filters'])
-        # For debugging
-##        print '**10435** ==================================================='
-##        self._recurse(['_print_filters_preorder'])
-##        print '**10435** ==================================================='
-##        self._recurse(['_print_filters_postorder'], preorder=False)
-##        print '**10435** ==================================================='
         # Set the key values only after defaults have been extracted from
         # optional keys, to avoid setting an attribute name to something like
         # "size:0x2000" rather than "size".
@@ -1484,8 +1458,9 @@ class DataPacket(object):
         # Pass remaining parameters into cloned packet
         cloned_packet.__dict__.update(kwargs)
         return cloned_packet
-
-    def _get_data_length(self):
+    
+    @property
+    def data_length(self):
         """Use this instead of len(data) because data may not be a string.
         If not, we'll count its length as 0. 
         (Or there might be some use in converting it to a string first, or
@@ -1498,7 +1473,6 @@ class DataPacket(object):
             return len(self.data)
         except TypeError:
             return 0
-    data_length = property(_get_data_length, doc='Length of data, if a string')    
 
 
 class HiddenBranchRoute(DataFilter):
