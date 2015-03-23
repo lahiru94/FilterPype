@@ -12,6 +12,8 @@ import mock
 import bz2
 import random
 
+from copy import copy
+
 import filterpype.data_fltr_base as dfb
 import filterpype.data_filter as df
 import filterpype.filter_utils as fut
@@ -1226,7 +1228,7 @@ class TestCountBytes(unittest.TestCase):
             self.byte_counter.send(packet)
         self.assertEquals(self.byte_counter.counted_bytes, 180)
 
-    
+
 class TestCountLoops(unittest.TestCase):
     
     def setUp(self):
@@ -1253,8 +1255,8 @@ class TestCountLoops(unittest.TestCase):
         self.counter2.send(packet)
         self.counter2.send(packet)
         self.assertEquals(self.sink2.results[-1].loop_num, 7)
-                        
-        
+
+
 class TestCountPackets(unittest.TestCase):
     
     def setUp(self):
@@ -1278,7 +1280,82 @@ class TestCountPackets(unittest.TestCase):
             self.packet_counter.send(packet)
         self.assertEquals(self.packet_counter.counted_packets, 20)
 
+
+class TestDataBuffer(unittest.TestCase):
+    def setUp(self):
+        self.filter = df.DataBuffer()
+    
+    def test_chunk_index(self):
+        self.filter._chunks = ['012', '34', '567', '8']
         
+        self.assertEqual(self.filter._chunk_index(-1), (0, 0))
+        self.assertEqual(self.filter._chunk_index(0), (0, 0))
+        self.assertEqual(self.filter._chunk_index(1), (0, 1))
+        self.assertEqual(self.filter._chunk_index(2), (0, 2))
+        self.assertEqual(self.filter._chunk_index(3), (1, 0))
+        self.assertEqual(self.filter._chunk_index(4), (1, 1))
+        self.assertEqual(self.filter._chunk_index(5), (2, 0))
+        self.assertEqual(self.filter._chunk_index(6), (2, 1))
+        self.assertEqual(self.filter._chunk_index(7), (2, 2))
+        self.assertEqual(self.filter._chunk_index(8), (3, 0))
+        self.assertEqual(self.filter._chunk_index(9), (4, 0))
+        self.assertEqual(self.filter._chunk_index(10), (None, None))
+    
+    def test_get_data(self):
+        self.filter._chunks = ['012', '34', '567', '8']
+        self.assertEqual(self.filter._get_data(-1), '')
+        self.assertEqual(self.filter._get_data(0), '')
+        self.assertEqual(self.filter._get_data(1), '0')
+        self.assertEqual(self.filter._get_data(2), '01')
+        self.assertEqual(self.filter._get_data(3), '012')
+        self.assertEqual(self.filter._get_data(4), '0123')
+        self.assertEqual(self.filter._get_data(5), '01234')
+        self.assertEqual(self.filter._get_data(6), '012345')
+        self.assertEqual(self.filter._get_data(7), '0123456')
+        self.assertEqual(self.filter._get_data(8), '01234567')
+        self.assertEqual(self.filter._get_data(9), '012345678')
+        self.assertEqual(self.filter._get_data(10), '012345678')
+    
+    def test_truncate_data(self):
+        chunks = ['012', '34', '567', '8']
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(-1)
+        self.assertEqual(self.filter._chunks, chunks)
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(0)
+        self.assertEqual(self.filter._chunks, chunks)
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(1)
+        self.assertEqual(self.filter._chunks, ['12'] + chunks[1:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(2)
+        self.assertEqual(self.filter._chunks, ['2'] + chunks[1:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(3)
+        self.assertEqual(self.filter._chunks, chunks[1:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(4)
+        self.assertEqual(self.filter._chunks, ['4'] + chunks[2:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(5)
+        self.assertEqual(self.filter._chunks, chunks[2:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(6)
+        self.assertEqual(self.filter._chunks, ['67'] + chunks[3:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(7)
+        self.assertEqual(self.filter._chunks, ['7'] + chunks[3:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(8)
+        self.assertEqual(self.filter._chunks, chunks[3:])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(9)
+        self.assertEqual(self.filter._chunks, [])
+        self.filter._chunks = copy(chunks)
+        self.filter._truncate_data(10)
+        self.assertEqual(self.filter._chunks, [])
+
+
 class TestDistillHeader(unittest.TestCase):
 
     def setUp(self):

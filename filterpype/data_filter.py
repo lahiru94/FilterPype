@@ -1108,6 +1108,94 @@ class DataLength(dfb.DataFilter):
         """
 
 
+class DataBuffer(dfb.DataFilterBase):
+    ftype = 'data_buffer'
+    keys = []
+    
+    def __init__(self, *args, **kwargs):
+        '''
+        '''
+        super(DataBuffer, self).__init__(*args, **kwargs)
+        self._chunks = []
+    
+    @property
+    def _buffer_size(self):
+        '''
+        Get the total size of the data in the buffer.
+        
+        :returns: Total size of buffer data.
+        :rtype: int
+        '''
+        return sum(len(d) for d in self._chunks)
+    
+    def _chunk_index(self, data_index):
+        '''
+        Translates a single data index into both self._chunks index and within chunk index.
+        
+        :type data_index: int
+        :rtype: int or None, int or None
+        '''
+        if data_index <= 0:
+            return 0, 0
+        
+        chunk_size = 0
+        for chunk_index, chunk in enumerate(self._chunks):
+            chunk_size += len(chunk)
+            if data_index == chunk_size:
+                return chunk_index + 1, 0
+            elif chunk_size > data_index:
+                return chunk_index, data_index - (chunk_size - len(chunk))
+        else:
+            return None, None
+    
+    def _add_data(self, data):
+        self._chunks.append(data)
+    
+    def _get_data(self, data_index=None):
+        '''
+        Get data from the start of the buffer, concatenating if required.
+        
+        :type data_index: int or None
+        :rtype: str
+        '''
+        if data_index is None:
+            return ''.join(self._chunks)
+        
+        chunk_index, split_index = self._chunk_index(data_index)
+        
+        if chunk_index is None:
+            return ''.join(self._chunks)
+        
+        matching_chunks = self._chunks[:chunk_index]
+        
+        if not split_index:
+            return ''.join(matching_chunks)
+        
+        split_chunk = self._chunks[chunk_index]
+        return ''.join(matching_chunks + [split_chunk[:split_index]])
+    
+    def _truncate_data(self, data_index):
+        '''
+        Truncate data from the start of the buffer.
+        
+        :type data_index: int
+        :rtype: None
+        '''
+        chunk_index, split_index = self._chunk_index(data_index)
+        
+        if chunk_index is None:
+            self._chunks = []
+            return
+        
+        if not split_index:
+            self._chunks = self._chunks[chunk_index:]
+            return
+        
+        split_chunk = self._chunks[chunk_index]
+        self._chunks = [split_chunk[split_index:]] + self._chunks[chunk_index + 1:]
+    
+
+
 class DedupeData(dfb.DataFilter):
     """Takes a list of data as an input, and outputs the set of different
     values. This can be used to ensure that a parameter read multiple times
