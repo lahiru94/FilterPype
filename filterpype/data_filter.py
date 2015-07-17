@@ -1854,7 +1854,11 @@ class ReadBytes(dfb.DataFilter):
         # help to avoid errors being raised.
         if self.start_byte > total_file_size:
             self.start_byte = total_file_size
-        file_desc.seek(self.start_byte, seek_whence)
+        try:
+            file_desc.seek(self.start_byte, seek_whence)
+        except:
+            # Seeking is unsupported, read from current location.
+            pass
 
         # Set up size to read
         if self.size < 0:
