@@ -1108,7 +1108,7 @@ class DataLength(dfb.DataFilter):
         """
 
 
-class DataBuffer(dfb.DataFilterBase):
+class DataBuffer(dfb.DataFilter):
     ftype = 'data_buffer'
     keys = []
     
